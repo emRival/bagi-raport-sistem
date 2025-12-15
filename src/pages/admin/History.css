@@ -265,3 +265,67 @@
     color: var(--neutral-600);
     font-size: var(--font-size-sm);
 }
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .filters {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .filter-info {
+        margin-left: 0;
+        margin-top: var(--spacing-2);
+    }
+}
+
+@media (max-width: 768px) {
+    .history-table {
+        font-size: 13px;
+    }
+
+    .history-table th,
+    .history-table td {
+        padding: var(--spacing-2);
+    }
+
+    /* Adjust column widths for mobile */
+    .history-table th:nth-child(1),
+    .history-table td:nth-child(1) {
+        width: auto;
+        min-width: 80px;
+    }
+
+    .history-table th:nth-child(3),
+    .history-table td:nth-child(3) {
+        min-width: 120px;
+    }
+}
+
+@media (max-width: 640px) {
+    .page-title {
+        font-size: var(--font-size-xl);
+    }
+
+    .history-table {
+        font-size: 12px;
+    }
+
+    .history-table th,
+    .history-table td {
+        padding: var(--spacing-1) var(--spacing-2);
+        white-space: nowrap;
+    }
+
+    .class-badge,
+    .status-badge,
+    .phone-badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    .pagination {
+        flex-direction: column;
+        gap: var(--spacing-2);
+    }
+}
