@@ -12,7 +12,8 @@ import {
     RotateCcw,
     Check,
     MessageSquare,
-    History as HistoryIcon
+    History as HistoryIcon,
+    XCircle
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui-new/card'
 import { Button } from '@/components/ui-new/button'
@@ -86,6 +87,21 @@ export default function Queue() {
             toast.success(`Memanggil ulang ${item.name}`)
         } catch (error) {
             toast.error('Gagal memanggil ulang: ' + error.message)
+        } finally {
+            setLoading({ ...loading, [item.id]: null })
+        }
+    }
+
+    const handleCancelCall = async (item) => {
+        setLoading({ ...loading, [item.id]: 'call' })
+        try {
+            await queueApi.cancelCall(item.id)
+            setQueue(queue.map(q =>
+                q.id === item.id ? { ...q, status: 'WAITING' } : q
+            ))
+            toast.success(`Panggilan ${item.name} dibatalkan`)
+        } catch (error) {
+            toast.error('Gagal membatalkan: ' + error.message)
         } finally {
             setLoading({ ...loading, [item.id]: null })
         }
@@ -301,6 +317,17 @@ export default function Queue() {
                                                 </Button>
                                             ) : (
                                                 <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleCancelCall(item)}
+                                                        loading={loading[item.id] === 'call'}
+                                                        disabled={!!loading[item.id]}
+                                                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 w-full mb-2"
+                                                        icon={XCircle}
+                                                    >
+                                                        Batal
+                                                    </Button>
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
