@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
@@ -14,26 +14,23 @@ import {
     MessageSquare,
     History as HistoryIcon
 } from 'lucide-react'
-import Button from '../../components/ui/Button.jsx'
+import { Card, CardContent } from '@/components/ui-new/card'
+import { Button } from '@/components/ui-new/button'
+import { Badge } from '@/components/ui-new/badge'
 import TeacherHeader from '../../components/layout/TeacherHeader.jsx'
-import './Queue.css'
 
 export default function Queue() {
     const navigate = useNavigate()
-    const { user, logout } = useAuth()
+    const { user } = useAuth()
     const toast = useToast()
     const [queue, setQueue] = useState([])
     const [loading, setLoading] = useState({})
     const [connected, setConnected] = useState(false)
 
     const className = user?.assignedClass || '7A'
-    // Filter out FINISHED status from the main view
     const waitingQueue = queue.filter(q => q.status === 'WAITING')
     const calledQueue = queue.filter(q => q.status === 'CALLED')
-    // We can also have a separate list for finished if needed, but for now just exclude them from these lists which populate the UI
-    const finishedQueue = queue.filter(q => q.status === 'FINISHED')
 
-    // Fetch queue from API
     const fetchQueue = async () => {
         try {
             const data = await queueApi.getQueue({ class: className })
@@ -45,11 +42,9 @@ export default function Queue() {
 
     useEffect(() => {
         fetchQueue()
-
-        // WebSocket connection
         socketService.connect()
         socketService.register({ role: 'teacher', className })
-    }, [className]) // Re-run if className changes
+    }, [className])
 
     useEffect(() => {
         const unsubConnect = socketService.on('connect', () => {
@@ -61,16 +56,10 @@ export default function Queue() {
             setConnected(false)
         })
 
-        // Listen for updates
         const unsubCalled = socketService.on('student-called', () => {
             fetchQueue()
         })
 
-        // Listen for new check-ins potentially? Backend might not emit queue-updated but lets handle it if it does
-        // Or if we need to listen to generic updates.
-        // Based on previous code, we just poll. But let's keep polling + event listening.
-
-        // Refresh queue periodically
         const interval = setInterval(fetchQueue, 30000)
 
         return () => {
@@ -85,18 +74,13 @@ export default function Queue() {
         setLoading({ ...loading, [item.id]: 'call' })
         try {
             const result = await queueApi.call(item.id)
-
-            // Update local state
             setQueue(queue.map(q =>
                 q.id === item.id ? { ...q, status: 'CALLED' } : q
             ))
-
-            // Broadcast via WebSocket for TV Display
             if (result.broadcast) {
                 socketService.callStudent(result.broadcast.studentName, result.broadcast.className)
             }
-
-            toast.success(`Memanggil ${item.name} `)
+            toast.success(`Memanggil ${item.name}`)
         } catch (error) {
             toast.error('Gagal memanggil: ' + error.message)
         } finally {
@@ -105,16 +89,13 @@ export default function Queue() {
     }
 
     const handleRecall = async (item) => {
-        // Use call API again to trigger WA and update status/time
         setLoading({ ...loading, [item.id]: 'call' })
         try {
             const result = await queueApi.call(item.id)
-
-            // Broadcast via WebSocket
             if (result.broadcast) {
                 socketService.callStudent(result.broadcast.studentName, result.broadcast.className)
             }
-            toast.success(`Memanggil ulang ${item.name} `)
+            toast.success(`Memanggil ulang ${item.name}`)
         } catch (error) {
             toast.error('Gagal memanggil ulang: ' + error.message)
         } finally {
@@ -139,11 +120,8 @@ export default function Queue() {
     const handleNotify = async (item) => {
         setLoading({ ...loading, [item.id]: 'notify' })
         try {
-            // For teacher page, manual notification should always use 'call' template (Panggilan)
-            // regardless of status, as the teacher intends to notify/call the parent.
-            const type = 'call'
-            await queueApi.notify(item.id, type)
-            toast.success(`Notifikasi Panggilan dikirim ke ${item.name} `)
+            await queueApi.notify(item.id, 'call')
+            toast.success(`Notifikasi dikirim ke ${item.name}`)
         } catch (error) {
             toast.error('Gagal kirim notifikasi: ' + error.message)
         } finally {
@@ -151,139 +129,164 @@ export default function Queue() {
         }
     }
 
-    const handleLogout = () => {
-        logout()
-        navigate('/login')
-    }
+    const activeQueue = queue.filter(q => q.status !== 'FINISHED')
 
     return (
-        <div className="queue-page">
-            {/* Header */}
-            {/* Header */}
-            <TeacherHeader
-                subtitle={`Kelas ${className}`}
-            />
+        <div className="min-h-screen bg-slate-50">
+            <TeacherHeader subtitle={`Kelas ${className}`} />
 
-            <main className="queue-main">
+            <main className="p-4 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
                 {/* Stats */}
-                <div className="queue-stats">
-                    <div className="stat-card stat-card--waiting">
-                        <div className="stat-icon-wrapper">
-                            <Clock />
-                        </div>
-                        <div className="stat-info">
-                            <span className="stat-value">{waitingQueue.length}</span>
-                            <span className="stat-label">Menunggu</span>
-                        </div>
-                    </div>
-                    <div className="stat-card stat-card--called">
-                        <div className="stat-icon-wrapper">
-                            <CheckCircle />
-                        </div>
-                        <div className="stat-info">
-                            <span className="stat-value">{calledQueue.length}</span>
-                            <span className="stat-label">Dipanggil</span>
-                        </div>
-                    </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <Card>
+                        <CardContent className="p-4 sm:p-6">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                                    <Clock className="w-6 h-6 text-yellow-600" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl sm:text-3xl font-bold text-slate-900">{waitingQueue.length}</p>
+                                    <p className="text-xs sm:text-sm text-muted-foreground">Menunggu</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardContent className="p-4 sm:p-6">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                    <CheckCircle className="w-6 h-6 text-blue-600" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl sm:text-3xl font-bold text-slate-900">{calledQueue.length}</p>
+                                    <p className="text-xs sm:text-sm text-muted-foreground">Dipanggil</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Queue Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <h2 className="text-xl font-bold text-slate-900">
+                        Daftar Antrian ({activeQueue.length})
+                    </h2>
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate('/teacher/history')}
+                        icon={HistoryIcon}
+                    >
+                        Riwayat
+                    </Button>
                 </div>
 
                 {/* Queue List */}
-                <div className="queue-list-header">
-                    <h2 className="section-title">Daftar Antrian ({waitingQueue.length + calledQueue.length})</h2>
-                    <button
-                        className="history-btn"
-                        onClick={() => navigate('/teacher/history')}
-                    >
-                        <HistoryIcon size={16} />
-                        <span>Riwayat Selesai</span>
-                    </button>
-                </div>
-
-                <div className="queue-list">
-                    {queue.filter(q => q.status !== 'FINISHED').length === 0 ? (
-                        <div className="queue-empty">
-                            <CheckCircle size={48} />
-                            <p>Tidak ada antrian aktif untuk kelas {className}</p>
-                            <small>Siswa akan muncul setelah check-in oleh satpam</small>
-                        </div>
+                <div className="space-y-3">
+                    {activeQueue.length === 0 ? (
+                        <Card>
+                            <CardContent className="p-8 sm:p-12 text-center">
+                                <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-green-500 mb-4" />
+                                <p className="text-lg font-medium text-slate-900 mb-2">
+                                    Tidak ada antrian aktif
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    Siswa kelas {className} akan muncul setelah check-in
+                                </p>
+                            </CardContent>
+                        </Card>
                     ) : (
-                        queue.filter(q => q.status !== 'FINISHED').map((item, index) => (
-                            <div
-                                key={item.id}
-                                className={`queue-card ${item.status === 'CALLED' ? 'queue-card--called' : ''}`}
-                            >
-                                <div className="queue-card__number">
-                                    #{item.queue_number}
-                                </div>
-                                <div className="queue-card__info">
-                                    <h3 className="queue-card__name">{item.name}</h3>
-                                    <div className="queue-card__details">
-                                        <div className="detail-item">
-                                            <Phone size={14} />
-                                            <span>{item.parent_phone || '-'}</span>
-                                        </div>
-                                        <div className="detail-item">
-                                            <Clock size={14} />
-                                            <span>{new Date(item.check_in_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
-                                        </div>
-                                        {item.status === 'CALLED' && (
-                                            <div className="detail-item" style={{ color: 'var(--success-600)', fontWeight: 600 }}>
-                                                <Volume2 size={14} />
-                                                <span>DIPANGGIL</span>
+                        activeQueue.map((item) => (
+                            <Card key={item.id} className={item.status === 'CALLED' ? 'border-blue-300 bg-blue-50/50' : ''}>
+                                <CardContent className="p-4 sm:p-6">
+                                    <div className="flex flex-col sm:flex-row gap-4">
+                                        {/* Queue Number */}
+                                        <div className="flex-shrink-0">
+                                            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                                                <span className="text-white font-bold text-xl">#{item.queue_number}</span>
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="queue-card__actions">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        icon={MessageSquare}
-                                        onClick={() => handleNotify(item)}
-                                        loading={loading[item.id] === 'notify'}
-                                        disabled={loading[item.id]}
-                                        title="Kirim WA Manual"
-                                    >
-                                        WA
-                                    </Button>
+                                        </div>
 
-                                    {item.status === 'WAITING' ? (
-                                        <Button
-                                            variant="primary"
-                                            size="sm"
-                                            icon={Volume2}
-                                            onClick={() => handleCall(item)}
-                                            loading={loading[item.id] === 'call'}
-                                            disabled={loading[item.id]}
-                                        >
-                                            Panggil
-                                        </Button>
-                                    ) : (
-                                        <>
+                                        {/* Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="text-lg font-bold text-slate-900 mb-2">{item.name}</h3>
+                                            <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-muted-foreground">
+                                                <div className="flex items-center gap-1">
+                                                    <Phone className="w-4 h-4" />
+                                                    <span>{item.parent_phone || '-'}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Clock className="w-4 h-4" />
+                                                    <span>
+                                                        {new Date(item.check_in_time).toLocaleTimeString('id-ID', {
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </span>
+                                                </div>
+                                                {item.status === 'CALLED' && (
+                                                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+                                                        <Volume2 className="w-3 h-3 mr-1" />
+                                                        DIPANGGIL
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="flex flex-wrap gap-2 sm:flex-col sm:w-auto">
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                icon={RotateCcw}
-                                                onClick={() => handleRecall(item)}
-                                                loading={loading[item.id] === 'call'}
-                                                disabled={loading[item.id]}
+                                                onClick={() => handleNotify(item)}
+                                                loading={loading[item.id] === 'notify'}
+                                                disabled={!!loading[item.id]}
+                                                icon={MessageSquare}
+                                                title="Kirim WA Manual"
                                             >
-                                                Ulang
+                                                WA
                                             </Button>
-                                            <Button
-                                                variant="success"
-                                                size="sm"
-                                                icon={Check}
-                                                onClick={() => handleFinish(item)}
-                                                loading={loading[item.id] === 'finish'}
-                                                disabled={loading[item.id]}
-                                            >
-                                                Selesai
-                                            </Button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
+
+                                            {item.status === 'WAITING' ? (
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => handleCall(item)}
+                                                    loading={loading[item.id] === 'call'}
+                                                    disabled={!!loading[item.id]}
+                                                    icon={Volume2}
+                                                    className="flex-1 sm:flex-none"
+                                                >
+                                                    Panggil
+                                                </Button>
+                                            ) : (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleRecall(item)}
+                                                        loading={loading[item.id] === 'call'}
+                                                        disabled={!!loading[item.id]}
+                                                        icon={RotateCcw}
+                                                    >
+                                                        Ulang
+                                                    </Button>
+                                                    <Button
+                                                        variant="default"
+                                                        size="sm"
+                                                        onClick={() => handleFinish(item)}
+                                                        loading={loading[item.id] === 'finish'}
+                                                        disabled={!!loading[item.id]}
+                                                        icon={Check}
+                                                        className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none"
+                                                    >
+                                                        Selesai
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
                         ))
                     )}
                 </div>
