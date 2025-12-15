@@ -93,7 +93,7 @@ export default function AnnouncementSettings() {
                             <div className="absolute inset-0 bg-white/20 rounded-lg opacity-0 group-hover:opacity-100 smooth-transition"></div>
                         </button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px] max-w-[95vw] mx-4">
+                    <DialogContent className="sm:max-w-[500px] w-[95vw]">
                         <DialogHeader className="space-y-2">
                             <DialogTitle className="text-lg sm:text-xl">Tambah Pengumuman Baru</DialogTitle>
                             <DialogDescription className="text-sm">
