@@ -174,84 +174,71 @@ export default function Students() {
     }
 
     return (
-        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold">Data Siswa</h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        {students.length} siswa terdaftar
-                        {someSelected && ` • ${selectedIds.length} terpilih`}
-                    </p>
-                </div>
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        onClick={() => setModalOpen(true)}
-                        icon={Plus}
-                        className="flex-1 sm:flex-none"
-                    >
-                        <span className="hidden sm:inline">Tambah Siswa</span>
-                        <span className="sm:hidden">Tambah</span>
+        <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto animate-fade-in">
+            {/* Clean Header */}
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                    <h1 className="text-3xl font-bold">Data Siswa</h1>
+                    <Button onClick={() => setModalOpen(true)} icon={Plus}>
+                        Tambah
                     </Button>
                 </div>
+                <p className="text-sm text-muted-foreground">
+                    {students.length} siswa • {someSelected && `${selectedIds.length} terpilih`}
+                </p>
             </div>
 
-            {/* Import/Export Actions */}
+            {/* Action Buttons Row */}
+            <div className="flex flex-wrap gap-2">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadTemplate}
+                    icon={FileSpreadsheet}
+                >
+                    Template
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    loading={uploading}
+                    icon={Upload}
+                >
+                    Import Excel
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExport}
+                    icon={Download}
+                >
+                    Export
+                </Button>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                />
+            </div>
+
+            {/* Search & Filter */}
             <Card>
                 <CardContent className="p-4">
-                    <div className="flex flex-col sm:flex-row gap-2">
-                        <Button
-                            variant="outline"
-                            onClick={handleDownloadTemplate}
-                            icon={FileSpreadsheet}
-                            className="flex-1 sm:flex-none"
-                        >
-                            Template Excel
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => fileInputRef.current?.click()}
-                            loading={uploading}
-                            icon={Upload}
-                            className="flex-1 sm:flex-none"
-                        >
-                            Import Excel
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={handleExport}
-                            icon={Download}
-                            className="flex-1 sm:flex-none"
-                        >
-                            Export Excel
-                        </Button>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".xlsx,.xls"
-                            onChange={handleFileUpload}
-                            className="hidden"
-                        />
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Filters & Bulk Actions */}
-            <Card>
-                <CardContent className="p-4 space-y-3">
                     <div className="flex flex-col sm:flex-row gap-3">
                         <div className="flex-1">
                             <Input
-                                placeholder="Cari NIS atau nama siswa..."
+                                placeholder="Cari nama atau NIS..."
                                 icon={Search}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
                         </div>
                         <Select value={classFilter} onValueChange={setClassFilter}>
-                            <SelectTrigger className="w-full sm:w-48">
-                                <SelectValue placeholder="Filter Kelas" />
+                            <SelectTrigger className="w-full sm:w-40">
+                                <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Semua Kelas</SelectItem>
@@ -262,18 +249,17 @@ export default function Students() {
                         </Select>
                     </div>
 
-                    {/* Bulk Actions */}
+                    {/* Bulk Actions Banner */}
                     {someSelected && (
-                        <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200 animate-in slide-in-from-top-2">
-                            <Badge variant="secondary" className="bg-blue-600 text-white">
-                                {selectedIds.length} dipilih
-                            </Badge>
+                        <div className="flex items-center gap-3 mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <Badge className="bg-blue-600 text-white">{selectedIds.length}</Badge>
+                            <span className="text-sm font-medium text-blue-900">dipilih</span>
                             <div className="flex-1" />
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={handleBulkDelete}
-                                className="bg-white text-red-600 hover:bg-red-50 border-red-200"
+                                className="bg-white text-red-600 hover:bg-red-50"
                             >
                                 <Trash2 className="w-4 h-4 mr-1" />
                                 Hapus
@@ -283,14 +269,8 @@ export default function Students() {
                 </CardContent>
             </Card>
 
-            {/* Students Table */}
+            {/* Table */}
             <Card>
-                <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                        <UsersIcon className="w-5 h-5" />
-                        Daftar Siswa
-                    </CardTitle>
-                </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
                         <Table>
@@ -303,23 +283,22 @@ export default function Students() {
                                         />
                                     </TableHead>
                                     <TableHead>NIS</TableHead>
-                                    <TableHead>Nama</TableHead>
+                                    <TableHead>Nama Siswa</TableHead>
                                     <TableHead>Kelas</TableHead>
-                                    <TableHead className="hidden sm:table-cell">Ortu</TableHead>
-                                    <TableHead className="hidden md:table-cell">No. HP</TableHead>
+                                    <TableHead className="hidden md:table-cell">Nama Orang Tua</TableHead>
                                     <TableHead className="text-right">Aksi</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {filteredStudents.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                        <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
                                             {search || classFilter !== 'all' ? 'Tidak ada siswa ditemukan' : 'Belum ada data siswa'}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     filteredStudents.map(student => (
-                                        <TableRow key={student.id} className="hover:bg-muted/50 smooth-transition">
+                                        <TableRow key={student.id}>
                                             <TableCell>
                                                 <Checkbox
                                                     checked={selectedIds.includes(student.id)}
@@ -336,14 +315,11 @@ export default function Students() {
                                             <TableCell>
                                                 <Badge variant="outline">{student.class}</Badge>
                                             </TableCell>
-                                            <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+                                            <TableCell className="hidden md:table-cell text-sm">
                                                 {student.parent_name || '-'}
                                             </TableCell>
-                                            <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                                                {student.parent_phone || '-'}
-                                            </TableCell>
                                             <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
+                                                <div className="flex justify-end gap-1">
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
@@ -359,7 +335,7 @@ export default function Students() {
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => handleDelete(student)}
-                                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                        className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </Button>
