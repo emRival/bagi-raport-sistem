@@ -126,7 +126,7 @@ export default function TV() {
 
         socketService.on('connect', handleConnect)
         socketService.on('disconnect', handleDisconnect)
-        socketService.on('teacher-status-update', handleTeacherStatus)
+        socketService.on('online-status', handleTeacherStatus)
         socketService.on('student-called', handleCall)
         socketService.on('student-finished', handleFinished)
         socketService.on('announcement-created', handleAnnouncement)
@@ -134,12 +134,12 @@ export default function TV() {
         return () => {
             socketService.off('connect', handleConnect)
             socketService.off('disconnect', handleDisconnect)
-            socketService.off('teacher-status-update', handleTeacherStatus)
+            socketService.off('online-status', handleTeacherStatus)
             socketService.off('student-called', handleCall)
             socketService.off('student-finished', handleFinished)
             socketService.off('announcement-created', handleAnnouncement)
         }
-    }, [refreshAnnouncements]) // Depend only on stable dependencies
+    }, [refreshAnnouncements])
 
     // --- DATA FETCHING ---
     const fetchStats = async () => {
@@ -302,7 +302,6 @@ export default function TV() {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 h-full content-start">
                     {classData.map(cls => {
                         const isOnline = onlineClasses.includes(cls.id)
-                        console.log(`Class ${cls.id} Online?`, isOnline, 'List:', onlineClasses)
                         const activeStudent = activeCalls[cls.id]
                         const isActiveCall = !!activeStudent
 
