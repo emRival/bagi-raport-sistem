@@ -171,8 +171,17 @@ export default function Users() {
         if (!roleConfig) return <Badge>{role}</Badge>
 
         const Icon = roleConfig.icon
+
+        // Map role to hover color that matches its background
+        const hoverColor = {
+            'bg-red-100 text-red-700': 'hover:bg-red-100',
+            'bg-blue-100 text-blue-700': 'hover:bg-blue-100',
+            'bg-green-100 text-green-700': 'hover:bg-green-100',
+            'bg-purple-100 text-purple-700': 'hover:bg-purple-100',
+        }[roleConfig.color] || ''
+
         return (
-            <Badge className={`${roleConfig.color} border-0`}>
+            <Badge className={`${roleConfig.color} ${hoverColor} border-0`}>
                 <Icon className="w-3 h-3 mr-1" />
                 {roleConfig.label}
             </Badge>
