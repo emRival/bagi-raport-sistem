@@ -280,68 +280,13 @@ export default function Queue() {
                                                         >
                                                             Selesai
                                                         </Button>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Actions Desktop - Vertical on right */}
-                                        <div className="hidden sm:flex flex-col gap-2 w-auto">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleNotify(item)}
-                                                loading={loading[item.id] === 'notify'}
-                                                disabled={!!loading[item.id] || !item.parent_phone}
-                                                icon={MessageSquare}
-                                                title={item.parent_phone ? "Kirim WA ke " + item.parent_phone : "Nomor HP tidak tersedia"}
-                                            >
-                                                WA
-                                            </Button>
-
-                                            {item.status === 'WAITING' ? (
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => handleCall(item)}
-                                                    loading={loading[item.id] === 'call'}
-                                                    disabled={!!loading[item.id]}
-                                                    icon={Volume2}
-                                                >
-                                                    Panggil
-                                                </Button>
-                                            ) : (
-                                                <>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleRecall(item)}
-                                                        loading={loading[item.id] === 'call'}
-                                                        disabled={!!loading[item.id]}
-                                                        icon={RotateCcw}
-                                                    >
-                                                        Ulang
-                                                    </Button>
-                                                    <Button
-                                                        variant="default"
-                                                        size="sm"
-                                                        onClick={() => handleFinish(item)}
-                                                        loading={loading[item.id] === 'finish'}
-                                                        disabled={!!loading[item.id]}
-                                                        icon={Check}
-                                                        className="bg-green-600 hover:bg-green-700"
-                                                    >
-                                                        Selesai
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))
+                                                    </div>
+                                            </CardContent>
+                                        </Card>
+                                        ))
                     )}
-                </div>
-            </main>
-        </div>
-    )
+                                    </div>
+                                </main>
+                            </div>
+                        )
 }
