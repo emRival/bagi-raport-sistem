@@ -249,7 +249,6 @@ export default function TV() {
     })
 
     return (
-    return (
         <div className="min-h-screen bg-slate-50 flex flex-col overflow-hidden">
             {/* Header */}
             <header className="bg-white border-b border-slate-200 shadow-sm z-10 sticky top-0">
