@@ -126,7 +126,7 @@ export default function TV() {
         socketService.on('online-status', handleTeacherStatus)
         socketService.on('student-called', handleCall)
         socketService.on('student-finished', handleFinished)
-        socketService.on('announcement-created', handleAnnouncement)
+        socketService.on('announcement', handleAnnouncement)
 
         return () => {
             socketService.off('connect', handleConnect)
@@ -134,7 +134,7 @@ export default function TV() {
             socketService.off('online-status', handleTeacherStatus)
             socketService.off('student-called', handleCall)
             socketService.off('student-finished', handleFinished)
-            socketService.off('announcement-created', handleAnnouncement)
+            socketService.off('announcement', handleAnnouncement)
         }
     }, [refreshAnnouncements])
 
