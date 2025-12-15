@@ -469,7 +469,7 @@ export default function Students() {
                     setModalOpen(false)
                     setEditStudent(null)
                 }}
-                onSave={() => {
+                onSuccess={() => {
                     fetchStudents()
                     setModalOpen(false)
                     setEditStudent(null)
