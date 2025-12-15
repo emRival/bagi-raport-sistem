@@ -20,6 +20,34 @@ Terdapat dua versi yang tersedia dalam repository ini:
 
 > **Note:** Saat ini pengembangan aktif dilakukan di branch `feature/shadcn-ui`.
 
+## 🔄 Cara Update ke Versi 2 (Modern UI)
+
+Jika Anda sudah deploy versi `main` (Original) menggunakan Docker dan ingin beralih ke Versi 2:
+
+1.  **Masuk ke Server** dan buka folder project:
+    ```bash
+    cd ~/bagi-raport-sistem
+    ```
+
+2.  **Ambil update terbaru dari GitHub:**
+    ```bash
+    git fetch
+    ```
+
+3.  **Pindah ke branch v2:**
+    ```bash
+    git checkout feature/shadcn-ui
+    git pull origin feature/shadcn-ui
+    ```
+
+4.  **Rebuild Container (PENTING):**
+    ```bash
+    docker-compose down
+    docker-compose up -d --build
+    ```
+
+5.  **Selesai!** Aplikasi sekarang menggunakan tampilan baru & fitur tambahan.
+
 ---
 
 ## ✨ Fitur Utama
