@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react'
-import { Save, TestTube, Eye, EyeOff, Upload, Link, Image } from 'lucide-react'
-import Card from '../../components/ui/Card.jsx'
-import Button from '../../components/ui/Button.jsx'
-import Input from '../../components/ui/Input.jsx'
+import { Save, TestTube, Eye, EyeOff, Upload, Link, Image, Trash2 } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui-new/card'
+import { Button } from '@/components/ui-new/button'
+import { Input } from '@/components/ui-new/input'
+import { Label } from '@/components/ui-new/label'
+import { Switch } from '@/components/ui-new/switch'
+import { Slider } from '@/components/ui-new/slider'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import './Settings.css'
 
 export default function Settings() {
     const { settings, updateSettings } = useSettings()
@@ -17,19 +19,11 @@ export default function Settings() {
     const [logoUrl, setLogoUrl] = useState(settings.schoolLogo?.startsWith('http') ? settings.schoolLogo : '')
     const fileInputRef = useRef(null)
 
-    const handleSaveSchool = () => {
+    const handleSave = (section) => {
         setSaving(true)
         setTimeout(() => {
             setSaving(false)
-            toast.success('Pengaturan sekolah berhasil disimpan')
-        }, 500)
-    }
-
-    const handleSaveWA = () => {
-        setSaving(true)
-        setTimeout(() => {
-            setSaving(false)
-            toast.success('Pengaturan WhatsApp berhasil disimpan')
+            toast.success(`Pengaturan ${section} berhasil disimpan`)
         }, 500)
     }
 
@@ -45,19 +39,16 @@ export default function Settings() {
         const file = e.target.files?.[0]
         if (!file) return
 
-        // Check file size (max 2MB)
         if (file.size > 2 * 1024 * 1024) {
             toast.error('Ukuran file maksimal 2MB')
             return
         }
 
-        // Check file type
         if (!file.type.startsWith('image/')) {
             toast.error('File harus berupa gambar')
             return
         }
 
-        // Convert to base64
         const reader = new FileReader()
         reader.onload = (event) => {
             updateSettings({ schoolLogo: event.target.result })
@@ -87,285 +78,263 @@ export default function Settings() {
     }
 
     return (
-        <div className="settings-page">
-            <h1 className="page-title">Pengaturan</h1>
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
+            {/* Header */}
+            <div>
+                <h1 className="text-2xl sm:text-3xl font-bold">Pengaturan</h1>
+                <p className="text-sm text-muted-foreground mt-1">Kelola konfigurasi sistem</p>
+            </div>
 
-            {/* School Settings */}
-            <Card title="🏫 Informasi Sekolah">
-                <div className="settings-form">
-                    <Input
-                        label="Nama Sekolah"
-                        placeholder="Contoh: SMP Negeri 1 Jakarta"
-                        value={settings.schoolName}
-                        onChange={(e) => updateSettings({ schoolName: e.target.value })}
-                    />
+            {/* School Info */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>🏫 Informasi Sekolah</CardTitle>
+                    <CardDescription>Atur nama dan logo sekolah</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="schoolName">Nama Sekolah</Label>
+                        <Input
+                            id="schoolName"
+                            placeholder="Contoh: SMP Negeri 1 Jakarta"
+                            value={settings.schoolName}
+                            onChange={(e) => updateSettings({ schoolName: e.target.value })}
+                        />
+                    </div>
 
-                    <div className="input-wrapper">
-                        <label className="input-label">Logo Sekolah</label>
-
-                        {/* Logo Preview */}
-                        {settings.schoolLogo && (
-                            <div className="logo-preview">
-                                <img
-                                    src={settings.schoolLogo}
-                                    alt="Logo Sekolah"
-                                    onError={(e) => {
-                                        e.target.style.display = 'none'
-                                        toast.error('Gagal memuat logo')
-                                    }}
-                                />
-                                <button
-                                    className="logo-remove-btn"
-                                    onClick={handleRemoveLogo}
-                                    title="Hapus Logo"
-                                >
-                                    ×
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Logo Mode Toggle */}
-                        <div className="logo-mode-toggle">
-                            <button
-                                className={`mode-btn ${logoMode === 'upload' ? 'mode-btn--active' : ''}`}
+                    <div className="space-y-2">
+                        <Label>Logo Sekolah</Label>
+                        <div className="flex gap-2 mb-3">
+                            <Button
+                                variant={logoMode === 'upload' ? 'default' : 'outline'}
+                                size="sm"
                                 onClick={() => setLogoMode('upload')}
+                                icon={Upload}
                             >
-                                <Upload size={16} />
                                 Upload File
-                            </button>
-                            <button
-                                className={`mode-btn ${logoMode === 'url' ? 'mode-btn--active' : ''}`}
+                            </Button>
+                            <Button
+                                variant={logoMode === 'url' ? 'default' : 'outline'}
+                                size="sm"
                                 onClick={() => setLogoMode('url')}
+                                icon={Link}
                             >
-                                <Link size={16} />
-                                URL
-                            </button>
+                                Dari URL
+                            </Button>
                         </div>
 
-                        {/* Upload Mode */}
-                        {logoMode === 'upload' && (
-                            <div className="logo-upload-zone" onClick={() => fileInputRef.current?.click()}>
+                        {logoMode === 'upload' ? (
+                            <div>
                                 <input
                                     ref={fileInputRef}
                                     type="file"
                                     accept="image/*"
                                     onChange={handleLogoUpload}
-                                    hidden
+                                    className="hidden"
                                 />
-                                <Image size={32} />
-                                <p>Klik untuk upload logo</p>
-                                <span>PNG, JPG, SVG (max 2MB)</span>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    icon={Image}
+                                    className="w-full"
+                                >
+                                    Pilih Gambar (Max 2MB)
+                                </Button>
                             </div>
-                        )}
-
-                        {/* URL Mode */}
-                        {logoMode === 'url' && (
-                            <div className="logo-url-input">
-                                <input
-                                    type="text"
-                                    className="input"
+                        ) : (
+                            <div className="flex gap-2">
+                                <Input
                                     placeholder="https://example.com/logo.png"
                                     value={logoUrl}
                                     onChange={(e) => setLogoUrl(e.target.value)}
                                 />
-                                <Button size="sm" onClick={handleLogoUrl}>
-                                    Terapkan
-                                </Button>
+                                <Button onClick={handleLogoUrl}>Set</Button>
+                            </div>
+                        )}
+
+                        {settings.schoolLogo && (
+                            <div className="mt-3 p-3 border rounded-lg bg-muted/50">
+                                <div className="flex items-center gap-3">
+                                    <img src={settings.schoolLogo} alt="Logo" className="h-12 w-12 object-contain" />
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium">Logo aktif</p>
+                                    </div>
+                                    <Button variant="ghost" size="sm" onClick={handleRemoveLogo}>
+                                        <Trash2 className="w-4 h-4 text-red-600" />
+                                    </Button>
+                                </div>
                             </div>
                         )}
                     </div>
 
-                    <div className="settings-actions">
-                        <Button icon={Save} onClick={handleSaveSchool} loading={saving}>
-                            Simpan Pengaturan Sekolah
-                        </Button>
-                    </div>
-                </div>
+                    <Button onClick={() => handleSave('sekolah')} loading={saving} icon={Save}>
+                        Simpan Info Sekolah
+                    </Button>
+                </CardContent>
             </Card>
 
             {/* WhatsApp Settings */}
-            <Card title="📱 WhatsApp Gateway">
-                <div className="settings-form">
-                    {/* Enable/Disable */}
-                    <div className="setting-row">
-                        <div className="setting-info">
-                            <h4>Aktifkan WhatsApp Notification</h4>
-                            <p>Kirim notifikasi otomatis ke wali murid</p>
+            <Card>
+                <CardHeader>
+                    <CardTitle>💬 Integrasi WhatsApp</CardTitle>
+                    <CardDescription>Notifikasi otomatis ke orang tua siswa</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                            <p className="font-medium">Aktifkan WhatsApp Gateway</p>
+                            <p className="text-sm text-muted-foreground">Kirim notifikasi via WA</p>
                         </div>
-                        <label className="toggle">
-                            <input
-                                type="checkbox"
-                                checked={settings.waEnabled}
-                                onChange={(e) => updateSettings({ waEnabled: e.target.checked })}
-                            />
-                            <span className="toggle-slider"></span>
-                        </label>
+                        <Switch
+                            checked={settings.waEnabled}
+                            onCheckedChange={(checked) => updateSettings({ waEnabled: checked })}
+                        />
                     </div>
 
-                    <hr className="divider" />
+                    <div className="space-y-2">
+                        <Label htmlFor="waUrl">API URL</Label>
+                        <Input
+                            id="waUrl"
+                            placeholder="https://your-wa-gateway.com/send"
+                            value={settings.waApiUrl}
+                            onChange={(e) => updateSettings({ waApiUrl: e.target.value })}
+                        />
+                    </div>
 
-                    <Input
-                        label="API URL"
-                        placeholder="https://your-wa-gateway.com/send"
-                        value={settings.waApiUrl}
-                        onChange={(e) => updateSettings({ waApiUrl: e.target.value })}
-                    />
-
-                    <div className="input-wrapper">
-                        <label className="input-label">API Token</label>
-                        <div className="token-input">
-                            <input
+                    <div className="space-y-2">
+                        <Label htmlFor="waToken">API Token</Label>
+                        <div className="relative">
+                            <Input
+                                id="waToken"
                                 type={showToken ? 'text' : 'password'}
-                                className="input"
                                 value={settings.waApiToken}
                                 onChange={(e) => updateSettings({ waApiToken: e.target.value })}
+                                className="pr-10"
                             />
                             <button
                                 type="button"
-                                className="token-toggle"
                                 onClick={() => setShowToken(!showToken)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             >
-                                {showToken ? <EyeOff size={18} /> : <Eye size={18} />}
+                                {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
                         </div>
                     </div>
 
-                    <hr className="divider" />
+                    <div className="border-t pt-4">
+                        <h4 className="font-medium mb-2">Template Pesan</h4>
+                        <p className="text-sm text-muted-foreground mb-3">
+                            Gunakan: <code className="bg-muted px-1 rounded">{'{name}'}</code>, <code className="bg-muted px-1 rounded">{'{class}'}</code>, <code className="bg-muted px-1 rounded">{'{queue_number}'}</code>
+                        </p>
 
-                    <h3 className="section-title">Template Pesan</h3>
+                        <div className="space-y-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="checkinTemplate">Template Check-in</Label>
+                                <textarea
+                                    id="checkinTemplate"
+                                    className="w-full min-h-[80px] px-3 py-2 text-sm rounded-md border border-input bg-background"
+                                    value={settings.waCheckinTemplate}
+                                    onChange={(e) => updateSettings({ waCheckinTemplate: e.target.value })}
+                                />
+                            </div>
 
-                    <p className="section-desc">
-                        Gunakan placeholder: <code>{'{name}'}</code> untuk nama siswa, <code>{'{class}'}</code> untuk kelas, <code>{'{queue_number}'}</code> untuk nomor antrian
-                    </p>
-
-                    <div className="input-wrapper">
-                        <label className="input-label">Template Pesan Check-in</label>
-                        <textarea
-                            className="textarea"
-                            rows={3}
-                            value={settings.waCheckinTemplate}
-                            onChange={(e) => updateSettings({ waCheckinTemplate: e.target.value })}
-                        />
+                            <div className="space-y-2">
+                                <Label htmlFor="callTemplate">Template Panggilan</Label>
+                                <textarea
+                                    id="callTemplate"
+                                    className="w-full min-h-[80px] px-3 py-2 text-sm rounded-md border border-input bg-background"
+                                    value={settings.waCallTemplate}
+                                    onChange={(e) => updateSettings({ waCallTemplate: e.target.value })}
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="input-wrapper">
-                        <label className="input-label">Template Pesan Panggilan</label>
-                        <textarea
-                            className="textarea"
-                            rows={3}
-                            value={settings.waCallTemplate}
-                            onChange={(e) => updateSettings({ waCallTemplate: e.target.value })}
-                        />
-                    </div>
-
-                    <div className="settings-actions">
-                        <Button
-                            variant="secondary"
-                            icon={TestTube}
-                            onClick={handleTest}
-                            loading={testing}
-                        >
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={handleTest} loading={testing} icon={TestTube}>
                             Test Koneksi
                         </Button>
-                        <Button icon={Save} onClick={handleSaveWA} loading={saving}>
-                            Simpan Pengaturan WA
+                        <Button onClick={() => handleSave('WhatsApp')} loading={saving} icon={Save}>
+                            Simpan
                         </Button>
                     </div>
-                </div>
+                </CardContent>
             </Card>
 
-            {/* TTS Voice Settings */}
-            <Card title="🔊 Pengaturan Suara Pengumuman (TTS)">
-                <div className="settings-form">
-                    <p className="section-desc">
-                        Atur suara pengumuman yang diputar di TV Display
-                    </p>
-
-                    {/* Pitch Slider */}
-                    <div className="slider-wrapper">
-                        <label className="input-label">
-                            Nada Suara (Pitch)
-                            <span className="slider-value">{settings.ttsPitch || 1.0}</span>
-                        </label>
-                        <input
-                            type="range"
-                            className="slider"
-                            min="0.5"
-                            max="2"
-                            step="0.1"
-                            value={settings.ttsPitch || 1.0}
-                            onChange={(e) => updateSettings({ ttsPitch: parseFloat(e.target.value) })}
+            {/* TTS Settings */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>🔊 Pengaturan Suara (TTS)</CardTitle>
+                    <CardDescription>Atur suara pengumuman di TV Display</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <Label>Nada Suara (Pitch)</Label>
+                            <span className="text-sm font-medium">{settings.ttsPitch || 1.0}</span>
+                        </div>
+                        <Slider
+                            value={[settings.ttsPitch || 1.0]}
+                            onValueChange={(value) => updateSettings({ ttsPitch: value[0] })}
+                            min={0.5}
+                            max={2}
+                            step={0.1}
                         />
-                        <div className="slider-labels">
+                        <div className="flex justify-between text-xs text-muted-foreground">
                             <span>Rendah (Deep)</span>
                             <span>Normal</span>
                             <span>Tinggi</span>
                         </div>
                     </div>
 
-                    {/* Rate Slider */}
-                    <div className="slider-wrapper">
-                        <label className="input-label">
-                            Kecepatan Bicara (Rate)
-                            <span className="slider-value">{settings.ttsRate || 0.6}</span>
-                        </label>
-                        <input
-                            type="range"
-                            className="slider"
-                            min="0.5"
-                            max="2"
-                            step="0.1"
-                            value={settings.ttsRate || 0.6}
-                            onChange={(e) => updateSettings({ ttsRate: parseFloat(e.target.value) })}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <Label>Kecepatan Bicara (Rate)</Label>
+                            <span className="text-sm font-medium">{settings.ttsRate || 0.6}</span>
+                        </div>
+                        <Slider
+                            value={[settings.ttsRate || 0.6]}
+                            onValueChange={(value) => updateSettings({ ttsRate: value[0] })}
+                            min={0.5}
+                            max={2}
+                            step={0.1}
                         />
-                        <div className="slider-labels">
+                        <div className="flex justify-between text-xs text-muted-foreground">
                             <span>Lambat</span>
                             <span>Normal</span>
                             <span>Cepat</span>
                         </div>
                     </div>
 
-                    {/* Volume Slider */}
-                    <div className="slider-wrapper">
-                        <label className="input-label">
-                            Volume
-                            <span className="slider-value">{Math.round((settings.ttsVolume || 1.0) * 100)}%</span>
-                        </label>
-                        <input
-                            type="range"
-                            className="slider"
-                            min="0"
-                            max="1"
-                            step="0.1"
-                            value={settings.ttsVolume || 1.0}
-                            onChange={(e) => updateSettings({ ttsVolume: parseFloat(e.target.value) })}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <Label>Volume</Label>
+                            <span className="text-sm font-medium">{Math.round((settings.ttsVolume || 1.0) * 100)}%</span>
+                        </div>
+                        <Slider
+                            value={[settings.ttsVolume || 1.0]}
+                            onValueChange={(value) => updateSettings({ ttsVolume: value[0] })}
+                            min={0}
+                            max={1}
+                            step={0.1}
                         />
-                        <div className="slider-labels">
+                        <div className="flex justify-between text-xs text-muted-foreground">
                             <span>Pelan</span>
                             <span>Sedang</span>
                             <span>Keras</span>
                         </div>
                     </div>
 
-                    <div className="info-box">
-                        <p className="info-text">
-                            💡 <strong>Tips:</strong> Untuk suara lebih dalam/deep, gunakan pitch <strong>0.5-0.8</strong>.
-                            Kecepatan default yang bagus adalah <strong>0.6-0.8</strong> untuk kejelasan.
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-900">
+                            💡 <strong>Tips:</strong> Untuk suara deep, gunakan pitch <strong>0.5-0.8</strong>. Kecepatan bagus: <strong>0.6-0.8</strong>
                         </p>
                     </div>
 
-                    <div className="settings-actions">
-                        <Button icon={Save} onClick={() => {
-                            setSaving(true)
-                            setTimeout(() => {
-                                setSaving(false)
-                                toast.success('Pengaturan suara berhasil disimpan')
-                            }, 500)
-                        }} loading={saving}>
-                            Simpan Pengaturan Suara
-                        </Button>
-                    </div>
-                </div>
+                    <Button onClick={() => handleSave('suara')} loading={saving} icon={Save}>
+                        Simpan Pengaturan Suara
+                    </Button>
+                </CardContent>
             </Card>
         </div>
     )
