@@ -21,10 +21,21 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui-new/table'
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from '@/components/ui-new/pagination'
 import StudentModal from '../../components/admin/StudentModal.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { studentsApi } from '../../services/api'
+
+const ITEMS_PER_PAGE = 15
 
 export default function Students() {
     const { settings } = useSettings()
@@ -36,6 +47,7 @@ export default function Students() {
     const [selectedIds, setSelectedIds] = useState([])
     const [modalOpen, setModalOpen] = useState(false)
     const [editStudent, setEditStudent] = useState(null)
+    const [currentPage, setCurrentPage] = useState(1)
     const fileInputRef = useRef(null)
 
     const classes = settings.classes
@@ -60,8 +72,19 @@ export default function Students() {
         return matchesSearch && matchesClass
     })
 
-    const allSelected = filteredStudents.length > 0 && filteredStudents.every(s => selectedIds.includes(s.id))
+    // Pagination logic
+    const totalPages = Math.ceil(filteredStudents.length / ITEMS_PER_PAGE)
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    const endIndex = startIndex + ITEMS_PER_PAGE
+    const paginatedStudents = filteredStudents.slice(startIndex, endIndex)
+
+    const allSelected = paginatedStudents.length > 0 && paginatedStudents.every(s => selectedIds.includes(s.id))
     const someSelected = selectedIds.length > 0
+
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [search, classFilter])
 
     const handleFileUpload = async (e) => {
         const file = e.target.files?.[0]
@@ -166,11 +189,42 @@ export default function Students() {
 
     const toggleSelectAll = () => {
         if (allSelected) {
-            setSelectedIds(selectedIds.filter(id => !filteredStudents.find(s => s.id === id)))
+            setSelectedIds(selectedIds.filter(id => !paginatedStudents.find(s => s.id === id)))
         } else {
-            const newIds = filteredStudents.map(s => s.id)
+            const newIds = paginatedStudents.map(s => s.id)
             setSelectedIds([...new Set([...selectedIds, ...newIds])])
         }
+    }
+
+    const renderPageNumbers = () => {
+        const pages = []
+        const maxVisible = 5
+
+        if (totalPages <= maxVisible) {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i)
+            }
+        } else {
+            if (currentPage <= 3) {
+                for (let i = 1; i <= 4; i++) pages.push(i)
+                pages.push('ellipsis')
+                pages.push(totalPages)
+            } else if (currentPage >= totalPages - 2) {
+                pages.push(1)
+                pages.push('ellipsis')
+                for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i)
+            } else {
+                pages.push(1)
+                pages.push('ellipsis')
+                pages.push(currentPage - 1)
+                pages.push(currentPage)
+                pages.push(currentPage + 1)
+                pages.push('ellipsis')
+                pages.push(totalPages)
+            }
+        }
+
+        return pages
     }
 
     return (
@@ -302,14 +356,14 @@ export default function Students() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredStudents.length === 0 ? (
+                                {paginatedStudents.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                                             {search || classFilter !== 'all' ? 'Tidak ada siswa ditemukan' : 'Belum ada data siswa'}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filteredStudents.map(student => (
+                                    paginatedStudents.map(student => (
                                         <TableRow key={student.id} className="hover:bg-muted/50 smooth-transition">
                                             <TableCell>
                                                 <Checkbox
@@ -363,6 +417,50 @@ export default function Students() {
                         </Table>
                     </div>
                 </CardContent>
+
+                {/* Pagination */}
+                {filteredStudents.length > ITEMS_PER_PAGE && (
+                    <CardContent className="p-4 border-t">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <p className="text-sm text-muted-foreground">
+                                Showing {startIndex + 1}-{Math.min(endIndex, filteredStudents.length)} of {filteredStudents.length} students
+                            </p>
+                            <Pagination>
+                                <PaginationContent>
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                            className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                        />
+                                    </PaginationItem>
+                                    {renderPageNumbers().map((page, idx) => (
+                                        <PaginationItem key={idx}>
+                                            {page === 'ellipsis' ? (
+                                                <PaginationEllipsis />
+                                            ) : (
+                                                <PaginationLink
+                                                    onClick={() => setCurrentPage(page)}
+                                                    isActive={currentPage === page}
+                                                    className="cursor-pointer"
+                                                >
+                                                    {page}
+                                                </PaginationLink>
+                                            )}
+                                        </PaginationItem>
+                                    ))}
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={currentPage === totalPages}
+                                            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                        />
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
+                        </div>
+                    </CardContent>
+                )}
             </Card>
 
             <StudentModal
