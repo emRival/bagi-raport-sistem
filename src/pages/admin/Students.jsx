@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { Upload, Search, Pencil, Trash2, Download, FileSpreadsheet, CheckSquare, Square, XCircle, Plus } from 'lucide-react'
+import * as XLSX from 'xlsx'
 import Card from '../../components/ui/Card.jsx'
 import Button from '../../components/ui/Button.jsx'
 import Input from '../../components/ui/Input.jsx'
-import Modal from '../../components/ui/Modal.jsx' // Optional: remove if not used elsewhere, but maybe used for file upload or confirm?
+import Checkbox from '../../components/ui/Checkbox.jsx'
 import StudentModal from '../../components/admin/StudentModal.jsx'
+import BulkUpdateModal from '../../components/admin/BulkUpdateModal.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { studentsApi } from '../../services/api.js'
@@ -54,17 +56,35 @@ export default function Students() {
 
         setUploading(true)
         try {
-            const text = await file.text()
-            const lines = text.split('\n').filter(l => l.trim())
-            const studentsData = lines.slice(1).map(line => {
-                const [nis, name, cls, parent_name] = line.split(',').map(s => s.trim())
-                return { nis, name, class: cls, parent_name }
-            }).filter(s => s.name && s.nis)
+            const data = await file.arrayBuffer()
+            const workbook = XLSX.read(data, { type: 'array' })
+            const sheetName = workbook.SheetNames[0]
+            const worksheet = workbook.Sheets[sheetName]
+
+            // Convert to JSON with header row
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
+
+            // Skip header row and map to student objects
+            const studentsData = jsonData.slice(1)
+                .filter(row => row[0] && row[1]) // Must have NIS and Name
+                .map(row => ({
+                    nis: String(row[0]).trim(),
+                    name: String(row[1]).trim(),
+                    class: row[2] ? String(row[2]).trim() : '',
+                    parent_name: row[3] ? String(row[3]).trim() : '',
+                    parent_phone: row[4] ? String(row[4]).trim() : ''
+                }))
+
+            if (studentsData.length === 0) {
+                toast.error('File Excel tidak berisi data siswa')
+                return
+            }
 
             await studentsApi.import(studentsData)
             toast.success(`${studentsData.length} siswa berhasil diimport`)
             fetchStudents()
         } catch (error) {
+            console.error('Import error:', error)
             toast.error('Gagal import: ' + error.message)
         } finally {
             setUploading(false)
@@ -100,30 +120,80 @@ export default function Students() {
     }
 
     const handleDownloadTemplate = () => {
-        const csvContent = 'NIS,Nama Siswa,Kelas,Nama Ortu\n2024001,Contoh Nama,7A,Bapak Contoh'
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = 'template_import_siswa.csv'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-        toast.success('Template berhasil didownload!')
+        // Create workbook and worksheet
+        const wb = XLSX.utils.book_new()
+
+        // Header row
+        const headers = ['NIS', 'Nama Siswa', 'Kelas', 'Nama Ortu', 'No. HP']
+
+        // Sample data
+        const sampleData = [
+            ['2024001', 'Ahmad Fadillah', '7A', 'Bapak Ahmad', '081234567890'],
+            ['2024002', 'Siti Nurhaliza', '7A', 'Ibu Siti', '081234567891'],
+            ['2024003', 'Budi Santoso', '7B', 'Bapak Budi', '081234567892']
+        ]
+
+        // Combine headers and data
+        const wsData = [headers, ...sampleData]
+
+        // Create worksheet
+        const ws = XLSX.utils.aoa_to_sheet(wsData)
+
+        // Set column widths
+        ws['!cols'] = [
+            { wch: 10 },  // NIS
+            { wch: 25 },  // Nama Siswa
+            { wch: 8 },   // Kelas
+            { wch: 25 },  // Nama Ortu
+            { wch: 15 }   // No. HP
+        ]
+
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Data Siswa')
+
+        // Generate Excel file and download
+        XLSX.writeFile(wb, 'template_import_siswa.xlsx')
+
+        toast.success('Template Excel berhasil didownload!')
     }
 
     const handleExport = () => {
-        const csvContent = 'NIS,Nama Siswa,Kelas,Nama Ortu\n' +
-            students.map(s => `${s.nis},${s.name},${s.class},${s.parent_name || ''}`).join('\n')
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = 'data_siswa.csv'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+        // Create workbook
+        const wb = XLSX.utils.book_new()
+
+        // Header row
+        const headers = ['NIS', 'Nama Siswa', 'Kelas', 'Nama Ortu', 'No. HP']
+
+        // Student data
+        const data = students.map(s => [
+            s.nis,
+            s.name,
+            s.class,
+            s.parent_name || '',
+            s.parent_phone || ''
+        ])
+
+        // Combine headers and data
+        const wsData = [headers, ...data]
+
+        // Create worksheet
+        const ws = XLSX.utils.aoa_to_sheet(wsData)
+
+        // Set column widths
+        ws['!cols'] = [
+            { wch: 10 },
+            { wch: 25 },
+            { wch: 8 },
+            { wch: 25 },
+            { wch: 15 }
+        ]
+
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Data Siswa')
+
+        // Generate and download
+        XLSX.writeFile(wb, `data_siswa_${new Date().toISOString().split('T')[0]}.xlsx`)
+
         toast.success('Data siswa berhasil diexport!')
     }
 
@@ -175,7 +245,7 @@ export default function Students() {
                             onClick={() => fileInputRef.current?.click()}
                             loading={uploading}
                         >
-                            Import CSV
+                            Import Excel
                         </Button>
                         <Button variant="secondary" icon={Download} onClick={handleDownloadTemplate}>
                             Template
