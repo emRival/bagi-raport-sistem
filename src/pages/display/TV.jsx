@@ -42,9 +42,6 @@ export default function TV() {
 
     // --- INITIALIZATION ---
     useEffect(() => {
-        const savedSound = localStorage.getItem('tv_sound_enabled')
-        if (savedSound === 'true') setSoundEnabled(true)
-
         refreshAnnouncements()
 
         // Initial Fetch
