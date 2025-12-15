@@ -124,13 +124,9 @@
 /* Card Grid */
 .tv-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1rem;
     padding: 1rem;
-    height: calc(100vh - 160px);
-    /* Adjust based on header/footer */
-    overflow: auto;
-    /* Allow scrolling if needed */
     align-content: start;
 }
 
@@ -141,8 +137,8 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    height: 100%;
-    /* Fill grid cell */
+    min-height: 280px;
+    /* Minimum height for content */
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
     justify-content: space-between;
@@ -504,8 +500,12 @@
 /* Tablet Landscape (1024px) - Smaller cards */
 @media (max-width: 1024px) {
     .tv-grid {
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 0.75rem;
+    }
+
+    .tv-card {
+        min-height: 240px;
     }
 
     .tv-card__student {
@@ -516,8 +516,13 @@
 /* Tablet Portrait (768px) - Even smaller cards */
 @media (max-width: 768px) {
     .tv-grid {
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 0.75rem;
+        padding: 0.75rem;
+    }
+
+    .tv-card {
+        min-height: 220px;
     }
 
     .tv-header {
