@@ -4,10 +4,9 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { queueApi, studentsApi } from '../../services/api.js'
-import { LogOut, Search, UserCheck, Clock, CheckCircle, RefreshCw } from 'lucide-react'
+import { LogOut, Search, UserCheck, Clock, CheckCircle, RefreshCw, TrendingUp, Users } from 'lucide-react'
 import { Button } from '@/components/ui-new/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-new/card'
-import { Input } from '@/components/ui-new/input'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui-new/card'
 import { Badge } from '@/components/ui-new/badge'
 
 export default function CheckIn() {
@@ -113,134 +112,196 @@ export default function CheckIn() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950">
-            {/* Header */}
-            <header className="bg-white/10 backdrop-blur-md border-b border-white/20 px-6 py-4">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        {settings.schoolLogo && settings.schoolLogo.trim() !== '' ? (
-                            <img
-                                src={settings.schoolLogo}
-                                alt="School Logo"
-                                className="w-12 h-12 object-contain"
-                            />
-                        ) : (
-                            <span className="text-4xl">🎓</span>
-                        )}
-                        <h1 className="text-2xl font-bold text-white">Check-In Raport</h1>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button variant="ghost" icon={RefreshCw} onClick={() => { fetchStats(); fetchRecent(); }} className="text-white hover:bg-white/10">
-                            Refresh
-                        </Button>
-                        <Button variant="destructive" icon={LogOut} onClick={handleLogout}>
-                            Logout
-                        </Button>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+            {/* Professional Header */}
+            <header className="bg-white border-b shadow-sm">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                                {settings.schoolLogo && settings.schoolLogo.trim() !== '' ? (
+                                    <img
+                                        src={settings.schoolLogo}
+                                        alt="Logo"
+                                        className="w-10 h-10 object-contain"
+                                    />
+                                ) : (
+                                    <Users className="w-6 h-6 text-white" />
+                                )}
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-bold text-slate-900">Check-In Raport</h1>
+                                <p className="text-sm text-slate-500">Sistem Antrian Pengambilan Raport</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" icon={RefreshCw} onClick={() => { fetchStats(); fetchRecent(); }}>
+                                <span className="hidden sm:inline">Refresh</span>
+                            </Button>
+                            <Button variant="outline" size="sm" icon={LogOut} onClick={handleLogout}>
+                                <span className="hidden sm:inline">Logout</span>
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </header>
 
-            <main className="max-w-4xl mx-auto p-6 space-y-6">
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card className="bg-white/95">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <Clock className="w-12 h-12 text-yellow-600" />
-                            <div>
-                                <div className="text-4xl font-bold">{stats.totals.waiting}</div>
-                                <div className="text-sm text-muted-foreground">Menunggu</div>
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Modern Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 animate-fade-in">
+                    <Card className="hover-lift border-l-4 border-l-yellow-500">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-slate-600 mb-1">Menunggu</p>
+                                    <p className="text-3xl font-bold text-slate-900">{stats.totals.waiting}</p>
+                                </div>
+                                <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                                    <Clock className="w-6 h-6 text-yellow-600" />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
-                    <Card className="bg-white/95">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <CheckCircle className="w-12 h-12 text-green-600" />
-                            <div>
-                                <div className="text-4xl font-bold">{stats.totals.finished}</div>
-                                <div className="text-sm text-muted-foreground">Selesai</div>
+
+                    <Card className="hover-lift border-l-4 border-l-green-500">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-slate-600 mb-1">Selesai</p>
+                                    <p className="text-3xl font-bold text-slate-900">{stats.totals.finished}</p>
+                                </div>
+                                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                                    <CheckCircle className="w-6 h-6 text-green-600" />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
-                    <Card className="bg-white/95">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <UserCheck className="w-12 h-12 text-blue-600" />
-                            <div>
-                                <div className="text-4xl font-bold">{stats.totals.total}</div>
-                                <div className="text-sm text-muted-foreground">Total Hari Ini</div>
+
+                    <Card className="hover-lift border-l-4 border-l-blue-500 sm:col-span-2 lg:col-span-1">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-slate-600 mb-1">Total Hari Ini</p>
+                                    <p className="text-3xl font-bold text-slate-900">{stats.totals.total}</p>
+                                </div>
+                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <TrendingUp className="w-6 h-6 text-blue-600" />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Search Box */}
-                <Card className="bg-white/95">
-                    <CardHeader>
-                        <CardTitle className="text-center">Scan atau Masukkan NIS Siswa</CardTitle>
+                {/* Premium Search Card */}
+                <Card className="mb-8 shadow-lg animate-scale-in">
+                    <CardHeader className="text-center pb-4">
+                        <CardTitle className="text-2xl">Scan atau Masukkan NIS Siswa</CardTitle>
+                        <CardDescription>Gunakan scanner barcode atau ketik manual</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex gap-3">
-                            <input
-                                ref={inputRef}
-                                type="text"
-                                className="flex-1 h-12 px-4 text-lg rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                                placeholder="Ketik NIS atau scan barcode..."
-                                value={nis}
-                                onChange={(e) => {
-                                    setNis(e.target.value)
-                                    setSearchResult(null)
-                                }}
-                                onKeyPress={handleKeyPress}
-                                autoFocus
-                            />
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <div className="relative flex-1">
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    className="w-full h-14 px-4 text-lg rounded-lg border-2 border-slate-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none smooth-transition shadow-sm"
+                                    placeholder="Ketik NIS atau scan barcode..."
+                                    value={nis}
+                                    onChange={(e) => {
+                                        setNis(e.target.value)
+                                        setSearchResult(null)
+                                    }}
+                                    onKeyPress={handleKeyPress}
+                                    autoFocus
+                                />
+                            </div>
                             <Button
                                 size="lg"
                                 icon={Search}
                                 onClick={handleSearch}
                                 loading={loading && !searchResult}
+                                className="h-14 px-8 shadow-lg"
                             >
-                                Cari
+                                Cari Siswa
                             </Button>
                         </div>
 
-                        {/* Search Result */}
+                        {/* Professional Search Result */}
                         {searchResult && (
-                            <div className="flex items-center justify-between p-4 bg-green-50 border-2 border-green-500 rounded-lg">
-                                <div>
-                                    <h3 className="text-xl font-bold">{searchResult.name}</h3>
-                                    <p className="text-sm text-muted-foreground">NIS: {searchResult.nis}</p>
-                                    <p className="text-sm">Kelas: <strong>{searchResult.class}</strong></p>
-                                    <p className="text-sm text-muted-foreground">Wali: {searchResult.parent_name || '-'}</p>
+                            <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl shadow-md animate-scale-in">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center">
+                                                <UserCheck className="w-5 h-5 text-green-700" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xl font-bold text-slate-900">{searchResult.name}</h3>
+                                                <p className="text-sm text-slate-600">NIS: {searchResult.nis}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 mt-3">
+                                            <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+                                                Kelas {searchResult.class}
+                                            </Badge>
+                                            {searchResult.parent_name && (
+                                                <Badge variant="outline" className="text-slate-600">
+                                                    Wali: {searchResult.parent_name}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <Button
+                                        variant="success"
+                                        size="lg"
+                                        icon={UserCheck}
+                                        onClick={handleCheckIn}
+                                        loading={loading}
+                                        className="shadow-lg w-full sm:w-auto"
+                                    >
+                                        CHECK-IN SEKARANG
+                                    </Button>
                                 </div>
-                                <Button
-                                    variant="success"
-                                    size="lg"
-                                    icon={UserCheck}
-                                    onClick={handleCheckIn}
-                                    loading={loading}
-                                >
-                                    CHECK-IN
-                                </Button>
                             </div>
                         )}
                     </CardContent>
                 </Card>
 
-                {/* Recent Check-ins */}
-                <Card className="bg-white/95">
+                {/* Modern Recent Check-ins */}
+                <Card className="shadow-lg animate-slide-in">
                     <CardHeader>
                         <CardTitle>Check-in Terbaru</CardTitle>
+                        <CardDescription>10 check-in terakhir hari ini</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {recentCheckins.length === 0 ? (
-                            <p className="text-center text-muted-foreground py-4">Belum ada check-in hari ini</p>
+                            <div className="text-center py-12 text-slate-400">
+                                <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                <p className="font-medium">Belum ada check-in hari ini</p>
+                                <p className="text-sm">Check-in pertama akan muncul di sini</p>
+                            </div>
                         ) : (
                             <div className="space-y-2">
-                                {recentCheckins.map(item => (
-                                    <div key={item.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                                        <span className="font-medium">{item.name}</span>
-                                        <div className="flex gap-2">
-                                            <Badge>{item.class}</Badge>
-                                            <span className="text-sm text-muted-foreground">
+                                {recentCheckins.map((item, index) => (
+                                    <div
+                                        key={item.id}
+                                        className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-lg smooth-transition border border-slate-200"
+                                        style={{ animationDelay: `${index * 0.05}s` }}
+                                    >
+                                        <div className="flex items-center gap-3 flex-1">
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm">
+                                                {index + 1}
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-slate-900">{item.name}</p>
+                                                <p className="text-sm text-slate-500">NIS: {item.nis || '-'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <Badge variant="secondary" className="hidden sm:inline-flex">
+                                                {item.class}
+                                            </Badge>
+                                            <span className="text-sm text-slate-600 font-medium">
                                                 {new Date(item.check_in_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
