@@ -36,6 +36,7 @@ export default function AdminLayout() {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
     const [sidebarOpen, setSidebarOpen] = useState(true)
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
     const handleLogout = () => {
         logout()
@@ -140,8 +141,8 @@ export default function AdminLayout() {
                     )}
                 </header>
 
-                {/* Mobile Top Bar */}
-                <header className="lg:hidden h-14 bg-white border-b border-slate-200 flex items-center px-4 shadow-sm">
+                {/* Mobile Top Bar with Logout Menu */}
+                <header className="lg:hidden h-14 bg-white border-b border-slate-200 flex items-center px-4 shadow-sm relative">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
                             <GraduationCap className="w-5 h-5 text-white" />
@@ -152,8 +153,44 @@ export default function AdminLayout() {
                     </div>
                     <div className="flex-1" />
                     {user && (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
-                            {user.name?.charAt(0).toUpperCase()}
+                        <div className="relative">
+                            <button
+                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm hover:scale-110 smooth-transition active:scale-95"
+                            >
+                                {user.name?.charAt(0).toUpperCase()}
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {mobileMenuOpen && (
+                                <>
+                                    {/* Overlay to close menu */}
+                                    <div
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    />
+
+                                    {/* Menu */}
+                                    <div className="absolute right-0 top-12 w-56 bg-white rounded-lg shadow-2xl border border-slate-200 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="p-3 border-b border-slate-100">
+                                            <p className="text-sm font-semibold text-slate-900 truncate">{user.name}</p>
+                                            <p className="text-xs text-slate-500">Administrator</p>
+                                        </div>
+                                        <div className="p-2">
+                                            <button
+                                                onClick={() => {
+                                                    setMobileMenuOpen(false)
+                                                    handleLogout()
+                                                }}
+                                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 smooth-transition"
+                                            >
+                                                <LogOut className="w-4 h-4" />
+                                                <span className="text-sm font-medium">Logout</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     )}
                 </header>
