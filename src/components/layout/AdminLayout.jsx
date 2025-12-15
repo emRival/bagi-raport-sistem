@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { useSettings } from '../../context/SettingsContext.jsx'
 import {
     LayoutDashboard,
     Users,
@@ -34,6 +35,7 @@ const mobileNavItems = [
 
 export default function AdminLayout() {
     const { user, logout } = useAuth()
+    const { settings } = useSettings()
     const navigate = useNavigate()
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -55,13 +57,21 @@ export default function AdminLayout() {
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
                     <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg flex-shrink-0">
-                            <GraduationCap className="w-6 h-6 text-white" />
-                        </div>
+                        {settings.schoolLogo ? (
+                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-lg flex-shrink-0 overflow-hidden">
+                                <img src={settings.schoolLogo} alt="Logo" className="w-full h-full object-contain" />
+                            </div>
+                        ) : (
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg flex-shrink-0">
+                                <GraduationCap className="w-6 h-6 text-white" />
+                            </div>
+                        )}
                         {sidebarOpen && (
                             <div className="animate-fade-in">
-                                <h1 className="text-white font-bold text-lg whitespace-nowrap">Bagi Raport</h1>
-                                <p className="text-slate-400 text-xs">Admin Panel</p>
+                                <h1 className="text-white font-bold text-base leading-tight whitespace-nowrap">
+                                    {settings.schoolName || 'Bagi Raport'}
+                                </h1>
+                                <p className="text-slate-400 text-[10px] leading-tight">Sistem Antrian Raport</p>
                             </div>
                         )}
                     </div>
@@ -104,6 +114,18 @@ export default function AdminLayout() {
                         </NavLink>
                     ))}
                 </nav>
+
+                {/* Powered By Footer */}
+                {sidebarOpen && (
+                    <div className="px-4 py-2 border-t border-slate-700/30">
+                        <p className="text-[10px] text-slate-500 text-center leading-tight">
+                            Powered by <span className="text-blue-400 font-medium">Bagi Raport</span>
+                        </p>
+                        <p className="text-[9px] text-slate-600 text-center">
+                            @em_rival
+                        </p>
+                    </div>
+                )}
 
                 {/* Footer */}
                 <div className="p-3 border-t border-slate-700/50 space-y-2">
