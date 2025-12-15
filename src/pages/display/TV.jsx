@@ -144,10 +144,10 @@ export default function TV() {
             const data = await queueApi.getStats()
             if (data) {
                 setStats(data)
-                // Only update onlineClasses from API if it explicitly returns it
-                // and we haven't received a socket update recently? 
-                // For now, let's trust the socket for online status to avoid conflicts
-                // if (data.onlineClasses) setOnlineClasses(data.onlineClasses)
+                // Update onlineClasses from API to ensure state is correct on refresh
+                if (data.onlineClasses && Array.isArray(data.onlineClasses) && data.onlineClasses.length > 0) {
+                    setOnlineClasses(data.onlineClasses)
+                }
             }
         } catch (error) {
             console.error('Fetch Stats Error:', error)
@@ -416,7 +416,7 @@ export default function TV() {
                             <p className="text-6xl font-black mb-4 text-white drop-shadow-lg">{overlay.name}</p>
                             <p className="text-4xl font-bold text-blue-100">KELAS {overlay.class}</p>
                         </div>
-                        <p className="text-2xl text-white mt-8 font-medium">Silakan menuju meja guru</p>
+                        <p className="text-2xl text-white mt-8 font-medium">Silakan menuju kelas {overlay.class}</p>
                     </div>
                 </div>
             )}
