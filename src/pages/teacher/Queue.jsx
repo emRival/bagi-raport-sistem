@@ -42,20 +42,10 @@ export default function Queue() {
 
     useEffect(() => {
         fetchQueue()
-        socketService.connect()
-        socketService.register({ role: 'teacher', className })
+        // Socket connection handled by TeacherLayout
     }, [className])
 
     useEffect(() => {
-        const unsubConnect = socketService.on('connect', () => {
-            setConnected(true)
-            socketService.register({ role: 'teacher', className })
-        })
-
-        const unsubDisconnect = socketService.on('disconnect', () => {
-            setConnected(false)
-        })
-
         const unsubCalled = socketService.on('student-called', () => {
             fetchQueue()
         })
@@ -63,8 +53,6 @@ export default function Queue() {
         const interval = setInterval(fetchQueue, 30000)
 
         return () => {
-            unsubConnect()
-            unsubDisconnect()
             unsubCalled()
             clearInterval(interval)
         }

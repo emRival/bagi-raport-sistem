@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext.jsx'
 
 // Layouts
 import AdminLayout from './components/layout/AdminLayout.jsx'
+import TeacherLayout from './components/layout/TeacherLayout.jsx'
 
 // Pages
 import Login from './pages/auth/Login.jsx'
