@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useAnnouncements } from '../../context/AnnouncementsContext.jsx'
+import { useSettings } from '../../context/SettingsContext.jsx'
 import { socketService } from '../../services/socket.js'
 import { queueApi, settingsApi } from '../../services/api.js'
 import { Volume2, Megaphone, VolumeX, Wifi, WifiOff } from 'lucide-react'
@@ -11,6 +12,7 @@ export default function TV() {
     const navigate = useNavigate()
     const { logout } = useAuth()
     const { announcements, refreshAnnouncements } = useAnnouncements()
+    const { settings } = useSettings()
 
     const [soundEnabled, setSoundEnabled] = useState(false)
     const [connected, setConnected] = useState(false)
@@ -61,9 +63,10 @@ export default function TV() {
 
             const utterance = new SpeechSynthesisUtterance(text)
             utterance.lang = 'id-ID'
-            utterance.rate = 0.6
-            utterance.pitch = 1.0  // Lower pitch for deeper voice
-            utterance.volume = 1.0
+            // Use custom settings or defaults
+            utterance.rate = settings.ttsRate || 0.6
+            utterance.pitch = settings.ttsPitch || 1.0
+            utterance.volume = settings.ttsVolume || 1.0
 
             // Set voice after ensuring voices are loaded
             const setVoice = () => {

@@ -273,6 +273,100 @@ export default function Settings() {
                     </div>
                 </div>
             </Card>
+
+            {/* TTS Voice Settings */}
+            <Card title="🔊 Pengaturan Suara Pengumuman (TTS)">
+                <div className="settings-form">
+                    <p className="section-desc">
+                        Atur suara pengumuman yang diputar di TV Display
+                    </p>
+
+                    {/* Pitch Slider */}
+                    <div className="slider-wrapper">
+                        <label className="input-label">
+                            Nada Suara (Pitch)
+                            <span className="slider-value">{settings.ttsPitch || 1.0}</span>
+                        </label>
+                        <input
+                            type="range"
+                            className="slider"
+                            min="0.5"
+                            max="2"
+                            step="0.1"
+                            value={settings.ttsPitch || 1.0}
+                            onChange={(e) => updateSettings({ ttsPitch: parseFloat(e.target.value) })}
+                        />
+                        <div className="slider-labels">
+                            <span>Rendah (Deep)</span>
+                            <span>Normal</span>
+                            <span>Tinggi</span>
+                        </div>
+                    </div>
+
+                    {/* Rate Slider */}
+                    <div className="slider-wrapper">
+                        <label className="input-label">
+                            Kecepatan Bicara (Rate)
+                            <span className="slider-value">{settings.ttsRate || 0.6}</span>
+                        </label>
+                        <input
+                            type="range"
+                            className="slider"
+                            min="0.5"
+                            max="2"
+                            step="0.1"
+                            value={settings.ttsRate || 0.6}
+                            onChange={(e) => updateSettings({ ttsRate: parseFloat(e.target.value) })}
+                        />
+                        <div className="slider-labels">
+                            <span>Lambat</span>
+                            <span>Normal</span>
+                            <span>Cepat</span>
+                        </div>
+                    </div>
+
+                    {/* Volume Slider */}
+                    <div className="slider-wrapper">
+                        <label className="input-label">
+                            Volume
+                            <span className="slider-value">{Math.round((settings.ttsVolume || 1.0) * 100)}%</span>
+                        </label>
+                        <input
+                            type="range"
+                            className="slider"
+                            min="0"
+                            max="1"
+                            step="0.1"
+                            value={settings.ttsVolume || 1.0}
+                            onChange={(e) => updateSettings({ ttsVolume: parseFloat(e.target.value) })}
+                        />
+                        <div className="slider-labels">
+                            <span>Pelan</span>
+                            <span>Sedang</span>
+                            <span>Keras</span>
+                        </div>
+                    </div>
+
+                    <div className="info-box">
+                        <p className="info-text">
+                            💡 <strong>Tips:</strong> Untuk suara lebih dalam/deep, gunakan pitch <strong>0.5-0.8</strong>.
+                            Kecepatan default yang bagus adalah <strong>0.6-0.8</strong> untuk kejelasan.
+                        </p>
+                    </div>
+
+                    <div className="settings-actions">
+                        <Button icon={Save} onClick={() => {
+                            setSaving(true)
+                            setTimeout(() => {
+                                setSaving(false)
+                                toast.success('Pengaturan suara berhasil disimpan')
+                            }, 500)
+                        }} loading={saving}>
+                            Simpan Pengaturan Suara
+                        </Button>
+                    </div>
+                </div>
+            </Card>
         </div>
     )
 }
