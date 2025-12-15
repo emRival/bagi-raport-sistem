@@ -90,10 +90,23 @@ router.put('/:id', modifyLimiter, validate(studentSchema), (req, res) => {
 // Delete student
 router.delete('/:id', (req, res) => {
     try {
-        db.prepare('DELETE FROM students WHERE id = ?').run(req.params.id)
+        const studentId = req.params.id
+
+        const deleteStudent = db.transaction(() => {
+            // Delete dependencies first
+            db.prepare('DELETE FROM queue WHERE student_id = ?').run(studentId)
+            db.prepare('DELETE FROM activity WHERE student_id = ?').run(studentId)
+
+            // Delete student
+            db.prepare('DELETE FROM students WHERE id = ?').run(studentId)
+        })
+
+        deleteStudent()
+        logger.info(`Student ${studentId} deleted (and cascading dependencies)`)
         res.json({ success: true })
     } catch (error) {
-        res.status(500).json({ error: 'Internal server error' })
+        logger.error('Delete student error:', error)
+        res.status(500).json({ error: error.message || 'Internal server error' })
     }
 })
 
