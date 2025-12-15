@@ -430,11 +430,17 @@ export default function TV() {
 
             {overlay && overlay.type === 'announcement' && (
                 <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 animate-in fade-in duration-300">
-                    <div className="text-center p-12 bg-orange-600 rounded-3xl max-w-4xl w-full border-8 border-yellow-400 shadow-2xl animate-in zoom-in-50 duration-300">
-                        <Megaphone className="w-32 h-32 mx-auto text-white mb-8 animate-bounce" />
-                        <h2 className="text-4xl font-black mb-6 text-yellow-300 tracking-wider">📢 PENGUMUMAN</h2>
-                        <div className="bg-white/10 rounded-2xl p-8 backdrop-blur-sm border border-white/20">
-                            <p className="text-4xl font-bold text-white leading-relaxed">{overlay.text}</p>
+                    <div className="text-center p-12 bg-orange-600 rounded-3xl max-w-5xl w-full border-8 border-yellow-400 shadow-2xl animate-in zoom-in-50 duration-300">
+                        <Megaphone className="w-24 h-24 mx-auto text-white mb-6 animate-bounce" />
+                        <h2 className="text-3xl font-black mb-6 text-yellow-300 tracking-wider uppercase">📢 PENGUMUMAN</h2>
+                        <div className="bg-white/10 rounded-2xl p-8 backdrop-blur-sm border border-white/20 min-h-[200px] flex items-center justify-center">
+                            <p className={`${overlay.text.length > 200 ? 'text-2xl' :
+                                    overlay.text.length > 100 ? 'text-3xl' :
+                                        overlay.text.length > 50 ? 'text-4xl' :
+                                            'text-5xl'
+                                } font-bold text-white leading-relaxed break-words`}>
+                                {overlay.text}
+                            </p>
                         </div>
                     </div>
                 </div>
