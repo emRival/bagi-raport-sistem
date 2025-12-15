@@ -105,16 +105,14 @@ export default function Router() {
             } />
 
             {/* Teacher routes */}
-            <Route path="/teacher/queue" element={
+            <Route path="/teacher" element={
                 <ProtectedRoute allowedRoles={['teacher']}>
-                    <TeacherQueue />
+                    <TeacherLayout />
                 </ProtectedRoute>
-            } />
-            <Route path="/teacher/history" element={
-                <ProtectedRoute allowedRoles={['teacher']}>
-                    <TeacherHistory />
-                </ProtectedRoute>
-            } />
+            }>
+                <Route path="queue" element={<TeacherQueue />} />
+                <Route path="history" element={<TeacherHistory />} />
+            </Route>
 
             {/* Display routes */}
             <Route path="/display/tv" element={
