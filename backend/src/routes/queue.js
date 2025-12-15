@@ -196,6 +196,7 @@ router.get('/activity', (req, res) => {
 router.post('/checkin', checkInLimiter, validate(checkInSchema), (req, res) => {
     try {
         const { student_id, nis, parent_phone } = req.body
+        logger.debug('🚀 DEBUG: Processing Checkin... V3')
         const today = getIndonesiaDate()
 
         let studentId = student_id
@@ -293,11 +294,25 @@ router.post('/checkin', checkInLimiter, validate(checkInSchema), (req, res) => {
                 const queueNumber = queueCount.count
 
                 // Prepare message
-                let message = settingsMap.waCheckinTemplate || 'Halo {name}, siswa kelas {class} telah check-in. Antrian ke-{queue_number}.'
+                const defaultCheckin = `*👋 Assalamu'alaikum, Selamat Pagi!*
+Bapak/Ibu *{parent_name}*,
+
+Ananda *{name}* (Kelas {class}) telah berhasil check-in.
+Nomor Antrian: *{queue_number}*
+Waktu: {time}
+
+_Mohon menunggu giliran dipanggil._
+Terima kasih. 🙏`
+
+                let message = settingsMap.waCheckinTemplate || defaultCheckin
                 message = message
                     .replace(/{name}/g, queue.name)
                     .replace(/{class}/g, queue.class)
+                    .replace(/{nis}/g, queue.nis || '-')
+                    .replace(/{parent_name}/g, queue.parent_name || 'Wali')
                     .replace(/{queue_number}/g, queueNumber)
+                    .replace(/{date}/g, today)
+                    .replace(/{time}/g, getIndonesiaDateTime().split('T')[1].substring(0, 5))
 
                 logger.debug('Sending WA to', parent_phone, 'Message:', message)
 
@@ -407,10 +422,21 @@ router.post('/:id/call', (req, res) => {
                 }
 
                 // Prepare message
-                let message = settingsMap.waCallTemplate || 'Halo {name}, siswa kelas {class} harap menuju sumber suara.'
+                const defaultCall = `*🔔 PANGGILAN ANTRIAN*
+Bapak/Ibu *{parent_name}*,
+
+Giliran ananda *{name}* (Kelas {class}) untuk pengambilan raport.
+Silakan menuju ke ruang kelas sekarang.
+
+_Terima kasih atas kesabarannya._ 🙏`
+
+                let message = settingsMap.waCallTemplate || defaultCall
                 message = message
                     .replace(/{name}/g, queue.name)
                     .replace(/{class}/g, queue.class)
+                    .replace(/{nis}/g, queue.nis || '-')
+                    .replace(/{parent_name}/g, queue.parent_name || 'Wali')
+                    .replace(/{queue_number}/g, queue.queue_number || '-')
 
                 logger.debug('Sending WA Call to:', queueData.parent_phone, 'Message:', message)
 
@@ -448,7 +474,7 @@ router.post('/:id/cancel', (req, res) => {
     try {
         db.prepare(`
             UPDATE queue 
-            SET status = 'WAITING', called_time = NULL, called_by = NULL
+            SET status = 'WAITING', called_time = NULL, called_by = NULL, finished_time = NULL
             WHERE id = ?
         `).run(req.params.id)
 
@@ -629,6 +655,21 @@ router.post('/:id/skip', (req, res) => {
         }
 
         res.json(queue)
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' })
+    }
+})
+
+// Uncheckin (Delete queue item)
+router.delete('/:id', (req, res) => {
+    try {
+        db.prepare('DELETE FROM queue WHERE id = ?').run(req.params.id)
+
+        if (req.io) {
+            req.io.emit('queue-updated')
+        }
+
+        res.json({ success: true })
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' })
     }

@@ -15,8 +15,23 @@ const DEFAULT_SETTINGS = {
     waEnabled: false,
     waApiUrl: '',
     waApiToken: '',
-    waCheckinTemplate: 'Selamat datang! Antrian untuk ananda {name} kelas {class} telah terdaftar.',
-    waCallTemplate: 'Giliran Anda! Silakan masuk ke kelas {class} untuk mengambil raport ananda {name}.',
+    waCheckinTemplate: `*👋 Assalamu'alaikum, Selamat Pagi!*
+Bapak/Ibu *{parent_name}*,
+
+Ananda *{name}* (Kelas {class}) telah berhasil check-in.
+Nomor Antrian: *{queue_number}*
+Waktu: {time}
+
+_Mohon menunggu giliran dipanggil._
+Terima kasih. 🙏`,
+
+    waCallTemplate: `*🔔 PANGGILAN ANTRIAN*
+Bapak/Ibu *{parent_name}*,
+
+Giliran ananda *{name}* (Kelas {class}) untuk pengambilan raport.
+Silakan menuju ke ruang kelas sekarang.
+
+_Terima kasih atas kesabarannya._ 🙏`,
 }
 
 export function SettingsProvider({ children }) {

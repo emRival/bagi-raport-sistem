@@ -336,9 +336,18 @@ export default function Settings() {
 
                             <div className="border-t pt-4 space-y-3">
                                 <h4 className="font-medium">Template Pesan</h4>
-                                <p className="text-sm text-muted-foreground">
-                                    Gunakan: <code className="bg-muted px-1 rounded">{'{name}'}</code>, <code className="bg-muted px-1 rounded">{'{class}'}</code>
-                                </p>
+                                <div className="text-sm text-muted-foreground bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                    <p className="font-semibold mb-1">Variable yang tersedia:</p>
+                                    <ul className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                        <li><code className="text-xs font-bold bg-white px-1 py-0.5 rounded border">{'{name}'}</code> : Nama Siswa</li>
+                                        <li><code className="text-xs font-bold bg-white px-1 py-0.5 rounded border">{'{class}'}</code> : Kelas</li>
+                                        <li><code className="text-xs font-bold bg-white px-1 py-0.5 rounded border">{'{nis}'}</code> : NIS Siswa</li>
+                                        <li><code className="text-xs font-bold bg-white px-1 py-0.5 rounded border">{'{parent_name}'}</code> : Nama Wali</li>
+                                        <li><code className="text-xs font-bold bg-white px-1 py-0.5 rounded border">{'{queue_number}'}</code> : No. Antrian</li>
+                                        <li><code className="text-xs font-bold bg-white px-1 py-0.5 rounded border">{'{date}'}</code> : Tanggal</li>
+                                        <li><code className="text-xs font-bold bg-white px-1 py-0.5 rounded border">{'{time}'}</code> : Jam</li>
+                                    </ul>
+                                </div>
 
                                 <div className="space-y-2">
                                     <Label htmlFor="checkinTemplate">Check-in</Label>
