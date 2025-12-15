@@ -4,10 +4,9 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import { useAnnouncements } from '../../context/AnnouncementsContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { socketService } from '../../services/socket.js'
-import { queueApi } from '../../services/api.js'
+import { queueApi, settingsApi } from '../../services/api.js'
 import { Volume2, Megaphone, VolumeX, Wifi, WifiOff } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui-new/card'
-import { Badge } from '@/components/ui-new/badge'
+import './TV.css'
 
 export default function TV() {
     const navigate = useNavigate()
@@ -21,11 +20,12 @@ export default function TV() {
     const [announcementOverlay, setAnnouncementOverlay] = useState(null)
     const [stats, setStats] = useState({ byClass: [], totals: { waiting: 0, finished: 0, total: 0 } })
     const [currentTime, setCurrentTime] = useState(new Date())
+    const [tickerIndex, setTickerIndex] = useState(0)
     const [schoolName, setSchoolName] = useState('Sistem Antrian Bagi Raport')
     const [schoolLogo, setSchoolLogo] = useState('')
     const [classes, setClasses] = useState(['7A', '7B', '7C', '8A', '8B', '8C', '9A', '9B', '9C'])
-    const [activeCalls, setActiveCalls] = useState({})
-    const [onlineClasses, setOnlineClasses] = useState([])
+    const [activeCalls, setActiveCalls] = useState({}) // Track active calls per class
+    const [onlineClasses, setOnlineClasses] = useState([]) // Track connected teachers
 
     // TTS Queue System
     const [ttsQueue, setTtsQueue] = useState([])
@@ -33,22 +33,26 @@ export default function TV() {
     const ttsQueueRef = useRef([])
     const isSpeakingRef = useRef(false)
 
+    // Use ref to track soundEnabled so socket handlers always have current value
     const soundEnabledRef = useRef(soundEnabled)
     useEffect(() => {
         soundEnabledRef.current = soundEnabled
     }, [soundEnabled])
 
+    // Update TTS queue refs when state changes
     useEffect(() => {
         ttsQueueRef.current = ttsQueue
         isSpeakingRef.current = isSpeaking
     }, [ttsQueue, isSpeaking])
 
-    // Speak function
+    // Speak function (with queue support and overlay sync)
     const speak = (item) => {
+        // Support both string (backward compat) and object { text, overlay }
         const text = typeof item === 'string' ? item : item.text
         const overlay = typeof item === 'object' ? item.overlay : null
 
         if ('speechSynthesis' in window) {
+            // Show overlay when starting speech
             if (overlay) {
                 if (overlay.type === 'call') {
                     setCallOverlay({ name: overlay.name, class: overlay.class })
@@ -59,13 +63,17 @@ export default function TV() {
 
             const utterance = new SpeechSynthesisUtterance(text)
             utterance.lang = 'id-ID'
+            // Use custom settings or defaults
             utterance.rate = settings.ttsRate || 0.6
             utterance.pitch = settings.ttsPitch || 1.0
             utterance.volume = settings.ttsVolume || 1.0
 
+            // Set voice after ensuring voices are loaded
             const setVoice = () => {
                 const voices = speechSynthesis.getVoices()
+
                 if (voices.length > 0) {
+                    // Priority: Indonesian male > Indonesian any > Non-female
                     const maleVoice = voices.find(v =>
                         v.lang.startsWith('id') && (
                             v.name.toLowerCase().includes('male') ||
@@ -77,16 +85,26 @@ export default function TV() {
 
                     if (maleVoice) {
                         utterance.voice = maleVoice
+                        console.log('🎤 Using voice:', maleVoice.name, `(${maleVoice.lang})`)
+                    } else {
+                        console.log('🎤 Using default voice, pitch:', utterance.pitch)
                     }
                 }
             }
 
+            // Try to set voice immediately
             setVoice()
+
+            // If voices weren't loaded, wait for them
             if (speechSynthesis.getVoices().length === 0) {
                 speechSynthesis.addEventListener('voiceschanged', setVoice, { once: true })
             }
 
+            // Handle completion to process next in queue and clear overlay
             utterance.onend = () => {
+                console.log('🎤 Speech ended, checking queue...')
+
+                // Clear overlay when speech ends
                 if (overlay) {
                     if (overlay.type === 'call') {
                         setCallOverlay(null)
@@ -94,16 +112,21 @@ export default function TV() {
                         setAnnouncementOverlay(null)
                     }
                 }
+
                 setIsSpeaking(false)
+                // Process next item after a small delay
                 setTimeout(() => {
                     processQueue()
-                }, 500)
+                }, 500) // 500ms gap between announcements
             }
 
             utterance.onerror = (error) => {
-                console.error('Speech error:', error)
+                console.error('🎤 Speech error:', error)
+
+                // Clear overlay on error too
                 setCallOverlay(null)
                 setAnnouncementOverlay(null)
+
                 setIsSpeaking(false)
                 setTimeout(() => {
                     processQueue()
@@ -112,135 +135,172 @@ export default function TV() {
 
             speechSynthesis.speak(utterance)
             setIsSpeaking(true)
+            console.log('🎤 Speaking:', text.substring(0, 50) + '...')
+        } else {
+            console.warn('Speech synthesis not supported')
         }
     }
 
+    // Add to queue (text and optional overlay)
     const addToQueue = (text, overlay = null) => {
+        const displayText = typeof text === 'string' ? text : text.text
+        console.log('➕ Adding to TTS queue:', displayText.substring(0, 50) + '...')
         setTtsQueue(prev => [...prev, overlay ? { text, overlay } : text])
     }
 
+    // Process queue
     const processQueue = () => {
-        const currentQueue = ttsQueueRef.current
-        const speaking = isSpeakingRef.current
-
-        if (currentQueue.length > 0 && !speaking) {
-            const nextItem = currentQueue[0]
-            setTtsQueue(prev => prev.slice(1))
-            speak(nextItem)
+        // Use refs to get current values in async context
+        if (isSpeakingRef.current) {
+            console.log('🎤 Already speaking, skipping queue process')
+            return
         }
+
+        if (ttsQueueRef.current.length === 0) {
+            console.log('📭 Queue is empty')
+            return
+        }
+
+        const [nextItem, ...remaining] = ttsQueueRef.current
+        const displayText = typeof nextItem === 'string' ? nextItem : nextItem.text
+        console.log('▶️ Processing queue:', displayText.substring(0, 50) + '...', `(${remaining.length} remaining)`)
+        setTtsQueue(remaining)
+        speak(nextItem)
     }
 
+    // Effect to process queue when it changes
     useEffect(() => {
-        if (ttsQueue.length > 0 && !isSpeaking && soundEnabled) {
+        if (!isSpeaking && ttsQueue.length > 0) {
             processQueue()
         }
-    }, [ttsQueue, isSpeaking, soundEnabled])
+    }, [ttsQueue, isSpeaking])
 
-    const enableSound = () => {
-        setSoundEnabled(true)
-        localStorage.setItem('tv_sound_enabled', 'true')
-    }
-
-    useEffect(() => {
-        const savedSound = localStorage.getItem('tv_sound_enabled')
-        if (savedSound === 'true') {
-            setSoundEnabled(true)
-        }
-    }, [])
-
-    useEffect(() => {
-        refreshAnnouncements()
-        setSchoolName(settings.schoolName || 'Sistem Antrian Bagi Raport')
-        setSchoolLogo(settings.schoolLogo || '')
-        setClasses(settings.classes || ['7A', '7B', '7C', '8A', '8B', '8C', '9A', '9B', '9C'])
-    }, [settings, refreshAnnouncements])
-
-    const fetchStats = async () => {
+    // Fetch settings and stats from database
+    const fetchData = async () => {
         try {
-            const data = await queueApi.getStats()
-            setStats(data)
+            const [statsData, settings] = await Promise.all([
+                queueApi.getStats(),
+                settingsApi.getAll()
+            ])
+            setStats(statsData)
+            if (statsData.activeCalls) {
+                // Merge with existing overlay to avoid flickering but prioritize API
+                setActiveCalls(prev => ({ ...prev, ...statsData.activeCalls }))
+            }
+            if (settings.schoolName) setSchoolName(settings.schoolName)
+            if (settings.schoolLogo) setSchoolLogo(settings.schoolLogo)
+            if (settings.classes) setClasses(settings.classes)
         } catch (error) {
-            console.error('Error fetching stats:', error)
+            console.error('Error fetching TV data:', error)
         }
     }
 
     useEffect(() => {
-        fetchStats()
-        const interval = setInterval(fetchStats, 10000)
+        fetchData()
+        const interval = setInterval(fetchData, 30000)
         return () => clearInterval(interval)
     }, [])
 
+    // Connect to WebSocket
     useEffect(() => {
         socketService.connect()
-        socketService.register({ role: 'display' })
+        socketService.register('tv')
 
-        const handleConnect = () => {
+        const unsubConnect = socketService.on('connect', () => {
             setConnected(true)
-            socketService.register({ role: 'display' })
-        }
+            socketService.register('tv')
+            // Request initial status? Or just wait for update.
+            // Good practice: server sends initial state on connection/register? 
+            // Currently server only broadcasts on change. 
+            // We should add a 'get-online-status' or server should emit it to new clients.
+        })
 
-        const handleDisconnect = () => setConnected(false)
+        const unsubDisconnect = socketService.on('disconnect', () => {
+            setConnected(false)
+        })
 
-        const handleStudentCalled = (data) => {
+        const unsubCall = socketService.on('student-called', (data) => {
+            console.log('📞 TV: Student called:', data, 'Sound enabled:', soundEnabledRef.current)
+
+            // Set active call for this class
+            setActiveCalls(prev => ({ ...prev, [data.className]: data.studentName }))
+
             if (soundEnabledRef.current) {
-                setActiveCalls(prev => ({ ...prev, [data.className]: data.studentName }))
-                const text = `Panggilan untuk wali siswa ${data.studentName}, kelas ${data.className}. Silakan menuju ruang kelas sekarang.`
-                addToQueue(text, { type: 'call', name: data.studentName, class: data.className })
-                setTimeout(() => {
-                    setActiveCalls(prev => {
-                        const newCalls = { ...prev }
-                        if (newCalls[data.className] === data.studentName) {
-                            delete newCalls[data.className]
-                        }
-                        return newCalls
-                    })
-                }, 10000)
+                addToQueue(
+                    `Panggilan untuk wali siswa ${data.studentName}, kelas ${data.className}. Silakan menuju ruang kelas.`,
+                    { type: 'call', name: data.studentName, class: data.className }
+                )
             }
-            fetchStats()
-        }
+        })
 
-        const handleStudentFinished = () => fetchStats()
-
-        const handleAnnouncement = (data) => {
-            if (soundEnabledRef.current) {
-                const text = `Pengumuman penting. ${data.text}`
-                addToQueue(text, { type: 'announcement', text: data.text })
-            }
-            refreshAnnouncements()
-        }
-
-        const handleTeacherStatusUpdate = (data) => {
-            setOnlineClasses(prev => {
-                if (data.status === 'online') {
-                    return Array.from(new Set([...prev, data.className]))
-                } else {
-                    return prev.filter(c => c !== data.className)
+        const unsubFinish = socketService.on('student-finished', (data) => {
+            console.log('✅ TV: Student finished:', data)
+            // Remove from active calls
+            setActiveCalls(prev => {
+                const updated = { ...prev }
+                // Only remove if it matches current student (in case replaced)
+                if (updated[data.className] === data.studentName) {
+                    delete updated[data.className]
                 }
+                return updated
             })
-        }
+        })
 
-        socketService.on('connect', handleConnect)
-        socketService.on('disconnect', handleDisconnect)
-        socketService.on('student-called', handleStudentCalled)
-        socketService.on('student-finished', handleStudentFinished)
-        socketService.on('announcement-created', handleAnnouncement)
-        socketService.on('teacher-status-update', handleTeacherStatusUpdate)
+        const unsubAnnouncement = socketService.on('announcement', (data) => {
+            console.log('📢 TV: Announcement:', data, 'Sound enabled:', soundEnabledRef.current)
+            // Refresh list to show in footer
+            refreshAnnouncements()
+
+            if (soundEnabledRef.current) {
+                addToQueue(
+                    `Pengumuman penting: ${data.text}`,
+                    { type: 'announcement', text: data.text }
+                )
+            }
+        })
+
+        const unsubOnline = socketService.on('online-status', (classes) => {
+            console.log('🟢 Online classes:', classes)
+            setOnlineClasses(classes)
+        })
+
+        const unsubQueue = socketService.on('queue-updated', () => {
+            console.log('🔄 Queue updated, refetching data...')
+            fetchData()
+        })
 
         return () => {
-            socketService.off('connect', handleConnect)
-            socketService.off('disconnect', handleDisconnect)
-            socketService.off('student-called', handleStudentCalled)
-            socketService.off('student-finished', handleStudentFinished)
-            socketService.off('announcement-created', handleAnnouncement)
-            socketService.off('teacher-status-update', handleTeacherStatusUpdate)
+            unsubConnect()
+            unsubDisconnect()
+            unsubCall()
+            unsubFinish()
+            unsubAnnouncement()
+            unsubOnline()
+            unsubQueue()
         }
-    }, [refreshAnnouncements])
+    }, [])
 
+    const enableSound = () => {
+        setSoundEnabled(true)
+        addToQueue('Suara diaktifkan')
+    }
+
+    // Update clock
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000)
         return () => clearInterval(timer)
     }, [])
 
+    // Ticker animation
+    useEffect(() => {
+        if (announcements.length === 0) return
+        const timer = setInterval(() => {
+            setTickerIndex(prev => (prev + 1) % announcements.length)
+        }, 8000)
+        return () => clearInterval(timer)
+    }, [announcements.length])
+
+    // Hide cursor when idle
     useEffect(() => {
         let timeout
         const handleMouseMove = () => {
@@ -258,6 +318,7 @@ export default function TV() {
         }
     }, [])
 
+    // Escape to logout
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') {
@@ -277,6 +338,7 @@ export default function TV() {
         hour: '2-digit', minute: '2-digit', second: '2-digit'
     })
 
+    // Build class data from stats
     const classData = classes.map(cls => {
         const classStats = stats.byClass.find(s => s.class === cls) || { waiting: 0, finished: 0 }
         return {
@@ -288,201 +350,182 @@ export default function TV() {
     })
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 text-white overflow-hidden">
+        <div className="tv-page">
             {/* Connection Status */}
-            <div className={`fixed top-4 left-4 flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm z-50 ${connected
-                ? 'bg-green-500/20 text-green-300 border border-green-500/50'
-                : 'bg-red-500/20 text-red-300 border border-red-500/50'
-                }`}>
-                {connected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
+            <div className={`tv-connection ${connected ? 'tv-connection--connected' : 'tv-connection--disconnected'}`}>
+                {connected ? <Wifi size={16} /> : <WifiOff size={16} />}
                 <span>{connected ? 'Terhubung' : 'Tidak Terhubung'}</span>
             </div>
 
             {/* Sound Enable Button */}
             {!soundEnabled && (
-                <button
-                    onClick={enableSound}
-                    className="fixed top-4 right-4 flex items-center gap-3 px-6 py-3 bg-yellow-500/20 border border-yellow-500/50 text-yellow-300 rounded-full hover:bg-yellow-500/30 smooth-transition z-50 animate-pulse"
-                >
-                    <VolumeX className="w-6 h-6" />
-                    <span className="text-sm font-medium">Klik untuk Aktifkan Suara</span>
+                <button className="tv-sound-enable" onClick={enableSound}>
+                    <VolumeX size={24} />
+                    <span>Klik untuk Aktifkan Suara</span>
                 </button>
             )}
 
             {soundEnabled && (
-                <div className="fixed top-4 right-4 flex items-center gap-2 px-4 py-2 bg-blue-500/20 border border-blue-500/50 text-blue-300 rounded-full text-sm z-50">
-                    <Volume2 className="w-4 h-4" />
+                <div className="tv-sound-indicator">
+                    <Volume2 size={16} />
                     <span>Suara Aktif</span>
                 </div>
             )}
 
             {/* Header */}
-            <header className="text-center py-8 px-4 border-b border-white/10 bg-black/20 backdrop-blur-sm">
-                <div className="max-w-7xl mx-auto">
+            <header className="tv-header">
+                <div className="tv-header__title">
                     {schoolLogo && schoolLogo.trim() !== '' ? (
                         <img
                             src={schoolLogo}
                             alt="School Logo"
-                            className="w-20 h-20 mx-auto mb-4 object-contain"
+                            style={{
+                                width: '80px',
+                                height: '80px',
+                                objectFit: 'contain',
+                                marginBottom: '1rem'
+                            }}
                         />
                     ) : (
-                        <span className="text-6xl block mb-4">🎓</span>
+                        <span style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎓</span>
                     )}
-                    <h1 className="text-4xl md:text-5xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-200">
-                        SISTEM ANTRIAN BAGI RAPORT
-                    </h1>
-                    <p className="text-2xl md:text-3xl font-semibold text-blue-200 mb-1">{schoolName}</p>
-                    <p className="text-lg text-blue-300/80">{formatDate(currentTime)}</p>
+                    <h1>SISTEM ANTRIAN BAGI RAPORT</h1>
+                    <p className="tv-header__school">{schoolName}</p>
+                    <p className="tv-header__date">{formatDate(currentTime)}</p>
                 </div>
             </header>
 
-            {/* Grid - 5 columns */}
-            <main className="max-w-[1800px] mx-auto p-6">
-                <div className="grid grid-cols-5 gap-4">
+
+
+            {/* Grid */}
+            <main className="tv-main">
+                <div className="tv-grid">
                     {classData.map(cls => {
+                        const waitingCount = cls.waiting
+                        const finishedCount = cls.finished
+                        // Check if teacher is online
                         const isOnline = onlineClasses.includes(cls.id)
+
+                        // Debug log (temporary)
+                        if (cls.id === '7A') {
+                            console.log(`Checking 7A: onlineClasses=${JSON.stringify(onlineClasses)}, isOnline=${isOnline}`)
+                        }
+
+                        // Check if there is an active call for this class
                         const activeStudent = activeCalls[cls.id]
 
                         return (
-                            <Card
+                            <div
                                 key={cls.id}
-                                className={`overflow-hidden border-2 smooth-transition ${activeStudent
-                                    ? 'border-yellow-400 bg-yellow-500/10 animate-pulse'
-                                    : isOnline
-                                        ? 'border-green-500/50 bg-green-500/5'
-                                        : 'border-slate-700 bg-slate-900/50'
-                                    }`}
+                                className={`tv-card ${isOnline ? 'tv-card--online' : 'tv-card--offline'} ${activeStudent ? 'tv-card--calling' : ''}`}
                             >
-                                <CardContent className="p-6">
-                                    {/* Header */}
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h2 className="text-2xl font-bold text-white">{cls.name}</h2>
-                                        <Badge className={isOnline
-                                            ? 'bg-green-500 hover:bg-green-500 text-white'
-                                            : 'bg-slate-700 hover:bg-slate-700 text-slate-300'
-                                        }>
-                                            {isOnline ? 'ONLINE' : 'OFFLINE'}
-                                        </Badge>
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="mb-6 min-h-[100px] flex items-center justify-center">
-                                        {activeStudent ? (
-                                            <div className="text-center">
-                                                <Badge className="bg-yellow-500 hover:bg-yellow-500 text-black font-bold mb-3 px-4 py-2 text-base">
-                                                    <Volume2 className="w-4 h-4 mr-2" />
-                                                    DIPANGGIL
-                                                </Badge>
-                                                <div className="text-3xl font-bold text-white">{activeStudent}</div>
-                                            </div>
-                                        ) : (
-                                            <div className="text-center text-slate-400 text-lg">
-                                                {isOnline ? 'Menunggu Panggilan...' : 'Guru Belum Login'}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Stats */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div className="p-3 rounded-lg bg-orange-900/40 border border-orange-600/40">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-2xl">⏳</span>
-                                                <span className="text-[10px] text-orange-300 font-bold uppercase">Menunggu</span>
-                                            </div>
-                                            <div className="text-3xl font-bold text-white text-center">{cls.waiting}</div>
+                                <div className="tv-card__header">
+                                    <h2 className="tv-card__title">{cls.name}</h2>
+                                    <span className={`tv-card__status ${isOnline ? 'tv-card__status--online' : 'tv-card__status--offline'}`}>
+                                        {isOnline ? 'AKTIF' : 'OFFLINE'}
+                                    </span>
+                                </div>
+                                <div className="tv-card__content">
+                                    {activeStudent ? (
+                                        <div className="tv-card__call">
+                                            <span className="tv-card__badge">
+                                                <Volume2 size={16} /> DIPANGGIL
+                                            </span>
+                                            <div className="tv-card__student">{activeStudent}</div>
                                         </div>
-                                        <div className="p-3 rounded-lg bg-green-900/40 border border-green-600/40">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-2xl">✓</span>
-                                                <span className="text-[10px] text-green-300 font-bold uppercase">Selesai</span>
-                                            </div>
-                                            <div className="text-3xl font-bold text-white text-center">{cls.finished}</div>
+                                    ) : (
+                                        <div className="tv-card__idle">
+                                            {isOnline ? 'Menunggu Panggilan...' : 'Guru Belum Login'}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="tv-card__footer">
+                                    <div className="tv-card__stat">
+                                        <span className="tv-card__stat-icon warning">⏳</span>
+                                        <div className="tv-card__stat-info">
+                                            <span className="tv-card__stat-label">MENUNGGU</span>
+                                            <span className="tv-card__stat-value">{waitingCount}</span>
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    <div className="tv-card__stat-divider"></div>
+                                    <div className="tv-card__stat">
+                                        <span className="tv-card__stat-icon success">✓</span>
+                                        <div className="tv-card__stat-info">
+                                            <span className="tv-card__stat-label">SELESAI</span>
+                                            <span className="tv-card__stat-value">{finishedCount}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         )
                     })}
                 </div>
             </main>
 
             {/* Footer */}
-            <footer className="fixed bottom-0 left-0 right-0 bg-black/30 backdrop-blur-sm border-t border-white/10 py-4 px-6">
-                <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-                    {/* Time */}
-                    <div className="flex items-center gap-3 text-2xl font-bold">
-                        <span>🕐</span>
-                        <span>{formatTime(currentTime)}</span>
-                    </div>
+            <footer className="tv-footer">
+                <div className="tv-footer__time">
+                    <span className="time-icon">🕐</span>
+                    <span className="time-value">{formatTime(currentTime)}</span>
+                </div>
 
-                    {/* Ticker */}
-                    <div className="flex-1 overflow-hidden">
-                        {announcements.filter(a => a.is_active).length > 0 ? (
-                            <div className="flex items-center gap-3">
-                                <span className="text-2xl flex-shrink-0">📢</span>
-                                <div className="overflow-hidden">
-                                    <div className="animate-marquee whitespace-nowrap">
-                                        {announcements.filter(a => a.is_active).map((a, i) => (
-                                            <span key={a.id} className="mx-8 text-lg">{a.text}</span>
-                                        ))}
-                                    </div>
+                {/* Inline Ticker */}
+                <div className="tv-footer__ticker">
+                    {announcements.filter(a => a.is_active).length > 0 ? (
+                        <div className="inline-ticker">
+                            <span className="inline-ticker__icon">📢</span>
+                            <div className="inline-ticker__content">
+                                <div className="inline-ticker__text">
+                                    {announcements.filter(a => a.is_active).map((a, i) => (
+                                        <span key={a.id} className="ticker-item">
+                                            {a.text} •
+                                        </span>
+                                    ))}
                                 </div>
                             </div>
-                        ) : (
-                            <div className="text-center text-slate-400">
-                                Selamat Datang di Sistem Antrian Bagi Raport
-                            </div>
-                        )}
-                    </div>
+                        </div>
+                    ) : (
+                        <div className="tv-footer__placeholder">
+                            Selamat Datang di Sistem Antrian Bagi Raport
+                        </div>
+                    )}
+                </div>
 
-                    {/* Total */}
-                    <div className="flex items-center gap-4 text-lg">
-                        <span>Selesai: <strong className="text-2xl">{stats.totals.finished}</strong></span>
-                        <span className="flex items-center gap-2">
-                            {onlineClasses.length > 0 ? '🟢 Online' : '⚪ Offline'}
-                        </span>
-                    </div>
+                <div className="tv-footer__total">
+                    Selesai: <strong>{stats.totals.finished}</strong>
+                    <span className="online-indicator">
+                        {onlineClasses.length > 0 ? '🟢 Online' : '⚪ Offline'}
+                    </span>
                 </div>
             </footer>
 
             {/* Call Overlay */}
             {callOverlay && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-                    <div className="text-center p-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl shadow-2xl max-w-2xl mx-4 border-4 border-white/20">
-                        <div className="mb-6">
-                            <Volume2 className="w-24 h-24 mx-auto text-white animate-pulse" />
+                <div className="call-overlay">
+                    <div className="call-overlay__content">
+                        <div className="call-overlay__icon">
+                            <Volume2 size={64} />
                         </div>
-                        <h2 className="text-4xl font-bold mb-6">🔔 PANGGILAN UNTUK WALI SISWA</h2>
-                        <p className="text-6xl font-bold mb-4">{callOverlay.name}</p>
-                        <p className="text-3xl font-semibold mb-6">KELAS {callOverlay.class}</p>
-                        <p className="text-2xl">Silakan menuju ruang kelas sekarang</p>
+                        <h2 className="call-overlay__title">🔔 PANGGILAN UNTUK WALI SISWA</h2>
+                        <p className="call-overlay__name">{callOverlay.name}</p>
+                        <p className="call-overlay__class">KELAS {callOverlay.class}</p>
+                        <p className="call-overlay__message">Silakan menuju ruang kelas sekarang</p>
                     </div>
                 </div>
             )}
 
             {/* Announcement Overlay */}
             {announcementOverlay && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-                    <div className="text-center p-12 bg-gradient-to-br from-yellow-600 to-orange-600 rounded-3xl shadow-2xl max-w-2xl mx-4 border-4 border-white/20">
-                        <div className="mb-6">
-                            <Megaphone className="w-24 h-24 mx-auto text-white animate-pulse" />
+                <div className="announcement-overlay">
+                    <div className="announcement-overlay__content">
+                        <div className="announcement-overlay__icon">
+                            <Megaphone size={64} />
                         </div>
-                        <h2 className="text-4xl font-bold mb-6">📢 PENGUMUMAN PENTING</h2>
-                        <p className="text-3xl leading-relaxed">{announcementOverlay.text}</p>
+                        <h2 className="announcement-overlay__title">📢 PENGUMUMAN PENTING</h2>
+                        <p className="announcement-overlay__text">{announcementOverlay.text}</p>
                     </div>
                 </div>
             )}
-
-            <style jsx>{`
-                @keyframes marquee {
-                    0% { transform: translateX(100%); }
-                    100% { transform: translateX(-100%); }
-                }
-                .animate-marquee {
-                    display: inline-block;
-                    animation: marquee 30s linear infinite;
-                }
-            `}</style>
         </div>
     )
 }
