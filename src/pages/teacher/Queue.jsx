@@ -198,25 +198,25 @@ export default function Queue() {
                     ) : (
                         activeQueue.map((item) => (
                             <Card key={item.id} className={item.status === 'CALLED' ? 'border-blue-300 bg-blue-50/50' : ''}>
-                                <CardContent className="p-4 sm:p-6">
-                                    <div className="flex flex-col sm:flex-row gap-4">
-                                        {/* Queue Number */}
+                                <CardContent className="p-4">
+                                    <div className="flex gap-3">
+                                        {/* Queue Number - Smaller on mobile */}
                                         <div className="flex-shrink-0">
-                                            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                                                <span className="text-white font-bold text-xl">#{item.queue_number}</span>
+                                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                                                <span className="text-white font-bold text-lg sm:text-xl">#{item.queue_number}</span>
                                             </div>
                                         </div>
 
-                                        {/* Info */}
+                                        {/* Info - Flex column */}
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="text-lg font-bold text-slate-900 mb-2">{item.name}</h3>
-                                            <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-muted-foreground">
+                                            <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-1 truncate">{item.name}</h3>
+                                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground mb-3">
                                                 <div className="flex items-center gap-1">
-                                                    <Phone className="w-4 h-4" />
-                                                    <span>{item.parent_phone || '-'}</span>
+                                                    <Phone className="w-3 h-3" />
+                                                    <span className="truncate max-w-[120px]">{item.parent_phone || '-'}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1">
-                                                    <Clock className="w-4 h-4" />
+                                                    <Clock className="w-3 h-3" />
                                                     <span>
                                                         {new Date(item.check_in_time).toLocaleTimeString('id-ID', {
                                                             hour: '2-digit',
@@ -225,64 +225,66 @@ export default function Queue() {
                                                     </span>
                                                 </div>
                                                 {item.status === 'CALLED' && (
-                                                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+                                                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 h-5 text-[10px] px-1.5">
                                                         <Volume2 className="w-3 h-3 mr-1" />
                                                         DIPANGGIL
                                                     </Badge>
                                                 )}
                                             </div>
-                                        </div>
 
-                                        {/* Actions */}
-                                        <div className="flex flex-wrap gap-2 sm:flex-col sm:w-auto">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleNotify(item)}
-                                                loading={loading[item.id] === 'notify'}
-                                                disabled={!!loading[item.id] || !item.parent_phone}
-                                                icon={MessageSquare}
-                                                title={item.parent_phone ? "Kirim WA ke " + item.parent_phone : "Nomor HP tidak tersedia"}
-                                            >
-                                                WA
-                                            </Button>
-
-                                            {item.status === 'WAITING' ? (
+                                            {/* Actions - Horizontal on mobile, better spacing */}
+                                            <div className="flex gap-2">
                                                 <Button
+                                                    variant="outline"
                                                     size="sm"
-                                                    onClick={() => handleCall(item)}
-                                                    loading={loading[item.id] === 'call'}
-                                                    disabled={!!loading[item.id]}
-                                                    icon={Volume2}
-                                                    className="flex-1 sm:flex-none"
+                                                    onClick={() => handleNotify(item)}
+                                                    loading={loading[item.id] === 'notify'}
+                                                    disabled={!!loading[item.id] || !item.parent_phone}
+                                                    icon={MessageSquare}
+                                                    title={item.parent_phone ? "Kirim WA ke " + item.parent_phone : "Nomor HP tidak tersedia"}
+                                                    className="h-9"
                                                 >
-                                                    Panggil
+                                                    WA
                                                 </Button>
-                                            ) : (
-                                                <>
+
+                                                {item.status === 'WAITING' ? (
                                                     <Button
-                                                        variant="outline"
                                                         size="sm"
-                                                        onClick={() => handleRecall(item)}
+                                                        onClick={() => handleCall(item)}
                                                         loading={loading[item.id] === 'call'}
                                                         disabled={!!loading[item.id]}
-                                                        icon={RotateCcw}
+                                                        icon={Volume2}
+                                                        className="flex-1 h-9"
                                                     >
-                                                        Ulang
+                                                        Panggil
                                                     </Button>
-                                                    <Button
-                                                        variant="default"
-                                                        size="sm"
-                                                        onClick={() => handleFinish(item)}
-                                                        loading={loading[item.id] === 'finish'}
-                                                        disabled={!!loading[item.id]}
-                                                        icon={Check}
-                                                        className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none"
-                                                    >
-                                                        Selesai
-                                                    </Button>
-                                                </>
-                                            )}
+                                                ) : (
+                                                    <>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleRecall(item)}
+                                                            loading={loading[item.id] === 'call'}
+                                                            disabled={!!loading[item.id]}
+                                                            icon={RotateCcw}
+                                                            className="h-9"
+                                                        >
+                                                            Ulang
+                                                        </Button>
+                                                        <Button
+                                                            variant="default"
+                                                            size="sm"
+                                                            onClick={() => handleFinish(item)}
+                                                            loading={loading[item.id] === 'finish'}
+                                                            disabled={!!loading[item.id]}
+                                                            icon={Check}
+                                                            className="bg-green-600 hover:bg-green-700 flex-1 h-9"
+                                                        >
+                                                            Selesai
+                                                        </Button>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </CardContent>
