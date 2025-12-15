@@ -302,6 +302,7 @@ export default function TV() {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 h-full content-start">
                     {classData.map(cls => {
                         const isOnline = onlineClasses.includes(cls.id)
+                        console.log(`Class ${cls.id} Online?`, isOnline, 'List:', onlineClasses)
                         const activeStudent = activeCalls[cls.id]
                         const isActiveCall = !!activeStudent
 
