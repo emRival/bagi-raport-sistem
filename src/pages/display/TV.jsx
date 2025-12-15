@@ -43,9 +43,22 @@ export default function TV() {
         isSpeakingRef.current = isSpeaking
     }, [ttsQueue, isSpeaking])
 
-    // Speak function (with queue support)
-    const speak = (text) => {
+    // Speak function (with queue support and overlay sync)
+    const speak = (item) => {
+        // Support both string (backward compat) and object { text, overlay }
+        const text = typeof item === 'string' ? item : item.text
+        const overlay = typeof item === 'object' ? item.overlay : null
+
         if ('speechSynthesis' in window) {
+            // Show overlay when starting speech
+            if (overlay) {
+                if (overlay.type === 'call') {
+                    setCallOverlay({ name: overlay.name, class: overlay.class })
+                } else if (overlay.type === 'announcement') {
+                    setAnnouncementOverlay({ text: overlay.text })
+                }
+            }
+
             const utterance = new SpeechSynthesisUtterance(text)
             utterance.lang = 'id-ID'
             utterance.rate = 0.6
@@ -84,9 +97,19 @@ export default function TV() {
                 speechSynthesis.addEventListener('voiceschanged', setVoice, { once: true })
             }
 
-            // Handle completion to process next in queue
+            // Handle completion to process next in queue and clear overlay
             utterance.onend = () => {
                 console.log('🎤 Speech ended, checking queue...')
+
+                // Clear overlay when speech ends
+                if (overlay) {
+                    if (overlay.type === 'call') {
+                        setCallOverlay(null)
+                    } else if (overlay.type === 'announcement') {
+                        setAnnouncementOverlay(null)
+                    }
+                }
+
                 setIsSpeaking(false)
                 // Process next item after a small delay
                 setTimeout(() => {
@@ -96,6 +119,11 @@ export default function TV() {
 
             utterance.onerror = (error) => {
                 console.error('🎤 Speech error:', error)
+
+                // Clear overlay on error too
+                setCallOverlay(null)
+                setAnnouncementOverlay(null)
+
                 setIsSpeaking(false)
                 setTimeout(() => {
                     processQueue()
@@ -110,10 +138,11 @@ export default function TV() {
         }
     }
 
-    // Add to queue
-    const addToQueue = (text) => {
-        console.log('➕ Adding to TTS queue:', text.substring(0, 50) + '...')
-        setTtsQueue(prev => [...prev, text])
+    // Add to queue (text and optional overlay)
+    const addToQueue = (text, overlay = null) => {
+        const displayText = typeof text === 'string' ? text : text.text
+        console.log('➕ Adding to TTS queue:', displayText.substring(0, 50) + '...')
+        setTtsQueue(prev => [...prev, overlay ? { text, overlay } : text])
     }
 
     // Process queue
@@ -129,10 +158,11 @@ export default function TV() {
             return
         }
 
-        const [nextText, ...remaining] = ttsQueueRef.current
-        console.log('▶️ Processing queue:', nextText.substring(0, 50) + '...', `(${remaining.length} remaining)`)
+        const [nextItem, ...remaining] = ttsQueueRef.current
+        const displayText = typeof nextItem === 'string' ? nextItem : nextItem.text
+        console.log('▶️ Processing queue:', displayText.substring(0, 50) + '...', `(${remaining.length} remaining)`)
         setTtsQueue(remaining)
-        speak(nextText)
+        speak(nextItem)
     }
 
     // Effect to process queue when it changes
@@ -188,17 +218,16 @@ export default function TV() {
 
         const unsubCall = socketService.on('student-called', (data) => {
             console.log('📞 TV: Student called:', data, 'Sound enabled:', soundEnabledRef.current)
-            setCallOverlay({ name: data.studentName, class: data.className })
 
             // Set active call for this class
             setActiveCalls(prev => ({ ...prev, [data.className]: data.studentName }))
 
             if (soundEnabledRef.current) {
-                addToQueue(`Panggilan untuk wali siswa ${data.studentName}, kelas ${data.className}. Silakan menuju ruang kelas.`)
+                addToQueue(
+                    `Panggilan untuk wali siswa ${data.studentName}, kelas ${data.className}. Silakan menuju ruang kelas.`,
+                    { type: 'call', name: data.studentName, class: data.className }
+                )
             }
-
-            // Clear overlay after 10 seconds, but keep class call persistent until finished or replaced
-            setTimeout(() => setCallOverlay(null), 10000)
         })
 
         const unsubFinish = socketService.on('student-finished', (data) => {
@@ -216,14 +245,15 @@ export default function TV() {
 
         const unsubAnnouncement = socketService.on('announcement', (data) => {
             console.log('📢 TV: Announcement:', data, 'Sound enabled:', soundEnabledRef.current)
-            setAnnouncementOverlay({ text: data.text })
             // Refresh list to show in footer
             refreshAnnouncements()
 
             if (soundEnabledRef.current) {
-                addToQueue(`Pengumuman penting: ${data.text}`)
+                addToQueue(
+                    `Pengumuman penting: ${data.text}`,
+                    { type: 'announcement', text: data.text }
+                )
             }
-            setTimeout(() => setAnnouncementOverlay(null), 10000)
         })
 
         const unsubOnline = socketService.on('online-status', (classes) => {
