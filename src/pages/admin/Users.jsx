@@ -1,18 +1,41 @@
 import { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2, Search } from 'lucide-react'
-import Card from '../../components/ui/Card.jsx'
-import Button from '../../components/ui/Button.jsx'
-import Input from '../../components/ui/Input.jsx'
-import Modal from '../../components/ui/Modal.jsx'
+import { Plus, Pencil, Trash2, Search, Shield, UserCog, Users as UsersIcon, Tv } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-new/card'
+import { Button } from '@/components/ui-new/button'
+import { Input } from '@/components/ui-new/input'
+import { Label } from '@/components/ui-new/label'
+import { Badge } from '@/components/ui-new/badge'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui-new/dialog'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui-new/select'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui-new/table'
 import { useToast } from '../../context/ToastContext.jsx'
 import { settingsApi } from '../../services/api.js'
-import './Users.css'
 
 const ROLES = [
-    { value: 'admin', label: 'Admin' },
-    { value: 'satpam', label: 'Satpam' },
-    { value: 'teacher', label: 'Wali Kelas' },
-    { value: 'tv', label: 'TV Display' },
+    { value: 'admin', label: 'Admin', icon: Shield, color: 'bg-red-100 text-red-700' },
+    { value: 'satpam', label: 'Satpam', icon: UserCog, color: 'bg-blue-100 text-blue-700' },
+    { value: 'teacher', label: 'Wali Kelas', icon: UsersIcon, color: 'bg-green-100 text-green-700' },
+    { value: 'tv', label: 'TV Display', icon: Tv, color: 'bg-purple-100 text-purple-700' },
 ]
 
 const CLASSES = ['7A', '7B', '7C', '8A', '8B', '8C', '9A', '9B', '9C']
@@ -30,9 +53,6 @@ export default function Users() {
         try {
             setLoading(true)
             const data = await settingsApi.getUsers()
-            // Map backend role names to frontend if needed, but looks like they match mostly
-            // Backend roles: admin, satpam, teacher, tv
-            // Frontend demo used: guru (now teacher), display (now tv)
             setUsers(data)
         } catch (error) {
             console.error('Error fetching users:', error)
@@ -93,74 +113,125 @@ export default function Users() {
         }
     }
 
+    const getRoleBadge = (role) => {
+        const roleConfig = ROLES.find(r => r.value === role)
+        if (!roleConfig) return <Badge>{role}</Badge>
+
+        const Icon = roleConfig.icon
+        return (
+            <Badge className={`${roleConfig.color} border-0`}>
+                <Icon className="w-3 h-3 mr-1" />
+                {roleConfig.label}
+            </Badge>
+        )
+    }
+
     return (
-        <div className="users-page">
-            <div className="page-header">
-                <h1 className="page-title">Manajemen User</h1>
-                <Button icon={Plus} onClick={handleCreate}>
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl sm:text-3xl font-bold">Manajemen User</h1>
+                    <p className="text-sm text-muted-foreground mt-1">{users.length} user terdaftar</p>
+                </div>
+                <Button onClick={handleCreate} icon={Plus} className="w-full sm:w-auto">
                     Tambah User
                 </Button>
             </div>
 
+            {/* Filters Card */}
             <Card>
-                <div className="users-filters">
-                    <div className="search-wrapper">
-                        <Input
-                            placeholder="Cari user..."
-                            icon={Search}
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
+                <CardContent className="p-4">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="flex-1">
+                            <Input
+                                placeholder="Cari username atau nama..."
+                                icon={Search}
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                        </div>
+                        <Select value={roleFilter} onValueChange={setRoleFilter}>
+                            <SelectTrigger className="w-full sm:w-48">
+                                <SelectValue placeholder="Filter Role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Semua Role</SelectItem>
+                                {ROLES.map(role => (
+                                    <SelectItem key={role.value} value={role.value}>
+                                        {role.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
-                    <select
-                        className="role-filter"
-                        value={roleFilter}
-                        onChange={(e) => setRoleFilter(e.target.value)}
-                    >
-                        <option value="all">Semua Role</option>
-                        {ROLES.map(role => (
-                            <option key={role.value} value={role.value}>{role.label}</option>
-                        ))}
-                    </select>
-                </div>
+                </CardContent>
+            </Card>
 
-                <div className="users-table-wrapper">
-                    <table className="users-table">
-                        <thead>
-                            <tr>
-                                <th>Username</th>
-                                <th>Nama</th>
-                                <th>Role</th>
-                                <th>Kelas</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredUsers.map(user => (
-                                <tr key={user.id}>
-                                    <td><code>{user.username}</code></td>
-                                    <td>{user.name}</td>
-                                    <td>
-                                        <span className={`role-badge role-badge--${user.role}`}>
-                                            {ROLES.find(r => r.value === user.role)?.label || user.role}
-                                        </span>
-                                    </td>
-                                    <td>{user.assigned_class || user.assignedClass || '-'}</td>
-                                    <td>
-                                        <div className="action-buttons">
-                                            <button className="icon-btn" onClick={() => handleEdit(user)} title="Edit">
-                                                <Pencil size={16} />
-                                            </button>
-                                            <button className="icon-btn icon-btn--danger" onClick={() => handleDelete(user)} title="Hapus">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+            {/* Users Table */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg">Daftar User</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Username</TableHead>
+                                    <TableHead>Nama</TableHead>
+                                    <TableHead>Role</TableHead>
+                                    <TableHead>Kelas</TableHead>
+                                    <TableHead className="text-right">Aksi</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {loading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                            Loading...
+                                        </TableCell>
+                                    </TableRow>
+                                ) : filteredUsers.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                            Tidak ada user ditemukan
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    filteredUsers.map(user => (
+                                        <TableRow key={user.id} className="hover:bg-muted/50 smooth-transition">
+                                            <TableCell className="font-mono text-sm">{user.username}</TableCell>
+                                            <TableCell className="font-medium">{user.name}</TableCell>
+                                            <TableCell>{getRoleBadge(user.role)}</TableCell>
+                                            <TableCell>{user.assigned_class || user.assignedClass || '-'}</TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleEdit(user)}
+                                                        className="h-8 w-8 p-0"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleDelete(user)}
+                                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
             </Card>
 
             <UserModal
@@ -181,6 +252,7 @@ function UserModal({ isOpen, onClose, onSave, user }) {
         role: 'satpam',
         assignedClass: '',
     })
+    const [saving, setSaving] = useState(false)
 
     useEffect(() => {
         if (user) {
@@ -202,66 +274,109 @@ function UserModal({ isOpen, onClose, onSave, user }) {
         }
     }, [user])
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
-        onSave(formData)
+        setSaving(true)
+        try {
+            await onSave(formData)
+        } finally {
+            setSaving(false)
+        }
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={user ? 'Edit User' : 'Tambah User'}>
-            <form className="user-form" onSubmit={handleSubmit}>
-                <Input
-                    label="Username"
-                    value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    required
-                />
-                <Input
-                    label="Nama Lengkap"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                />
-                <Input
-                    label={user ? 'Password Baru (kosongkan jika tidak diubah)' : 'Password'}
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required={!user}
-                />
-                <div className="input-wrapper">
-                    <label className="input-label">Role</label>
-                    <select
-                        className="select-input"
-                        value={formData.role}
-                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    >
-                        {ROLES.map(role => (
-                            <option key={role.value} value={role.value}>{role.label}</option>
-                        ))}
-                    </select>
-                </div>
-                {formData.role === 'guru' && (
-                    <div className="input-wrapper">
-                        <label className="input-label">Kelas</label>
-                        <select
-                            className="select-input"
-                            value={formData.assignedClass}
-                            onChange={(e) => setFormData({ ...formData, assignedClass: e.target.value })}
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="sm:max-w-[500px] w-[95vw]">
+                <DialogHeader className="space-y-2">
+                    <DialogTitle className="text-lg sm:text-xl">
+                        {user ? 'Edit User' : 'Tambah User Baru'}
+                    </DialogTitle>
+                    <DialogDescription className="text-sm">
+                        {user ? 'Perbarui informasi user' : 'Buat user baru untuk sistem'}
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="username">Username</Label>
+                        <Input
+                            id="username"
+                            value={formData.username}
+                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                             required
-                        >
-                            <option value="">Pilih Kelas</option>
-                            {CLASSES.map(cls => (
-                                <option key={cls} value={cls}>{cls}</option>
-                            ))}
-                        </select>
+                            disabled={saving}
+                        />
                     </div>
-                )}
-                <div className="form-actions">
-                    <Button variant="secondary" type="button" onClick={onClose}>Batal</Button>
-                    <Button type="submit">{user ? 'Update' : 'Simpan'}</Button>
-                </div>
-            </form>
-        </Modal>
+                    <div className="space-y-2">
+                        <Label htmlFor="name">Nama Lengkap</Label>
+                        <Input
+                            id="name"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            required
+                            disabled={saving}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="password">
+                            {user ? 'Password Baru (kosongkan jika tidak diubah)' : 'Password'}
+                        </Label>
+                        <Input
+                            id="password"
+                            type="password"
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            required={!user}
+                            disabled={saving}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="role">Role</Label>
+                        <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })} disabled={saving}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {ROLES.map(role => (
+                                    <SelectItem key={role.value} value={role.value}>
+                                        {role.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {formData.role === 'teacher' && (
+                        <div className="space-y-2">
+                            <Label htmlFor="class">Kelas</Label>
+                            <Select value={formData.assignedClass} onValueChange={(value) => setFormData({ ...formData, assignedClass: value })} disabled={saving}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih Kelas" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {CLASSES.map(cls => (
+                                        <SelectItem key={cls} value={cls}>
+                                            {cls}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+                    <DialogFooter className="gap-2 sm:gap-0 pt-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                            disabled={saving}
+                            className="w-full sm:w-auto"
+                        >
+                            Batal
+                        </Button>
+                        <Button type="submit" loading={saving} className="w-full sm:w-auto">
+                            {user ? 'Update' : 'Simpan'}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     )
 }
