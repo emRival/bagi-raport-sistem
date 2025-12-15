@@ -5,10 +5,7 @@ import { useAnnouncements } from '../../context/AnnouncementsContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { socketService } from '../../services/socket.js'
 import { queueApi } from '../../services/api.js'
-import { Volume2, Megaphone, VolumeX, Wifi, WifiOff, GraduationCap } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui-new/card'
-import { Badge } from '@/components/ui-new/badge'
-import { Button } from '@/components/ui-new/button'
+import { Volume2, Megaphone, VolumeX, Wifi, WifiOff } from 'lucide-react'
 
 export default function TV() {
     const navigate = useNavigate()
@@ -22,8 +19,9 @@ export default function TV() {
     const [announcementOverlay, setAnnouncementOverlay] = useState(null)
     const [stats, setStats] = useState({ byClass: [], totals: { waiting: 0, finished: 0, total: 0 } })
     const [currentTime, setCurrentTime] = useState(new Date())
-    const [schoolLogo, setSchoolLogo] = useState('')
     const [schoolName, setSchoolName] = useState('Sistem Antrian Bagi Raport')
+    const [schoolLogo, setSchoolLogo] = useState('')
+    const [classes, setClasses] = useState(['7A', '7B', '7C', '8A', '8B', '8C', '9A', '9B', '9C'])
     const [activeCalls, setActiveCalls] = useState({})
     const [onlineClasses, setOnlineClasses] = useState([])
 
@@ -55,14 +53,8 @@ export default function TV() {
             const setVoice = () => {
                 const voices = speechSynthesis.getVoices()
                 if (voices.length > 0) {
-                    const preferredVoice = voices.find(v =>
-                        v.lang.startsWith('id') &&
-                        (v.name.toLowerCase().includes('male') ||
-                            v.name.toLowerCase().includes('rizki') ||
-                            v.name.toLowerCase().includes('standard-b'))
-                    ) || voices.find(v => v.lang.startsWith('id')) || voices[0]
-
-                    if (preferredVoice) utterance.voice = preferredVoice
+                    const maleVoice = voices.find(v => v.lang.startsWith('id') && (v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('rizki') || v.name.toLowerCase().includes('standard-b'))) || voices.find(v => v.lang.startsWith('id')) || voices.find(v => !v.name.toLowerCase().includes('female'))
+                    if (maleVoice) utterance.voice = maleVoice
                 }
             }
 
@@ -122,6 +114,7 @@ export default function TV() {
         refreshAnnouncements()
         setSchoolName(settings.schoolName || 'Sistem Antrian Bagi Raport')
         setSchoolLogo(settings.schoolLogo || '')
+        setClasses(settings.classes || ['7A', '7B', '7C', '8A', '8B', '8C', '9A', '9B', '9C'])
     }, [settings, refreshAnnouncements])
 
     const fetchStats = async () => {
@@ -202,192 +195,196 @@ export default function TV() {
         return () => clearInterval(timer)
     }, [])
 
-    // Mouse hide for fullscreen
     useEffect(() => {
         let timeout
         const handleMouseMove = () => {
             document.body.style.cursor = 'default'
             clearTimeout(timeout)
-            timeout = setTimeout(() => {
-                document.body.style.cursor = 'none'
-            }, 3000)
+            timeout = setTimeout(() => { document.body.style.cursor = 'none' }, 5000)
         }
-
+        handleMouseMove()
         document.addEventListener('mousemove', handleMouseMove)
         return () => {
             document.removeEventListener('mousemove', handleMouseMove)
-            clearTimeout(timeout)
             document.body.style.cursor = 'default'
         }
     }, [])
 
-    const formatTime = (date) => {
-        return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    }
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                logout()
+                navigate('/login')
+            }
+        }
+        document.addEventListener('keydown', handleKeyDown)
+        return () => document.removeEventListener('keydown', handleKeyDown)
+    }, [logout, navigate])
 
-    const formatDate = (date) => {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
-        return date.toLocaleDateString('id-ID', options)
-    }
+    const formatDate = (date) => date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    const formatTime = (date) => date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+
+    const classData = classes.map(cls => {
+        const classStats = stats.byClass.find(s => s.class === cls) || { waiting: 0, finished: 0 }
+        return {
+            id: cls,
+            name: `Kelas ${cls}`,
+            waiting: classStats.waiting || 0,
+            finished: classStats.finished || 0
+        }
+    })
 
     return (
-        <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex flex-col">
+        <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100">
+            {/* Status */}
+            <div className={`fixed top-3 left-3 px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg z-50 ${connected ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+                {connected ? <><Wifi className="w-3.5 h-3.5 inline mr-1" />Online</> : <><WifiOff className="w-3.5 h-3.5 inline mr-1" />Offline</>}
+            </div>
+
+            {!soundEnabled ? (
+                <button onClick={enableSound} className="fixed top-3 right-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg z-50 font-semibold text-sm animate-pulse">
+                    <VolumeX className="w-4 h-4 inline mr-1" />Aktifkan Suara
+                </button>
+            ) : (
+                <div className="fixed top-3 right-3 px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-bold shadow-lg z-50">
+                    <Volume2 className="w-3.5 h-3.5 inline mr-1" />Suara Aktif
+                </div>
+            )}
+
             {/* Header */}
-            <header className="bg-white/90 backdrop-blur-sm shadow-md border-b border-slate-200">
-                <div className="flex items-center justify-between px-6 py-3">
-                    {/* Logo & Title */}
-                    <div className="flex items-center gap-4">
-                        {schoolLogo ? (
-                            <img src={schoolLogo} alt="Logo" className="h-12 w-12 object-contain" />
+            <header className="bg-white shadow-md border-b-4 border-blue-600 py-3 px-6">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        {schoolLogo && schoolLogo.trim() !== '' ? (
+                            <img src={schoolLogo} alt="Logo" className="w-12 h-12 object-contain" />
                         ) : (
-                            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                                <GraduationCap className="w-7 h-7 text-white" />
-                            </div>
+                            <span className="text-3xl">🎓</span>
                         )}
                         <div>
-                            <h1 className="text-xl font-bold text-slate-900">{schoolName}</h1>
-                            <p className="text-sm text-slate-600">Sistem Antrian Raport</p>
+                            <h1 className="text-xl font-bold text-gray-900">SISTEM ANTRIAN BAGI RAPORT</h1>
+                            <p className="text-xs text-gray-600">{schoolName}</p>
                         </div>
                     </div>
-
-                    {/* Stats & Controls */}
-                    <div className="flex items-center gap-4">
-                        {/* Stats */}
-                        <div className="flex items-center gap-4">
-                            <div className="text-center px-4 py-2 bg-orange-100 rounded-xl">
-                                <div className="text-2xl font-bold text-orange-700">{stats.totals.waiting}</div>
-                                <div className="text-xs text-orange-600 font-medium">Menunggu</div>
-                            </div>
-                            <div className="text-center px-4 py-2 bg-green-100 rounded-xl">
-                                <div className="text-2xl font-bold text-green-700">{stats.totals.finished}</div>
-                                <div className="text-xs text-green-600 font-medium">Selesai</div>
-                            </div>
-                        </div>
-
-                        {/* Connection */}
-                        <Badge className={connected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-                            {connected ? <Wifi className="w-3.5 h-3.5 mr-1" /> : <WifiOff className="w-3.5 h-3.5 mr-1" />}
-                            {connected ? 'Online' : 'Offline'}
-                        </Badge>
-
-                        {/* Sound Toggle */}
-                        <Button
-                            onClick={() => soundEnabled ? setSoundEnabled(false) : enableSound()}
-                            size="sm"
-                            variant={soundEnabled ? 'default' : 'outline'}
-                            icon={soundEnabled ? Volume2 : VolumeX}
-                        >
-                            {soundEnabled ? 'Suara ON' : 'Suara OFF'}
-                        </Button>
-
-                        {/* Time */}
-                        <div className="text-right">
-                            <div className="text-lg font-bold text-slate-900">{formatTime(currentTime)}</div>
-                            <div className="text-xs text-slate-600">{formatDate(currentTime)}</div>
-                        </div>
+                    <div className="text-right">
+                        <p className="text-xs text-gray-600">{formatDate(currentTime)}</p>
+                        <p className="text-xl font-bold text-gray-900">{formatTime(currentTime)}</p>
                     </div>
                 </div>
             </header>
 
-            {/* Main Content */}
-            <main className="flex-1 overflow-y-auto p-4">
-                <div className="grid grid-cols-5 gap-3 auto-rows-min">
-                    {stats.byClass.slice(0, 10).map((classData) => {
-                        const isOnline = onlineClasses.includes(classData.class)
-                        const activeCall = activeCalls[classData.class]
-                        const hasActiveCall = Boolean(activeCall)
+            {/* Grid 5 Columns */}
+            <main className="max-w-[1800px] mx-auto p-4">
+                <div className="grid grid-cols-5 gap-3">
+                    {classData.map(cls => {
+                        const isOnline = onlineClasses.includes(cls.id)
+                        const activeStudent = activeCalls[cls.id]
 
                         return (
-                            <Card
-                                key={classData.class}
-                                className={`${hasActiveCall ? 'ring-2 ring-blue-500 bg-blue-50 animate-pulse' : 'bg-white'} shadow-md border-slate-200`}
-                            >
-                                <CardContent className="p-4">
-                                    {/* Class Name */}
+                            <div key={cls.id} className={`bg-white rounded-lg shadow-md border-2 ${activeStudent ? 'border-yellow-400 shadow-yellow-200' : isOnline ? 'border-green-400' : 'border-gray-300'}`}>
+                                <div className="p-4">
                                     <div className="flex items-center justify-between mb-3">
-                                        <h3 className="text-lg font-bold text-slate-900">{classData.class}</h3>
-                                        {isOnline && (
-                                            <Badge className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5">
-                                                Online
-                                            </Badge>
+                                        <h2 className="text-lg font-bold text-gray-900">{cls.name}</h2>
+                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${isOnline ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'}`}>
+                                            {isOnline ? 'ONLINE' : 'OFFLINE'}
+                                        </span>
+                                    </div>
+
+                                    <div className="mb-3 min-h-[60px] flex items-center justify-center">
+                                        {activeStudent ? (
+                                            <div className="text-center">
+                                                <div className="mb-1 inline-flex items-center gap-1 bg-yellow-400 text-black px-2 py-1 rounded font-bold text-xs">
+                                                    <Volume2 className="w-3 h-3" />DIPANGGIL
+                                                </div>
+                                                <div className="text-base font-bold text-gray-900 mt-1">{activeStudent}</div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center text-gray-500 text-xs">{isOnline ? 'Menunggu Panggilan...' : 'Guru Belum Login'}</div>
                                         )}
                                     </div>
 
-                                    {/* Stats */}
                                     <div className="grid grid-cols-2 gap-2">
-                                        <div className="bg-orange-50 rounded-lg p-2 text-center border border-orange-200">
-                                            <div className="text-xl font-bold text-orange-700">{classData.waiting}</div>
-                                            <div className="text-[10px] text-orange-600 font-medium">Menunggu</div>
+                                        <div className="p-2 rounded bg-orange-100 border border-orange-300">
+                                            <div className="flex items-center gap-1 mb-0.5">
+                                                <span className="text-sm">⏳</span>
+                                                <span className="text-[9px] text-orange-700 font-bold">MENUNGGU</span>
+                                            </div>
+                                            <div className="text-2xl font-bold text-orange-700 text-center">{cls.waiting}</div>
                                         </div>
-                                        <div className="bg-green-50 rounded-lg p-2 text-center border border-green-200">
-                                            <div className="text-xl font-bold text-green-700">{classData.finished}</div>
-                                            <div className="text-[10px] text-green-600 font-medium">Selesai</div>
+                                        <div className="p-2 rounded bg-green-100 border border-green-300">
+                                            <div className="flex items-center gap-1 mb-0.5">
+                                                <span className="text-sm">✓</span>
+                                                <span className="text-[9px] text-green-700 font-bold">SELESAI</span>
+                                            </div>
+                                            <div className="text-2xl font-bold text-green-700 text-center">{cls.finished}</div>
                                         </div>
                                     </div>
-
-                                    {/* Active Call */}
-                                    {hasActiveCall && (
-                                        <div className="mt-3 bg-blue-100 rounded-lg p-2 border border-blue-300">
-                                            <div className="flex items-center gap-1 text-blue-700 mb-1">
-                                                <Volume2 className="w-3 h-3" />
-                                                <span className="text-[10px] font-bold">DIPANGGIL</span>
-                                            </div>
-                                            <div className="text-xs font-semibold text-blue-900 truncate">{activeCall}</div>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </div>
                         )
                     })}
                 </div>
             </main>
 
-            {/* Ticker */}
-            {announcements.length > 0 && (
-                <div className="bg-gradient-to-r from-indigo-600 to-blue-600 py-2 overflow-hidden">
-                    <div className="flex items-center gap-2 animate-marquee whitespace-nowrap">
-                        <Megaphone className="w-4 h-4 text-white flex-shrink-0" />
-                        {announcements.map((ann, index) => (
-                            <span key={ann.id} className="text-white font-medium text-sm">
-                                {ann.text}
-                                {index < announcements.length - 1 && <span className="mx-12 text-white/60">•</span>}
-                            </span>
-                        ))}
+            {/* Footer */}
+            <footer className="fixed bottom-0 left-0 right-0 bg-blue-600 text-white shadow-lg py-2 px-6">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <div className="flex-1 overflow-hidden">
+                        {announcements.filter(a => a.is_active).length > 0 ? (
+                            <div className="flex items-center gap-2">
+                                <span className="text-lg">📢</span>
+                                <div className="overflow-hidden">
+                                    <div className="whitespace-nowrap animate-marquee">
+                                        {announcements.filter(a => a.is_active).map((a, i, arr) => (
+                                            <span key={a.id} className="inline-block mr-12">
+                                                {a.text}{i < arr.length - 1 ? ' • ' : ''}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center text-sm">Selamat Datang di Sistem Antrian Bagi Raport</div>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs ml-4">
+                        <span>Selesai: <strong className="text-lg">{stats.totals.finished}</strong></span>
+                        <span>{onlineClasses.length > 0 ? '🟢' : '⚪'} {onlineClasses.length} Guru</span>
+                    </div>
+                </div>
+            </footer>
+
+            {/* Overlays */}
+            {callOverlay && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+                    <div className="text-center p-10 bg-blue-600 rounded-2xl max-w-3xl border-4 border-yellow-400">
+                        <Volume2 className="w-20 h-20 mx-auto text-white mb-4" />
+                        <h2 className="text-3xl font-bold mb-4 text-yellow-300">🔔 PANGGILAN UNTUK WALI SISWA</h2>
+                        <p className="text-5xl font-bold mb-3 text-white">{callOverlay.name}</p>
+                        <p className="text-2xl font-semibold mb-4 text-blue-200">KELAS {callOverlay.class}</p>
+                        <p className="text-xl text-white">Silakan menuju ruang kelas sekarang</p>
                     </div>
                 </div>
             )}
 
-            {/* Call Overlay */}
-            {callOverlay && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-                    <Card className="bg-white shadow-2xl border-4 border-blue-500 max-w-4xl w-full mx-8">
-                        <CardContent className="p-12 text-center">
-                            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-blue-100 mb-6 animate-bounce">
-                                <Volume2 className="w-12 h-12 text-blue-600" />
-                            </div>
-                            <h2 className="text-3xl font-bold text-slate-900 mb-4">PANGGILAN UNTUK</h2>
-                            <div className="text-6xl font-extrabold text-blue-600 mb-4">{callOverlay.name}</div>
-                            <div className="text-2xl font-semibold text-slate-700 mb-6">Kelas {callOverlay.class}</div>
-                            <div className="text-lg text-slate-600">Silakan menuju ruang kelas sekarang</div>
-                        </CardContent>
-                    </Card>
+            {announcementOverlay && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+                    <div className="text-center p-10 bg-orange-600 rounded-2xl max-w-3xl border-4 border-yellow-400">
+                        <Megaphone className="w-20 h-20 mx-auto text-white mb-4" />
+                        <h2 className="text-3xl font-bold mb-4 text-yellow-300">📢 PENGUMUMAN PENTING</h2>
+                        <p className="text-2xl text-white">{announcementOverlay.text}</p>
+                    </div>
                 </div>
             )}
 
-            {/* Announcement Overlay */}
-            {announcementOverlay && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-                    <Card className="bg-white shadow-2xl border-4 border-purple-500 max-w-4xl w-full mx-8">
-                        <CardContent className="p-12 text-center">
-                            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-purple-100 mb-6 animate-pulse">
-                                <Megaphone className="w-12 h-12 text-purple-600" />
-                            </div>
-                            <h2 className="text-3xl font-bold text-slate-900 mb-6">PENGUMUMAN PENTING</h2>
-                            <div className="text-2xl font-semibold text-purple-700">{announcementOverlay.text}</div>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
+            <style jsx>{`
+                @keyframes marquee {
+                    0% { transform: translateX(0%); }
+                    100% { transform: translateX(-100%); }
+                }
+                .animate-marquee {
+                    animation: marquee 30s linear infinite;
+                }
+            `}</style>
         </div>
     )
 }
