@@ -93,20 +93,20 @@ export default function AnnouncementSettings() {
                             <div className="absolute inset-0 bg-white/20 rounded-lg opacity-0 group-hover:opacity-100 smooth-transition"></div>
                         </button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px]">
-                        <DialogHeader>
-                            <DialogTitle>Tambah Pengumuman Baru</DialogTitle>
-                            <DialogDescription>
+                    <DialogContent className="sm:max-w-[500px] max-w-[95vw] mx-4">
+                        <DialogHeader className="space-y-2">
+                            <DialogTitle className="text-lg sm:text-xl">Tambah Pengumuman Baru</DialogTitle>
+                            <DialogDescription className="text-sm">
                                 Buat pengumuman yang akan ditampilkan di TV Display
                             </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleSubmit}>
-                            <div className="grid gap-4 py-4">
+                            <div className="space-y-3 py-3">
                                 <div className="space-y-2">
-                                    <Label htmlFor="announcement">Teks Pengumuman</Label>
+                                    <Label htmlFor="announcement" className="text-sm">Teks Pengumuman</Label>
                                     <textarea
                                         id="announcement"
-                                        className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="flex min-h-[100px] sm:min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         placeholder="Ketik pengumuman Anda di sini..."
                                         value={text}
                                         onChange={(e) => setText(e.target.value)}
@@ -117,17 +117,18 @@ export default function AnnouncementSettings() {
                                     </p>
                                 </div>
                             </div>
-                            <DialogFooter>
+                            <DialogFooter className="gap-2 sm:gap-0">
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onClick={() => setModalOpen(false)}
                                     disabled={sending}
+                                    className="w-full sm:w-auto"
                                 >
                                     Batal
                                 </Button>
-                                <Button type="submit" loading={sending} icon={Save}>
-                                    Simpan Pengumuman
+                                <Button type="submit" loading={sending} icon={Save} className="w-full sm:w-auto">
+                                    Simpan
                                 </Button>
                             </DialogFooter>
                         </form>
