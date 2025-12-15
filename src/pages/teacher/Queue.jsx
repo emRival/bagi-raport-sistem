@@ -199,7 +199,7 @@ export default function Queue() {
                         activeQueue.map((item) => (
                             <Card key={item.id} className={item.status === 'CALLED' ? 'border-blue-300 bg-blue-50/50' : ''}>
                                 <CardContent className="p-4">
-                                    <div className="flex gap-3">
+                                    <div className="flex gap-3 flex-col sm:flex-row">
                                         {/* Queue Number - Smaller on mobile */}
                                         <div className="flex-shrink-0">
                                             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
@@ -232,8 +232,8 @@ export default function Queue() {
                                                 )}
                                             </div>
 
-                                            {/* Actions - Horizontal on mobile, better spacing */}
-                                            <div className="flex gap-2">
+                                            {/* Actions - Horizontal on mobile, Vertical on desktop */}
+                                            <div className="flex gap-2 sm:hidden">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -242,7 +242,6 @@ export default function Queue() {
                                                     disabled={!!loading[item.id] || !item.parent_phone}
                                                     icon={MessageSquare}
                                                     title={item.parent_phone ? "Kirim WA ke " + item.parent_phone : "Nomor HP tidak tersedia"}
-                                                    className="h-9"
                                                 >
                                                     WA
                                                 </Button>
@@ -254,7 +253,7 @@ export default function Queue() {
                                                         loading={loading[item.id] === 'call'}
                                                         disabled={!!loading[item.id]}
                                                         icon={Volume2}
-                                                        className="flex-1 h-9"
+                                                        className="flex-1"
                                                     >
                                                         Panggil
                                                     </Button>
@@ -267,7 +266,6 @@ export default function Queue() {
                                                             loading={loading[item.id] === 'call'}
                                                             disabled={!!loading[item.id]}
                                                             icon={RotateCcw}
-                                                            className="h-9"
                                                         >
                                                             Ulang
                                                         </Button>
@@ -278,13 +276,64 @@ export default function Queue() {
                                                             loading={loading[item.id] === 'finish'}
                                                             disabled={!!loading[item.id]}
                                                             icon={Check}
-                                                            className="bg-green-600 hover:bg-green-700 flex-1 h-9"
+                                                            className="bg-green-600 hover:bg-green-700 flex-1"
                                                         >
                                                             Selesai
                                                         </Button>
                                                     </>
                                                 )}
                                             </div>
+                                        </div>
+
+                                        {/* Actions Desktop - Vertical on right */}
+                                        <div className="hidden sm:flex flex-col gap-2 w-auto">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleNotify(item)}
+                                                loading={loading[item.id] === 'notify'}
+                                                disabled={!!loading[item.id] || !item.parent_phone}
+                                                icon={MessageSquare}
+                                                title={item.parent_phone ? "Kirim WA ke " + item.parent_phone : "Nomor HP tidak tersedia"}
+                                            >
+                                                WA
+                                            </Button>
+
+                                            {item.status === 'WAITING' ? (
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => handleCall(item)}
+                                                    loading={loading[item.id] === 'call'}
+                                                    disabled={!!loading[item.id]}
+                                                    icon={Volume2}
+                                                >
+                                                    Panggil
+                                                </Button>
+                                            ) : (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleRecall(item)}
+                                                        loading={loading[item.id] === 'call'}
+                                                        disabled={!!loading[item.id]}
+                                                        icon={RotateCcw}
+                                                    >
+                                                        Ulang
+                                                    </Button>
+                                                    <Button
+                                                        variant="default"
+                                                        size="sm"
+                                                        onClick={() => handleFinish(item)}
+                                                        loading={loading[item.id] === 'finish'}
+                                                        disabled={!!loading[item.id]}
+                                                        icon={Check}
+                                                        className="bg-green-600 hover:bg-green-700"
+                                                    >
+                                                        Selesai
+                                                    </Button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </CardContent>
