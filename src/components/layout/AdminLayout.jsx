@@ -55,8 +55,8 @@ export default function AdminLayout() {
                 )}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
-                    <div className="flex items-center gap-3 overflow-hidden">
+                <div className="flex items-start justify-between p-4 border-b border-slate-700/50 gap-2">
+                    <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
                         {settings.schoolLogo ? (
                             <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-lg flex-shrink-0 overflow-hidden">
                                 <img src={settings.schoolLogo} alt="Logo" className="w-full h-full object-contain" />
@@ -67,16 +67,16 @@ export default function AdminLayout() {
                             </div>
                         )}
                         {sidebarOpen && (
-                            <div className="animate-fade-in">
-                                <h1 className="text-white font-bold text-base leading-tight whitespace-nowrap">
+                            <div className="animate-fade-in min-w-0 flex-1">
+                                <h1 className="text-white font-bold text-sm leading-tight break-words">
                                     {settings.schoolName || 'Bagi Raport'}
                                 </h1>
-                                <p className="text-slate-400 text-[10px] leading-tight">Sistem Antrian Raport</p>
+                                <p className="text-slate-400 text-[10px] leading-tight mt-0.5">Sistem Antrian Raport</p>
                             </div>
                         )}
                     </div>
                     <button
-                        className="flex w-8 h-8 rounded-lg items-center justify-center hover:bg-slate-700/50 text-slate-400 hover:text-white smooth-transition"
+                        className="flex w-8 h-8 rounded-lg items-center justify-center hover:bg-slate-700/50 text-slate-400 hover:text-white smooth-transition flex-shrink-0"
                         onClick={() => setSidebarOpen(!sidebarOpen)}
                     >
                         <ChevronLeft className={cn("w-5 h-5 smooth-transition", !sidebarOpen && "rotate-180")} />
