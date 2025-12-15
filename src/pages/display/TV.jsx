@@ -147,7 +147,10 @@ export default function TV() {
             const data = await queueApi.getStats()
             if (data) {
                 setStats(data)
-                if (data.onlineClasses) setOnlineClasses(data.onlineClasses)
+                // Only update onlineClasses from API if it explicitly returns it
+                // and we haven't received a socket update recently? 
+                // For now, let's trust the socket for online status to avoid conflicts
+                // if (data.onlineClasses) setOnlineClasses(data.onlineClasses)
             }
         } catch (error) {
             console.error('Fetch Stats Error:', error)
@@ -156,7 +159,12 @@ export default function TV() {
 
     // --- TTS LOGIC ---
     const addToQueue = (text, overlayData = null) => {
-        setTtsQueue(prev => [...prev, { text, overlay: overlayData }])
+        // Prevent duplicates in queue
+        setTtsQueue(prev => {
+            const isDuplicate = prev.some(item => item.text === text)
+            if (isDuplicate) return prev
+            return [...prev, { text, overlay: overlayData }]
+        })
     }
 
     const processQueue = () => {
@@ -428,7 +436,7 @@ export default function TV() {
                 </div>
             )}
 
-            <style jsx>{`
+            <style>{`
                 @keyframes marquee {
                     0% { transform: translateX(0%); }
                     100% { transform: translateX(-100%); }
