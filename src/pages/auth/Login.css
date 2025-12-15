@@ -84,3 +84,35 @@
     text-align: center;
     color: var(--neutral-600);
 }
+
+/* Responsive */
+@media (max-width: 640px) {
+    .login-page {
+        padding: var(--spacing-3);
+    }
+
+    .login-card {
+        padding: var(--spacing-6);
+    }
+
+    .login-logo {
+        width: 64px;
+        height: 64px;
+    }
+
+    .login-title {
+        font-size: var(--font-size-xl);
+    }
+
+    .login-subtitle {
+        font-size: var(--font-size-xs);
+    }
+
+    .login-form {
+        gap: var(--spacing-4);
+    }
+
+    .login-demo-accounts {
+        grid-template-columns: 1fr;
+    }
+}
