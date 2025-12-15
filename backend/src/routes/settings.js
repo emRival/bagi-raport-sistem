@@ -124,15 +124,6 @@ router.delete('/users/:id', authMiddleware, (req, res) => {
     }
 })
 
-// Delete announcement (soft delete by setting is_active to 0)
-router.delete('/announcements/:id', (req, res) => {
-    try {
-        db.prepare('UPDATE announcements SET is_active = 0 WHERE id = ?').run(req.params.id)
-        res.json({ success: true })
-    } catch (error) {
-        res.status(500).json({ error: 'Internal server error' })
-    }
-})
 
 // Broadcast announcement (Trigger Popup)
 router.post('/announcements/:id/broadcast', (req, res) => {

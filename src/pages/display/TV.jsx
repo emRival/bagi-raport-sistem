@@ -5,7 +5,7 @@ import { useAnnouncements } from '../../context/AnnouncementsContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { socketService } from '../../services/socket.js'
 import { queueApi } from '../../services/api.js'
-import { Volume2, Megaphone, VolumeX, Wifi, WifiOff } from 'lucide-react'
+import { Volume2, Megaphone, VolumeX, Wifi, WifiOff, LogOut } from 'lucide-react'
 import { Badge } from '@/components/ui-new/badge'
 import { Button } from '@/components/ui-new/button'
 
@@ -279,6 +279,19 @@ export default function TV() {
                                 {soundEnabled ? 'SUARA ON' : 'SUARA OFF'}
                             </Button>
                         </div>
+
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                                logout()
+                                navigate('/login')
+                            }}
+                            className="h-8 px-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                            title="Keluar"
+                        >
+                            <LogOut className="w-4 h-4" />
+                        </Button>
 
                         <div className="h-10 w-px bg-slate-200"></div>
 
