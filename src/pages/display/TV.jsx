@@ -7,6 +7,9 @@ import { socketService } from '../../services/socket.js'
 import { queueApi } from '../../services/api.js'
 import { Volume2, Megaphone, VolumeX, Wifi, WifiOff } from 'lucide-react'
 
+import { Badge } from '@/components/ui-new/badge'
+import { Button } from '@/components/ui-new/button'
+
 export default function TV() {
     const navigate = useNavigate()
     const { logout } = useAuth()
@@ -121,6 +124,10 @@ export default function TV() {
         try {
             const data = await queueApi.getStats()
             setStats(data)
+            // Also update online classes if provided in stats
+            if (data.onlineClasses) {
+                setOnlineClasses(data.onlineClasses)
+            }
         } catch (error) {
             console.error('Error fetching stats:', error)
         }
@@ -167,10 +174,17 @@ export default function TV() {
             refreshAnnouncements()
         }
         const handleTeacherStatusUpdate = (data) => {
-            setOnlineClasses(prev => {
-                if (data.status === 'online') return Array.from(new Set([...prev, data.className]))
-                else return prev.filter(c => c !== data.className)
-            })
+            console.log('Online status event:', data)
+            if (Array.isArray(data)) {
+                setOnlineClasses(data)
+            } else if (data && data.onlineClasses) {
+                setOnlineClasses(data.onlineClasses)
+            } else {
+                setOnlineClasses(prev => {
+                    if (data.status === 'online') return Array.from(new Set([...prev, data.className]))
+                    else return prev.filter(c => c !== data.className)
+                })
+            }
         }
 
         socketService.on('connect', handleConnect)
@@ -237,19 +251,26 @@ export default function TV() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100">
             {/* Status */}
-            <div className={`fixed top-3 left-3 px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg z-50 ${connected ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
-                {connected ? <><Wifi className="w-3.5 h-3.5 inline mr-1" />Online</> : <><WifiOff className="w-3.5 h-3.5 inline mr-1" />Offline</>}
+            <div className="fixed top-3 left-3 z-50">
+                <Badge
+                    variant={connected ? "default" : "destructive"}
+                    className={`${connected ? "bg-green-500 hover:bg-green-600 border-green-600" : "bg-red-500 hover:bg-red-600 border-red-600"} shadow-lg text-xs px-3 py-1.5 gap-1.5`}
+                >
+                    {connected ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
+                    {connected ? 'Online' : 'Offline'}
+                </Badge>
             </div>
 
-            {!soundEnabled ? (
-                <button onClick={enableSound} className="fixed top-3 right-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg z-50 font-semibold text-sm animate-pulse">
-                    <VolumeX className="w-4 h-4 inline mr-1" />Aktifkan Suara
-                </button>
-            ) : (
-                <div className="fixed top-3 right-3 px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-bold shadow-lg z-50">
-                    <Volume2 className="w-3.5 h-3.5 inline mr-1" />Suara Aktif
-                </div>
-            )}
+            <div className="fixed top-3 right-3 z-50">
+                <Button
+                    size="sm"
+                    onClick={soundEnabled ? () => setSoundEnabled(false) : enableSound}
+                    className={`${!soundEnabled ? "animate-pulse bg-blue-600 hover:bg-blue-700" : "bg-blue-500 hover:bg-blue-600"} text-white shadow-lg h-8 text-xs font-bold`}
+                >
+                    {soundEnabled ? <Volume2 className="w-3.5 h-3.5 mr-1.5" /> : <VolumeX className="w-3.5 h-3.5 mr-1.5" />}
+                    {soundEnabled ? 'Suara Aktif' : 'Aktifkan Suara'}
+                </Button>
+            </div>
 
             {/* Header */}
             <header className="bg-white shadow-md border-b-4 border-blue-600 py-3 px-6">
