@@ -435,13 +435,35 @@ export default function TV() {
                         <h2 className="text-3xl font-black mb-6 text-yellow-300 tracking-wider uppercase">📢 PENGUMUMAN</h2>
                         <div className="bg-white/10 rounded-2xl p-8 backdrop-blur-sm border border-white/20 min-h-[200px] flex items-center justify-center">
                             <p className={`${overlay.text.length > 200 ? 'text-2xl' :
-                                    overlay.text.length > 100 ? 'text-3xl' :
-                                        overlay.text.length > 50 ? 'text-4xl' :
-                                            'text-5xl'
+                                overlay.text.length > 100 ? 'text-3xl' :
+                                    overlay.text.length > 50 ? 'text-4xl' :
+                                        'text-5xl'
                                 } font-bold text-white leading-relaxed break-words`}>
                                 {overlay.text}
                             </p>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Sound Activation Overlay - Forces user interaction for Autoplay Policy */}
+            {!soundEnabled && (
+                <div
+                    onClick={enableSound}
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center cursor-pointer animate-in fade-in duration-500 hover:bg-black/70 transition-colors"
+                >
+                    <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 text-center shadow-2xl animate-bounce-slow">
+                        <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600">
+                            <VolumeX className="w-10 h-10" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-slate-900 mb-2">Suara Nonaktif</h3>
+                        <p className="text-slate-600 mb-8 max-w-sm mx-auto">
+                            Klik di mana saja pada layar untuk mengaktifkan suara notifikasi panggilan.
+                        </p>
+                        <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6 shadow-lg shadow-blue-200">
+                            <Volume2 className="w-6 h-6 mr-2" />
+                            Aktifkan Suara
+                        </Button>
                     </div>
                 </div>
             )}
@@ -453,6 +475,13 @@ export default function TV() {
                 }
                 .animate-marquee {
                     animation: marquee 30s linear infinite;
+                }
+                @keyframes bounce-slow {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-10px); }
+                }
+                .animate-bounce-slow {
+                    animation: bounce-slow 3s infinite ease-in-out;
                 }
             `}</style>
         </div>
