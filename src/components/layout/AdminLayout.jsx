@@ -55,8 +55,8 @@ export default function AdminLayout() {
                 )}
             >
                 {/* Header */}
-                <div className="flex items-start justify-between p-4 border-b border-slate-700/50 gap-2">
-                    <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
+                <div className="relative p-4 border-b border-slate-700/50">
+                    <div className="flex items-center gap-3 justify-center">
                         {settings.schoolLogo ? (
                             <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-lg flex-shrink-0 overflow-hidden">
                                 <img src={settings.schoolLogo} alt="Logo" className="w-full h-full object-contain" />
@@ -75,11 +75,13 @@ export default function AdminLayout() {
                             </div>
                         )}
                     </div>
+
+                    {/* Floating Arrow Button */}
                     <button
-                        className="flex w-8 h-8 rounded-lg items-center justify-center hover:bg-slate-700/50 text-slate-400 hover:text-white smooth-transition flex-shrink-0"
+                        className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-slate-300 hover:text-white smooth-transition shadow-lg border border-slate-600 z-10"
                         onClick={() => setSidebarOpen(!sidebarOpen)}
                     >
-                        <ChevronLeft className={cn("w-5 h-5 smooth-transition", !sidebarOpen && "rotate-180")} />
+                        <ChevronLeft className={cn("w-4 h-4 smooth-transition", !sidebarOpen && "rotate-180")} />
                     </button>
                 </div>
 
