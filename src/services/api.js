@@ -104,6 +104,8 @@ export const queueApi = {
         body: JSON.stringify({ type })
     }),
 
+    remove: (id) => api(`/queue/${id}`, { method: 'DELETE' }),
+
     reset: () => api('/queue/reset', { method: 'DELETE' })
 }
 

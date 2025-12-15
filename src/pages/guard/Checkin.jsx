@@ -113,7 +113,7 @@ export default function Checkin() {
         if (!confirm(`Batalkan check-in untuk ${name}?`)) return
 
         try {
-            await queueApi.delete(id)
+            await queueApi.remove(id)
             toast.success(`Check-in ${name} dibatalkan`)
             fetchData()
         } catch (error) {
