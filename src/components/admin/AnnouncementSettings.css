@@ -1,0 +1,120 @@
+/* Announcement Settings */
+.announcement-form {
+    display: flex;
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-6);
+}
+
+.announcement-form .input-wrapper {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.announcement-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+}
+
+.announcement-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-4);
+    background: var(--neutral-50);
+    border: 1px solid var(--neutral-200);
+    border-radius: var(--radius-lg);
+    transition: all 0.2s;
+}
+
+.announcement-item.inactive {
+    opacity: 0.6;
+    background: var(--neutral-100);
+}
+
+.announcement-content {
+    flex: 1;
+    margin-right: var(--spacing-4);
+}
+
+.announcement-text {
+    font-weight: 500;
+    color: var(--neutral-900);
+    margin-bottom: var(--spacing-1);
+}
+
+.announcement-date {
+    font-size: var(--font-size-xs);
+    color: var(--neutral-500);
+}
+
+.announcement-actions {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.action-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    border: 1px solid var(--neutral-200);
+    color: var(--neutral-600);
+}
+
+.action-btn:hover {
+    background: var(--neutral-100);
+    color: var(--primary-600);
+    border-color: var(--primary-200);
+}
+
+.toggle-btn.active {
+    color: var(--success-600);
+    background: var(--success-50);
+    border-color: var(--success-200);
+}
+
+.broadcast-btn:hover {
+    color: var(--info-600);
+    background: var(--info-50);
+    border-color: var(--info-200);
+}
+
+.delete-btn:hover {
+    color: var(--danger-600);
+    background: var(--danger-50);
+    border-color: var(--danger-200);
+}
+
+.edit-mode {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+.edit-actions {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-8);
+    color: var(--neutral-400);
+    font-style: italic;
+    background: var(--neutral-50);
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--neutral-200);
+}
+
+.icon-edit,
+.icon-trash {
+    font-size: 1.25rem;
+    line-height: 1;
+}

@@ -1,0 +1,29 @@
+# Frontend .dockerignore
+node_modules
+npm-debug.log
+.env
+.env.*
+*.log
+dist
+build
+.DS_Store
+.git
+.gitignore
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Development files
+*.development
+*.test
+coverage
+.vscode
+.idea
+
+# Backend directory
+backend/
+
+# Logs
+logs
+*.log
+npm-debug.log*

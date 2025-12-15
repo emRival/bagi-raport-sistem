@@ -1,0 +1,29 @@
+# Backend .dockerignore
+node_modules
+npm-debug.log
+.env
+.env.*
+*.log
+dist
+build
+.DS_Store
+.git
+.gitignore
+README.md
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Development files
+*.development
+*.test
+coverage
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Database (will use volume)
+data/*.db
+data/*.db-*

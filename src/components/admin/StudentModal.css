@@ -1,0 +1,64 @@
+/* StudentModal.css */
+.student-form-layout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+.form-label {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--neutral-700);
+}
+
+.form-select {
+    width: 100%;
+    height: 44px;
+    /* Match Input layout */
+    padding: 0 var(--spacing-4);
+    font-size: var(--font-size-base);
+    color: var(--neutral-900);
+    background-color: white;
+    border: 1px solid var(--neutral-300);
+    border-radius: var(--radius-lg);
+    /* Match Input radius */
+    transition: all var(--transition-fast);
+
+    /* Custom Dropdown Arrow */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    cursor: pointer;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px var(--primary-100);
+    /* Match Input focus ring */
+}
+
+.form-select:disabled {
+    background-color: var(--neutral-100);
+    cursor: not-allowed;
+    color: var(--neutral-500);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-6);
+    padding-top: var(--spacing-4);
+    border-top: 1px solid var(--neutral-100);
+}
