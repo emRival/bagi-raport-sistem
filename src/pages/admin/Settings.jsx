@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react'
-import { Save, TestTube, Eye, EyeOff, Upload, Link, Image, Trash2 } from 'lucide-react'
+import { Save, TestTube, Eye, EyeOff, Upload, Link, Image, Trash2, Plus, X } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui-new/card'
 import { Button } from '@/components/ui-new/button'
 import { Input } from '@/components/ui-new/input'
 import { Label } from '@/components/ui-new/label'
+import { Badge } from '@/components/ui-new/badge'
 import { Switch } from '@/components/ui-new/switch'
 import { Slider } from '@/components/ui-new/slider'
 import { useSettings } from '../../context/SettingsContext.jsx'
@@ -17,6 +18,7 @@ export default function Settings() {
     const [testing, setTesting] = useState(false)
     const [logoMode, setLogoMode] = useState(settings.schoolLogo?.startsWith('http') ? 'url' : 'upload')
     const [logoUrl, setLogoUrl] = useState(settings.schoolLogo?.startsWith('http') ? settings.schoolLogo : '')
+    const [newClass, setNewClass] = useState('')
     const fileInputRef = useRef(null)
 
     const handleSave = (section) => {
@@ -74,6 +76,32 @@ export default function Settings() {
             toast.success('Logo berhasil dihapus')
         } catch (error) {
             toast.error('Gagal menghapus logo')
+        }
+    }
+
+    const handleAddClass = () => {
+        const className = newClass.trim().toUpperCase()
+        if (!className) {
+            toast.error('Nama kelas tidak boleh kosong')
+            return
+        }
+
+        if (settings.classes.includes(className)) {
+            toast.error('Kelas sudah ada')
+            return
+        }
+
+        const updatedClasses = [...settings.classes, className].sort()
+        updateSettings({ classes: updatedClasses })
+        setNewClass('')
+        toast.success(`Kelas ${className} berhasil ditambahkan`)
+    }
+
+    const handleRemoveClass = (className) => {
+        if (confirm(`Hapus kelas ${className} dari daftar?`)) {
+            const updatedClasses = settings.classes.filter(c => c !== className)
+            updateSettings({ classes: updatedClasses })
+            toast.success(`Kelas ${className} berhasil dihapus`)
         }
     }
 
@@ -170,6 +198,72 @@ export default function Settings() {
                     <Button onClick={() => handleSave('sekolah')} loading={saving} icon={Save}>
                         Simpan Info Sekolah
                     </Button>
+                </CardContent>
+            </Card>
+
+            {/* Classes Management */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>📚 Manajemen Kelas</CardTitle>
+                    <CardDescription>
+                        Daftar kelas untuk dropdown filter. Siswa tetap bisa memiliki kelas lain saat import.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label>Daftar Kelas</Label>
+                        <div className="flex flex-wrap gap-2">
+                            {settings.classes && settings.classes.length > 0 ? (
+                                settings.classes.map(className => (
+                                    <Badge
+                                        key={className}
+                                        variant="outline"
+                                        className="px-3 py-1.5 hover:bg-muted"
+                                    >
+                                        {className}
+                                        <button
+                                            onClick={() => handleRemoveClass(className)}
+                                            className="ml-2 hover:text-red-600"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    </Badge>
+                                ))
+                            ) : (
+                                <p className="text-sm text-muted-foreground">Belum ada kelas</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="newClass">Tambah Kelas Baru</Label>
+                        <div className="flex gap-2">
+                            <Input
+                                id="newClass"
+                                placeholder="Contoh: 7A, 8B, 9C"
+                                value={newClass}
+                                onChange={(e) => setNewClass(e.target.value)}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        handleAddClass()
+                                    }
+                                }}
+                            />
+                            <Button onClick={handleAddClass} icon={Plus}>
+                                Tambah
+                            </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            💡 Tip: Tekan Enter untuk menambah kelas
+                        </p>
+                    </div>
+
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-sm text-amber-900">
+                            <strong>Note:</strong> Daftar ini hanya untuk filter dropdown. Siswa bisa memiliki kelas apapun saat import Excel.
+                        </p>
+                    </div>
                 </CardContent>
             </Card>
 
