@@ -280,13 +280,71 @@ export default function Queue() {
                                                         >
                                                             Selesai
                                                         </Button>
-                                                    </div>
-                                            </CardContent>
-                                        </Card>
-                                        ))
-                    )}
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Actions Desktop - Vertical on right, fixed width */}
+                                        <div className="hidden sm:flex flex-col gap-2 w-[120px]">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleNotify(item)}
+                                                loading={loading[item.id] === 'notify'}
+                                                disabled={!!loading[item.id] || !item.parent_phone}
+                                                icon={MessageSquare}
+                                                title={item.parent_phone ? "Kirim WA ke " + item.parent_phone : "Nomor HP tidak tersedia"}
+                                                className="w-full"
+                                            >
+                                                WA
+                                            </Button>
+
+                                            {item.status === 'WAITING' ? (
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => handleCall(item)}
+                                                    loading={loading[item.id] === 'call'}
+                                                    disabled={!!loading[item.id]}
+                                                    icon={Volume2}
+                                                    className="w-full"
+                                                >
+                                                    Panggil
+                                                </Button>
+                                            ) : (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleRecall(item)}
+                                                        loading={loading[item.id] === 'call'}
+                                                        disabled={!!loading[item.id]}
+                                                        icon={RotateCcw}
+                                                        className="w-full"
+                                                    >
+                                                        Ulang
+                                                    </Button>
+                                                    <Button
+                                                        variant="default"
+                                                        size="sm"
+                                                        onClick={() => handleFinish(item)}
+                                                        loading={loading[item.id] === 'finish'}
+                                                        disabled={!!loading[item.id]}
+                                                        icon={Check}
+                                                        className="bg-green-600 hover:bg-green-700 w-full"
+                                                    >
+                                                        Selesai
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
-                                </main>
-                            </div>
-                        )
+                                </CardContent>
+                            </Card>
+                        ))
+                    )}
+                </div>
+            </main>
+        </div>
+    )
 }
