@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Search, CheckCircle, LogOut, ClipboardList, Clock, AlertCircle, UserCheck, Phone } from 'lucide-react'
+import { Search, CheckCircle, LogOut, ClipboardList, Clock, AlertCircle, UserCheck, Phone, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
@@ -106,6 +106,19 @@ export default function Checkin() {
             toast.error(error.message || 'Gagal check-in. Mungkin sudah check-in hari ini.')
         } finally {
             setCheckingIn(false)
+        }
+    }
+
+    const handleUncheckin = async (id, name) => {
+        if (!confirm(`Batalkan check-in untuk ${name}?`)) return
+
+        try {
+            await queueApi.delete(id)
+            toast.success(`Check-in ${name} dibatalkan`)
+            fetchData()
+        } catch (error) {
+            console.error('Error undoing checkin:', error)
+            toast.error('Gagal membatalkan check-in')
         }
     }
 
@@ -301,6 +314,13 @@ export default function Checkin() {
                                     <span className="recent-checkins__time">
                                         {new Date(item.check_in_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                     </span>
+                                    <button
+                                        className="p-1 text-red-500 hover:bg-red-50 rounded ml-2"
+                                        onClick={() => handleUncheckin(item.id, item.name)}
+                                        title="Batalkan Check-in"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
                             ))}
                         </div>
