@@ -13,7 +13,7 @@ import {
     ChevronLeft,
     History,
 } from 'lucide-react'
-import './AdminLayout.css'
+import { cn } from '@/lib/utils'
 
 const navItems = [
     { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -36,77 +36,127 @@ export default function AdminLayout() {
     }
 
     return (
-        <div className="admin-layout">
+        <div className="flex h-screen overflow-hidden bg-slate-50">
             {/* Mobile overlay */}
             {mobileOpen && (
                 <div
-                    className="sidebar-overlay"
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden animate-fade-in"
                     onClick={() => setMobileOpen(false)}
                 />
             )}
 
-            {/* Sidebar */}
-            <aside className={`sidebar ${sidebarOpen ? '' : 'sidebar--collapsed'} ${mobileOpen ? 'sidebar--mobile-open' : ''}`}>
-                <div className="sidebar__header">
-                    <div className="sidebar__logo">
-                        <GraduationCap size={28} />
-                        {sidebarOpen && <span>Bagi Raport</span>}
+            {/* Modern Sidebar */}
+            <aside
+                className={cn(
+                    "fixed lg:sticky top-0 left-0 z-50 h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 flex flex-col smooth-transition shadow-2xl",
+                    sidebarOpen ? "w-64" : "w-20",
+                    mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+                )}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg flex-shrink-0">
+                            <GraduationCap className="w-6 h-6 text-white" />
+                        </div>
+                        {sidebarOpen && (
+                            <div className="animate-fade-in">
+                                <h1 className="text-white font-bold text-lg whitespace-nowrap">Bagi Raport</h1>
+                                <p className="text-slate-400 text-xs">Admin Panel</p>
+                            </div>
+                        )}
                     </div>
                     <button
-                        className="sidebar__toggle sidebar__toggle--desktop"
+                        className="hidden lg:flex w-8 h-8 rounded-lg items-center justify-center hover:bg-slate-700/50 text-slate-400 hover:text-white smooth-transition"
                         onClick={() => setSidebarOpen(!sidebarOpen)}
                     >
-                        <ChevronLeft size={20} />
+                        <ChevronLeft className={cn("w-5 h-5 smooth-transition", !sidebarOpen && "rotate-180")} />
                     </button>
                     <button
-                        className="sidebar__toggle sidebar__toggle--mobile"
+                        className="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-700/50 text-slate-400 hover:text-white smooth-transition"
                         onClick={() => setMobileOpen(false)}
                     >
-                        <X size={20} />
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <nav className="sidebar__nav">
-                    {navItems.map(item => (
+                {/* Navigation */}
+                <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+                    {navItems.map((item) => (
                         <NavLink
                             key={item.path}
                             to={item.path}
-                            className={({ isActive }) =>
-                                `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`
-                            }
                             onClick={() => setMobileOpen(false)}
+                            className={({ isActive }) =>
+                                cn(
+                                    "flex items-center gap-3 px-3 py-3 rounded-lg smooth-transition group relative overflow-hidden",
+                                    isActive
+                                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
+                                        : "text-slate-400 hover:bg-slate-700/50 hover:text-white"
+                                )
+                            }
                         >
-                            <item.icon size={20} />
-                            {sidebarOpen && <span>{item.label}</span>}
+                            {({ isActive }) => (
+                                <>
+                                    <item.icon className={cn("w-5 h-5 flex-shrink-0 smooth-transition", isActive && "scale-110")} />
+                                    {sidebarOpen && (
+                                        <span className="font-medium text-sm whitespace-nowrap animate-fade-in">
+                                            {item.label}
+                                        </span>
+                                    )}
+                                    {isActive && (
+                                        <div className="absolute inset-0 bg-white/10 rounded-lg animate-pulse"></div>
+                                    )}
+                                </>
+                            )}
                         </NavLink>
                     ))}
                 </nav>
 
-                <div className="sidebar__footer">
-                    <button className="sidebar__link sidebar__logout" onClick={handleLogout}>
-                        <LogOut size={20} />
-                        {sidebarOpen && <span>Logout</span>}
+                {/* Footer */}
+                <div className="p-3 border-t border-slate-700/50 space-y-2">
+                    {sidebarOpen && user && (
+                        <div className="px-3 py-2 bg-slate-700/30 rounded-lg mb-2 animate-fade-in">
+                            <p className="text-white text-sm font-medium truncate">{user.name}</p>
+                            <p className="text-slate-400 text-xs">Administrator</p>
+                        </div>
+                    )}
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-slate-400 hover:bg-red-500/20 hover:text-red-400 smooth-transition group"
+                    >
+                        <LogOut className="w-5 h-5 flex-shrink-0 group-hover:scale-110 smooth-transition" />
+                        {sidebarOpen && <span className="font-medium text-sm">Logout</span>}
                     </button>
                 </div>
             </aside>
 
             {/* Main content */}
-            <div className="admin-main">
-                <header className="admin-header">
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Top header */}
+                <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 sm:px-6 shadow-sm">
                     <button
-                        className="mobile-menu-btn"
+                        className="lg:hidden p-2 rounded-lg hover:bg-slate-100 smooth-transition"
                         onClick={() => setMobileOpen(true)}
                     >
-                        <Menu size={24} />
+                        <Menu className="w-6 h-6" />
                     </button>
-                    <div className="admin-header__spacer" />
-                    <div className="admin-header__user">
-                        <span className="admin-header__name">{user?.name}</span>
-                        <span className="admin-header__role">Administrator</span>
-                    </div>
+                    <div className="flex-1" />
+                    {user && (
+                        <div className="hidden sm:flex items-center gap-3">
+                            <div className="text-right">
+                                <p className="text-sm font-medium text-slate-900">{user.name}</p>
+                                <p className="text-xs text-slate-500">Administrator</p>
+                            </div>
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg">
+                                {user.name?.charAt(0).toUpperCase()}
+                            </div>
+                        </div>
+                    )}
                 </header>
 
-                <main className="admin-content">
+                {/* Page content */}
+                <main className="flex-1 overflow-y-auto">
                     <Outlet />
                 </main>
             </div>

@@ -311,3 +311,16 @@ img {
   transform: translateY(-4px);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 }
+
+/* Nuclear Mobile Fix */
+* {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+}
+
+@media (max-width: 640px) {
+  body, #root {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
+}

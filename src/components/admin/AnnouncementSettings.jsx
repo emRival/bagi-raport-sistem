@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useAnnouncements } from '../../context/AnnouncementsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import Button from '../ui/Button.jsx'
-import Input from '../ui/Input.jsx'
-import { Save, Eye, EyeOff, Megaphone } from 'lucide-react'
-import './AnnouncementSettings.css'
+import { Button } from '@/components/ui-new/button'
+import { Input } from '@/components/ui-new/input'
+import { Label } from '@/components/ui-new/label'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui-new/dialog'
+import { Save, Eye, EyeOff, Megaphone, Plus } from 'lucide-react'
 
 export default function AnnouncementSettings() {
     const { announcements, addAnnouncement, updateAnnouncement, removeAnnouncement, broadcastAnnouncement } = useAnnouncements()
@@ -14,6 +15,7 @@ export default function AnnouncementSettings() {
     const [editingId, setEditingId] = useState(null)
     const [editText, setEditText] = useState('')
     const [sending, setSending] = useState(false)
+    const [modalOpen, setModalOpen] = useState(false)
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -23,6 +25,7 @@ export default function AnnouncementSettings() {
         try {
             await addAnnouncement(text)
             setText('')
+            setModalOpen(false)
             toast.success('Pengumuman berhasil ditambahkan')
         } catch (error) {
             toast.error('Gagal menambah pengumuman')
@@ -74,86 +77,139 @@ export default function AnnouncementSettings() {
     }
 
     return (
-        <div className="announcement-settings">
-            <form onSubmit={handleSubmit} className="announcement-form">
-                <Input
-                    placeholder="Tulis pengumuman baru..."
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    disabled={sending}
-                />
-                <Button type="submit" loading={sending} icon={Save}>
-                    Tambah
-                </Button>
-            </form>
+        <div className="space-y-4">
+            {/* Beautiful Add Button with Modal */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p className="text-sm text-muted-foreground">
+                    {announcements.length} pengumuman tersimpan
+                </p>
+                <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+                    <DialogTrigger asChild>
+                        <button className="group relative px-6 py-3 bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl smooth-transition hover:scale-105 active:scale-95">
+                            <div className="flex items-center gap-2">
+                                <Plus className="w-5 h-5 group-hover:rotate-90 smooth-transition" />
+                                <span>Tambah Pengumuman</span>
+                            </div>
+                            <div className="absolute inset-0 bg-white/20 rounded-lg opacity-0 group-hover:opacity-100 smooth-transition"></div>
+                        </button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px]">
+                        <DialogHeader>
+                            <DialogTitle>Tambah Pengumuman Baru</DialogTitle>
+                            <DialogDescription>
+                                Buat pengumuman yang akan ditampilkan di TV Display
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleSubmit}>
+                            <div className="grid gap-4 py-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="announcement">Teks Pengumuman</Label>
+                                    <textarea
+                                        id="announcement"
+                                        className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        placeholder="Ketik pengumuman Anda di sini..."
+                                        value={text}
+                                        onChange={(e) => setText(e.target.value)}
+                                        disabled={sending}
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        {text.length} karakter
+                                    </p>
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setModalOpen(false)}
+                                    disabled={sending}
+                                >
+                                    Batal
+                                </Button>
+                                <Button type="submit" loading={sending} icon={Save}>
+                                    Simpan Pengumuman
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+            </div>
 
-            <div className="announcement-list">
+            {/* Announcements List */}
+            <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
                 {announcements.length === 0 && (
-                    <div className="empty-state">Belum ada pengumuman</div>
+                    <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                        <Megaphone className="w-12 h-12 mx-auto text-muted-foreground mb-3 opacity-50" />
+                        <p className="text-muted-foreground font-medium">Belum ada pengumuman</p>
+                        <p className="text-sm text-muted-foreground mt-1">Klik tombol di atas untuk membuat pengumuman pertama</p>
+                    </div>
                 )}
 
                 {announcements.map(ann => (
-                    <div key={ann.id} className={`announcement-item ${!ann.is_active ? 'inactive' : ''}`}>
-                        <div className="announcement-content">
-                            {editingId === ann.id ? (
-                                <div className="edit-mode">
-                                    <Input
-                                        value={editText}
-                                        onChange={e => setEditText(e.target.value)}
-                                        autoFocus
-                                    />
-                                    <div className="edit-actions">
-                                        <Button size="sm" onClick={() => handleUpdate(ann.id)}>Simpan</Button>
-                                        <Button size="sm" variant="secondary" onClick={() => setEditingId(null)}>Batal</Button>
+                    <div key={ann.id} className={`p-3 rounded-lg border ${!ann.is_active ? 'bg-muted/30 opacity-60' : 'bg-background hover:bg-muted/30 smooth-transition'}`}>
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                                {editingId === ann.id ? (
+                                    <div className="space-y-2">
+                                        <textarea
+                                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                            value={editText}
+                                            onChange={e => setEditText(e.target.value)}
+                                            autoFocus
+                                        />
+                                        <div className="flex gap-2">
+                                            <Button size="sm" onClick={() => handleUpdate(ann.id)}>Simpan</Button>
+                                            <Button size="sm" variant="secondary" onClick={() => setEditingId(null)}>Batal</Button>
+                                        </div>
                                     </div>
-                                </div>
-                            ) : (
-                                <div className="view-mode">
-                                    <p className="announcement-text">{ann.text}</p>
-                                    <span className="announcement-date">
-                                        {new Date(ann.created_at).toLocaleDateString('id-ID', {
-                                            day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                                        })}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
+                                ) : (
+                                    <div>
+                                        <p className="text-sm line-clamp-2 mb-1">{ann.text}</p>
+                                        <span className="text-xs text-muted-foreground">
+                                            {new Date(ann.created_at).toLocaleDateString('id-ID', {
+                                                day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                                            })}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
 
-                        <div className="announcement-actions">
-                            <button
-                                className="action-btn broadcast-btn"
-                                onClick={() => handleBroadcast(ann.id)}
-                                title="Siarkan (Popup di TV)"
-                            >
-                                <Megaphone size={18} />
-                            </button>
+                            <div className="flex gap-1 flex-shrink-0">
+                                <button
+                                    className="p-2 rounded hover:bg-blue-100 text-blue-600 smooth-transition"
+                                    onClick={() => handleBroadcast(ann.id)}
+                                    title="Siarkan (Popup di TV)"
+                                >
+                                    <Megaphone size={18} />
+                                </button>
 
-                            <button
-                                className={`action-btn toggle-btn ${ann.is_active ? 'active' : ''}`}
-                                onClick={() => handleToggle(ann.id, ann.is_active)}
-                                title={ann.is_active ? 'Nonaktifkan' : 'Aktifkan'}
-                            >
-                                {ann.is_active ? <Eye size={18} /> : <EyeOff size={18} />}
-                            </button>
+                                <button
+                                    className={`p-2 rounded hover:bg-green-100 smooth-transition ${ann.is_active ? 'text-green-600' : 'text-gray-400'}`}
+                                    onClick={() => handleToggle(ann.id, ann.is_active)}
+                                    title={ann.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                                >
+                                    {ann.is_active ? <Eye size={18} /> : <EyeOff size={18} />}
+                                </button>
 
-                            <button
-                                className="action-btn edit-btn"
-                                onClick={() => {
-                                    setEditingId(ann.id)
-                                    setEditText(ann.text)
-                                }}
-                                title="Edit"
-                            >
-                                <span className="icon-edit">✏️</span>
-                            </button>
+                                <button
+                                    className="p-2 rounded hover:bg-orange-100 text-orange-600 smooth-transition"
+                                    onClick={() => {
+                                        setEditingId(ann.id)
+                                        setEditText(ann.text)
+                                    }}
+                                    title="Edit"
+                                >
+                                    <span>✏️</span>
+                                </button>
 
-                            <button
-                                className="action-btn delete-btn"
-                                onClick={() => handleDelete(ann.id)}
-                                title="Hapus"
-                            >
-                                <span className="icon-trash">🗑️</span>
-                            </button>
+                                <button
+                                    className="p-2 rounded hover:bg-red-100 text-red-600 smooth-transition"
+                                    onClick={() => handleDelete(ann.id)}
+                                    title="Hapus"
+                                >
+                                    <span>🗑️</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}
