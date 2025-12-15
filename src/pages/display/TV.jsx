@@ -382,22 +382,29 @@ export default function TV() {
             <footer className="fixed bottom-0 left-0 right-0 bg-blue-600 text-white shadow-lg py-2 px-6 z-20">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <div className="flex-1 overflow-hidden">
-                        {announcements.filter(a => a.is_active).length > 0 ? (
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg">📢</span>
-                                <div className="overflow-hidden">
-                                    <div className="whitespace-nowrap animate-marquee">
-                                        {announcements.filter(a => a.is_active).map((a, i, arr) => (
-                                            <span key={a.id} className="inline-block mr-12">
-                                                {a.text}{i < arr.length - 1 ? ' • ' : ''}
-                                            </span>
-                                        ))}
+                        {(() => {
+                            // Debug logging
+                            console.log('TV Announcements Raw:', announcements)
+                            const activeAnnouncements = announcements.filter(a => a.is_active == 1 || a.is_active === true)
+                            console.log('TV Announcements Active:', activeAnnouncements)
+
+                            return activeAnnouncements.length > 0 ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-lg">📢</span>
+                                    <div className="overflow-hidden">
+                                        <div className="whitespace-nowrap animate-marquee">
+                                            {activeAnnouncements.map((a, i, arr) => (
+                                                <span key={a.id} className="inline-block mr-12">
+                                                    {a.text}{i < arr.length - 1 ? ' • ' : ''}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="text-center text-sm">Selamat Datang di Sistem Antrian Bagi Raport</div>
-                        )}
+                            ) : (
+                                <div className="text-center text-sm">Selamat Datang di Sistem Antrian Bagi Raport</div>
+                            )
+                        })()}
                     </div>
                     <div className="flex items-center gap-3 text-xs ml-4">
                         <span>Selesai: <strong className="text-lg">{stats.totals.finished}</strong></span>
