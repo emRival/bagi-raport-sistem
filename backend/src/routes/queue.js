@@ -443,6 +443,28 @@ router.post('/:id/call', (req, res) => {
     }
 })
 
+// Cancel call (Revert to WAITING)
+router.post('/:id/cancel', (req, res) => {
+    try {
+        db.prepare(`
+            UPDATE queue 
+            SET status = 'WAITING', called_time = NULL, called_by = NULL
+            WHERE id = ?
+        `).run(req.params.id)
+
+        const queue = db.prepare('SELECT * FROM queue WHERE id = ?').get(req.params.id)
+
+        if (req.io) {
+            req.io.emit('queue-updated')
+        }
+
+        res.json(queue)
+    } catch (error) {
+        logger.error('Cancel call error:', error)
+        res.status(500).json({ error: 'Internal server error' })
+    }
+})
+
 // Manual notify
 router.post('/:id/notify', (req, res) => {
     try {

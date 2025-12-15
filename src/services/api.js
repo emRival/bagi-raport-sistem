@@ -93,6 +93,8 @@ export const queueApi = {
 
     call: (id) => api(`/queue/${id}/call`, { method: 'POST' }),
 
+    cancelCall: (id) => api(`/queue/${id}/cancel`, { method: 'POST' }),
+
     finish: (id) => api(`/queue/${id}/finish`, { method: 'POST' }),
 
     skip: (id) => api(`/queue/${id}/skip`, { method: 'POST' }),
