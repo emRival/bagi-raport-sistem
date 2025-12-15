@@ -35,7 +35,7 @@ import { useToast } from '../../context/ToastContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { studentsApi } from '../../services/api'
 
-const ITEMS_PER_PAGE = 15
+const ITEMS_PER_PAGE = 10
 
 export default function Students() {
     const { settings } = useSettings()

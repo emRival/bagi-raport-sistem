@@ -28,6 +28,15 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui-new/table'
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from '@/components/ui-new/pagination'
 import { useToast } from '../../context/ToastContext.jsx'
 import { settingsApi } from '../../services/api.js'
 
@@ -39,6 +48,7 @@ const ROLES = [
 ]
 
 const CLASSES = ['7A', '7B', '7C', '8A', '8B', '8C', '9A', '9B', '9C']
+const ITEMS_PER_PAGE = 10
 
 export default function Users() {
     const [users, setUsers] = useState([])
@@ -47,6 +57,7 @@ export default function Users() {
     const [roleFilter, setRoleFilter] = useState('all')
     const [modalOpen, setModalOpen] = useState(false)
     const [editingUser, setEditingUser] = useState(null)
+    const [currentPage, setCurrentPage] = useState(1)
     const toast = useToast()
 
     const fetchUsers = async () => {
@@ -72,6 +83,48 @@ export default function Users() {
         const matchesRole = roleFilter === 'all' || user.role === roleFilter
         return matchesSearch && matchesRole
     })
+
+    // Pagination logic
+    const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE)
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    const endIndex = startIndex + ITEMS_PER_PAGE
+    const paginatedUsers = filteredUsers.slice(startIndex, endIndex)
+
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [search, roleFilter])
+
+    const renderPageNumbers = () => {
+        const pages = []
+        const maxVisible = 5
+
+        if (totalPages <= maxVisible) {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i)
+            }
+        } else {
+            if (currentPage <= 3) {
+                for (let i = 1; i <= 4; i++) pages.push(i)
+                pages.push('ellipsis')
+                pages.push(totalPages)
+            } else if (currentPage >= totalPages - 2) {
+                pages.push(1)
+                pages.push('ellipsis')
+                for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i)
+            } else {
+                pages.push(1)
+                pages.push('ellipsis')
+                pages.push(currentPage - 1)
+                pages.push(currentPage)
+                pages.push(currentPage + 1)
+                pages.push('ellipsis')
+                pages.push(totalPages)
+            }
+        }
+
+        return pages
+    }
 
     const handleCreate = () => {
         setEditingUser(null)
@@ -199,7 +252,7 @@ export default function Users() {
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filteredUsers.map(user => (
+                                    paginatedUsers.map(user => (
                                         <TableRow key={user.id} className="hover:bg-muted/50 smooth-transition">
                                             <TableCell className="font-mono text-sm">{user.username}</TableCell>
                                             <TableCell className="font-medium">{user.name}</TableCell>
