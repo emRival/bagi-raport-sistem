@@ -40,7 +40,7 @@ export default function AdminLayout() {
             {/* Mobile overlay */}
             {mobileOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden animate-fade-in"
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden animate-in fade-in duration-200"
                     onClick={() => setMobileOpen(false)}
                 />
             )}
@@ -48,9 +48,15 @@ export default function AdminLayout() {
             {/* Modern Sidebar */}
             <aside
                 className={cn(
-                    "fixed lg:sticky top-0 left-0 z-50 h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 flex flex-col smooth-transition shadow-2xl",
-                    sidebarOpen ? "w-64" : "w-20",
-                    mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+                    "fixed lg:sticky top-0 left-0 z-50 h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 flex flex-col shadow-2xl smooth-transition",
+                    // Desktop: collapsible width
+                    "lg:w-64 lg:translate-x-0",
+                    sidebarOpen ? "lg:w-64" : "lg:w-20",
+                    // Mobile: drawer with max-width
+                    "w-72 max-w-[80vw]",
+                    mobileOpen
+                        ? "translate-x-0 animate-in slide-in-from-left duration-300"
+                        : "-translate-x-full lg:translate-x-0"
                 )}
             >
                 {/* Header */}
