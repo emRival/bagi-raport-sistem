@@ -5,8 +5,10 @@ import { useToast } from '../../context/ToastContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { queueApi, studentsApi } from '../../services/api.js'
 import { LogOut, Search, UserCheck, Clock, CheckCircle, RefreshCw } from 'lucide-react'
-import Button from '../../components/ui/Button.jsx'
-import './CheckIn.css'
+import { Button } from '@/components/ui-new/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-new/card'
+import { Input } from '@/components/ui-new/input'
+import { Badge } from '@/components/ui-new/badge'
 
 export default function CheckIn() {
     const navigate = useNavigate()
@@ -20,7 +22,6 @@ export default function CheckIn() {
     const [searchResult, setSearchResult] = useState(null)
     const inputRef = useRef(null)
 
-    // Fetch stats
     const fetchStats = async () => {
         try {
             const data = await queueApi.getStats()
@@ -30,7 +31,6 @@ export default function CheckIn() {
         }
     }
 
-    // Fetch recent check-ins
     const fetchRecent = async () => {
         try {
             const data = await queueApi.getQueue()
@@ -43,11 +43,8 @@ export default function CheckIn() {
     useEffect(() => {
         fetchStats()
         fetchRecent()
-
-        // Focus input
         inputRef.current?.focus()
 
-        // Refresh every 30 seconds
         const interval = setInterval(() => {
             fetchStats()
             fetchRecent()
@@ -71,7 +68,6 @@ export default function CheckIn() {
             } else if (students.length === 1) {
                 setSearchResult(students[0])
             } else {
-                // Multiple results, show first match
                 const exact = students.find(s => s.nis === nis.trim())
                 setSearchResult(exact || students[0])
             }
@@ -117,125 +113,143 @@ export default function CheckIn() {
     }
 
     return (
-        <div className="checkin-page">
-            <header className="checkin-header">
-                <div className="checkin-header__title">
-                    {settings.schoolLogo && settings.schoolLogo.trim() !== '' ? (
-                        <img
-                            src={settings.schoolLogo}
-                            alt="School Logo"
-                            style={{ width: '48px', height: '48px', objectFit: 'contain', marginRight: '12px' }}
-                        />
-                    ) : (
-                        <span style={{ fontSize: '2rem', marginRight: '12px' }}>🎓</span>
-                    )}
-                    <h1>Check-In Raport</h1>
-                </div>
-                <div className="checkin-header__actions">
-                    <Button variant="ghost" icon={RefreshCw} onClick={() => { fetchStats(); fetchRecent(); }}>
-                        Refresh
-                    </Button>
-                    <button className="logout-btn-sm" onClick={handleLogout} title="Logout">
-                        <LogOut size={20} />
-                    </button>
+        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950">
+            {/* Header */}
+            <header className="bg-white/10 backdrop-blur-md border-b border-white/20 px-6 py-4">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        {settings.schoolLogo && settings.schoolLogo.trim() !== '' ? (
+                            <img
+                                src={settings.schoolLogo}
+                                alt="School Logo"
+                                className="w-12 h-12 object-contain"
+                            />
+                        ) : (
+                            <span className="text-4xl">🎓</span>
+                        )}
+                        <h1 className="text-2xl font-bold text-white">Check-In Raport</h1>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button variant="ghost" icon={RefreshCw} onClick={() => { fetchStats(); fetchRecent(); }} className="text-white hover:bg-white/10">
+                            Refresh
+                        </Button>
+                        <Button variant="destructive" icon={LogOut} onClick={handleLogout}>
+                            Logout
+                        </Button>
+                    </div>
                 </div>
             </header>
 
-            <main className="checkin-main">
+            <main className="max-w-4xl mx-auto p-6 space-y-6">
                 {/* Stats */}
-                <div className="checkin-stats">
-                    <div className="checkin-stat">
-                        <Clock size={32} />
-                        <div className="checkin-stat__content">
-                            <span className="checkin-stat__value">{stats.totals.waiting}</span>
-                            <span className="checkin-stat__label">Menunggu</span>
-                        </div>
-                    </div>
-                    <div className="checkin-stat checkin-stat--success">
-                        <CheckCircle size={32} />
-                        <div className="checkin-stat__content">
-                            <span className="checkin-stat__value">{stats.totals.finished}</span>
-                            <span className="checkin-stat__label">Selesai</span>
-                        </div>
-                    </div>
-                    <div className="checkin-stat checkin-stat--total">
-                        <UserCheck size={32} />
-                        <div className="checkin-stat__content">
-                            <span className="checkin-stat__value">{stats.totals.total}</span>
-                            <span className="checkin-stat__label">Total Hari Ini</span>
-                        </div>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="bg-white/95">
+                        <CardContent className="flex items-center gap-4 p-6">
+                            <Clock className="w-12 h-12 text-yellow-600" />
+                            <div>
+                                <div className="text-4xl font-bold">{stats.totals.waiting}</div>
+                                <div className="text-sm text-muted-foreground">Menunggu</div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-white/95">
+                        <CardContent className="flex items-center gap-4 p-6">
+                            <CheckCircle className="w-12 h-12 text-green-600" />
+                            <div>
+                                <div className="text-4xl font-bold">{stats.totals.finished}</div>
+                                <div className="text-sm text-muted-foreground">Selesai</div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-white/95">
+                        <CardContent className="flex items-center gap-4 p-6">
+                            <UserCheck className="w-12 h-12 text-blue-600" />
+                            <div>
+                                <div className="text-4xl font-bold">{stats.totals.total}</div>
+                                <div className="text-sm text-muted-foreground">Total Hari Ini</div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 {/* Search Box */}
-                <div className="checkin-search">
-                    <h2>Scan atau Masukkan NIS Siswa</h2>
-                    <div className="checkin-search__input-group">
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            className="checkin-search__input"
-                            placeholder="Ketik NIS atau scan barcode..."
-                            value={nis}
-                            onChange={(e) => {
-                                setNis(e.target.value)
-                                setSearchResult(null)
-                            }}
-                            onKeyPress={handleKeyPress}
-                            autoFocus
-                        />
-                        <Button
-                            variant="primary"
-                            size="lg"
-                            icon={Search}
-                            onClick={handleSearch}
-                            loading={loading && !searchResult}
-                        >
-                            Cari
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Search Result */}
-                {searchResult && (
-                    <div className="checkin-result">
-                        <div className="checkin-result__info">
-                            <h3>{searchResult.name}</h3>
-                            <p>NIS: {searchResult.nis}</p>
-                            <p>Kelas: <strong>{searchResult.class}</strong></p>
-                            <p>Wali: {searchResult.parent_name || '-'}</p>
+                <Card className="bg-white/95">
+                    <CardHeader>
+                        <CardTitle className="text-center">Scan atau Masukkan NIS Siswa</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex gap-3">
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                className="flex-1 h-12 px-4 text-lg rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                                placeholder="Ketik NIS atau scan barcode..."
+                                value={nis}
+                                onChange={(e) => {
+                                    setNis(e.target.value)
+                                    setSearchResult(null)
+                                }}
+                                onKeyPress={handleKeyPress}
+                                autoFocus
+                            />
+                            <Button
+                                size="lg"
+                                icon={Search}
+                                onClick={handleSearch}
+                                loading={loading && !searchResult}
+                            >
+                                Cari
+                            </Button>
                         </div>
-                        <Button
-                            variant="success"
-                            size="lg"
-                            icon={UserCheck}
-                            onClick={handleCheckIn}
-                            loading={loading}
-                        >
-                            CHECK-IN
-                        </Button>
-                    </div>
-                )}
+
+                        {/* Search Result */}
+                        {searchResult && (
+                            <div className="flex items-center justify-between p-4 bg-green-50 border-2 border-green-500 rounded-lg">
+                                <div>
+                                    <h3 className="text-xl font-bold">{searchResult.name}</h3>
+                                    <p className="text-sm text-muted-foreground">NIS: {searchResult.nis}</p>
+                                    <p className="text-sm">Kelas: <strong>{searchResult.class}</strong></p>
+                                    <p className="text-sm text-muted-foreground">Wali: {searchResult.parent_name || '-'}</p>
+                                </div>
+                                <Button
+                                    variant="success"
+                                    size="lg"
+                                    icon={UserCheck}
+                                    onClick={handleCheckIn}
+                                    loading={loading}
+                                >
+                                    CHECK-IN
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
                 {/* Recent Check-ins */}
-                <div className="checkin-recent">
-                    <h3>Check-in Terbaru</h3>
-                    <div className="checkin-recent__list">
+                <Card className="bg-white/95">
+                    <CardHeader>
+                        <CardTitle>Check-in Terbaru</CardTitle>
+                    </CardHeader>
+                    <CardContent>
                         {recentCheckins.length === 0 ? (
-                            <p className="checkin-recent__empty">Belum ada check-in hari ini</p>
+                            <p className="text-center text-muted-foreground py-4">Belum ada check-in hari ini</p>
                         ) : (
-                            recentCheckins.map(item => (
-                                <div key={item.id} className="checkin-recent__item">
-                                    <span className="checkin-recent__name">{item.name}</span>
-                                    <span className="checkin-recent__class">{item.class}</span>
-                                    <span className="checkin-recent__time">
-                                        {new Date(item.check_in_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                </div>
-                            ))
+                            <div className="space-y-2">
+                                {recentCheckins.map(item => (
+                                    <div key={item.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                                        <span className="font-medium">{item.name}</span>
+                                        <div className="flex gap-2">
+                                            <Badge>{item.class}</Badge>
+                                            <span className="text-sm text-muted-foreground">
+                                                {new Date(item.check_in_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         )}
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
             </main>
         </div>
     )
