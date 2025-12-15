@@ -6,6 +6,20 @@ Sistem manajemen antrian pembagian raport dengan fitur real-time monitoring, not
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org)
 [![React](https://img.shields.io/badge/react-19.2.0-blue)](https://reactjs.org)
 
+
+---
+
+## 📌 Versi Aplikasi
+
+Terdapat dua versi yang tersedia dalam repository ini:
+
+| Versi | Branch | Deskripsi |
+|-------|--------|-----------|
+| **v1 (Original)** | `main` | Versi klasik, stabil, tampilan awal. |
+| **v2 (Modern UI)** | `feature/shadcn-ui` | Tampilan baru (shadcn/ui), Dark Mode lebih baik, Fitur Tambahan (Cancel Call, Undo, Uncheckin). |
+
+> **Note:** Saat ini pengembangan aktif dilakukan di branch `feature/shadcn-ui`.
+
 ---
 
 ## ✨ Fitur Utama
