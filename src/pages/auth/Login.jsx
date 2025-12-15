@@ -5,9 +5,9 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { GraduationCap, User, Lock } from 'lucide-react'
 import { settingsApi } from '../../services/api.js'
-import Button from '../../components/ui/Button.jsx'
-import Input from '../../components/ui/Input.jsx'
-import './Login.css'
+import { Button } from '@/components/ui-new/button'
+import { Input } from '@/components/ui-new/input'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui-new/card'
 
 export default function Login() {
     const navigate = useNavigate()
@@ -55,30 +55,30 @@ export default function Login() {
     }
 
     return (
-        <div className="login-page">
-            <div className="login-container">
-                <div className="login-card">
-                    <div className="login-header">
-                        <div className="login-logo">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800 p-4">
+            <Card className="w-full max-w-md shadow-2xl">
+                <CardHeader className="space-y-4">
+                    <div className="flex justify-center">
+                        <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
                             {schoolLogo && schoolLogo.trim() !== '' ? (
                                 <img
                                     src={schoolLogo}
                                     alt="School Logo"
-                                    style={{
-                                        width: '80px',
-                                        height: '80px',
-                                        objectFit: 'contain'
-                                    }}
+                                    className="w-16 h-16 object-contain"
                                 />
                             ) : (
-                                <GraduationCap size={48} />
+                                <GraduationCap className="w-10 h-10 text-white" />
                             )}
                         </div>
-                        <h1 className="login-title">{schoolName}</h1>
-                        <p className="login-subtitle">Sistem Antrian Pengambilan Raport</p>
                     </div>
+                    <CardTitle className="text-2xl text-center">{schoolName}</CardTitle>
+                    <CardDescription className="text-center">
+                        Sistem Antrian Pengambilan Raport
+                    </CardDescription>
+                </CardHeader>
 
-                    <form className="login-form" onSubmit={handleSubmit(onSubmit)}>
+                <CardContent>
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                         <Input
                             label="Username"
                             placeholder="Masukkan username"
@@ -105,8 +105,8 @@ export default function Login() {
                             Masuk
                         </Button>
                     </form>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
         </div>
     )
 }

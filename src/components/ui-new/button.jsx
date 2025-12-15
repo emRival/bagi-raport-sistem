@@ -1,5 +1,6 @@
 import * as React from "react"
 import { cva } from "class-variance-authority"
+import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
@@ -13,6 +14,8 @@ const buttonVariants = cva(
                 secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
                 ghost: "hover:bg-accent hover:text-accent-foreground",
                 link: "text-primary underline-offset-4 hover:underline",
+                success: "bg-green-600 text-white hover:bg-green-700",
+                warning: "bg-yellow-600 text-white hover:bg-yellow-700",
             },
             size: {
                 default: "h-10 px-4 py-2",
@@ -29,13 +32,22 @@ const buttonVariants = cva(
 )
 
 const Button = React.forwardRef(
-    ({ className, variant, size, asChild = false, ...props }, ref) => {
+    ({ className, variant, size, loading, fullWidth, icon: Icon, children, disabled, ...props }, ref) => {
         return (
             <button
-                className={cn(buttonVariants({ variant, size, className }))}
+                className={cn(
+                    buttonVariants({ variant, size }),
+                    fullWidth && "w-full",
+                    className
+                )}
                 ref={ref}
+                disabled={disabled || loading}
                 {...props}
-            />
+            >
+                {loading && <Loader2 className="animate-spin" size={16} />}
+                {!loading && Icon && <Icon size={16} />}
+                {children}
+            </button>
         )
     }
 )
