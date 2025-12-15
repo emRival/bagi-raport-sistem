@@ -25,16 +25,27 @@ export default function TV() {
     const [activeCalls, setActiveCalls] = useState({}) // Track active calls per class
     const [onlineClasses, setOnlineClasses] = useState([]) // Track connected teachers
 
+    // TTS Queue System
+    const [ttsQueue, setTtsQueue] = useState([])
+    const [isSpeaking, setIsSpeaking] = useState(false)
+    const ttsQueueRef = useRef([])
+    const isSpeakingRef = useRef(false)
+
     // Use ref to track soundEnabled so socket handlers always have current value
     const soundEnabledRef = useRef(soundEnabled)
     useEffect(() => {
         soundEnabledRef.current = soundEnabled
     }, [soundEnabled])
 
-    // Speak function
+    // Update TTS queue refs when state changes
+    useEffect(() => {
+        ttsQueueRef.current = ttsQueue
+        isSpeakingRef.current = isSpeaking
+    }, [ttsQueue, isSpeaking])
+
+    // Speak function (with queue support)
     const speak = (text) => {
         if ('speechSynthesis' in window) {
-            speechSynthesis.cancel()
             const utterance = new SpeechSynthesisUtterance(text)
             utterance.lang = 'id-ID'
             utterance.rate = 0.6
@@ -73,11 +84,63 @@ export default function TV() {
                 speechSynthesis.addEventListener('voiceschanged', setVoice, { once: true })
             }
 
+            // Handle completion to process next in queue
+            utterance.onend = () => {
+                console.log('🎤 Speech ended, checking queue...')
+                setIsSpeaking(false)
+                // Process next item after a small delay
+                setTimeout(() => {
+                    processQueue()
+                }, 500) // 500ms gap between announcements
+            }
+
+            utterance.onerror = (error) => {
+                console.error('🎤 Speech error:', error)
+                setIsSpeaking(false)
+                setTimeout(() => {
+                    processQueue()
+                }, 500)
+            }
+
             speechSynthesis.speak(utterance)
+            setIsSpeaking(true)
+            console.log('🎤 Speaking:', text.substring(0, 50) + '...')
         } else {
             console.warn('Speech synthesis not supported')
         }
     }
+
+    // Add to queue
+    const addToQueue = (text) => {
+        console.log('➕ Adding to TTS queue:', text.substring(0, 50) + '...')
+        setTtsQueue(prev => [...prev, text])
+    }
+
+    // Process queue
+    const processQueue = () => {
+        // Use refs to get current values in async context
+        if (isSpeakingRef.current) {
+            console.log('🎤 Already speaking, skipping queue process')
+            return
+        }
+
+        if (ttsQueueRef.current.length === 0) {
+            console.log('📭 Queue is empty')
+            return
+        }
+
+        const [nextText, ...remaining] = ttsQueueRef.current
+        console.log('▶️ Processing queue:', nextText.substring(0, 50) + '...', `(${remaining.length} remaining)`)
+        setTtsQueue(remaining)
+        speak(nextText)
+    }
+
+    // Effect to process queue when it changes
+    useEffect(() => {
+        if (!isSpeaking && ttsQueue.length > 0) {
+            processQueue()
+        }
+    }, [ttsQueue, isSpeaking])
 
     // Fetch settings and stats from database
     const fetchData = async () => {
@@ -131,7 +194,7 @@ export default function TV() {
             setActiveCalls(prev => ({ ...prev, [data.className]: data.studentName }))
 
             if (soundEnabledRef.current) {
-                speak(`Panggilan untuk wali siswa ${data.studentName}, kelas ${data.className}. Silakan menuju ruang kelas.`)
+                addToQueue(`Panggilan untuk wali siswa ${data.studentName}, kelas ${data.className}. Silakan menuju ruang kelas.`)
             }
 
             // Clear overlay after 10 seconds, but keep class call persistent until finished or replaced
@@ -158,7 +221,7 @@ export default function TV() {
             refreshAnnouncements()
 
             if (soundEnabledRef.current) {
-                speak(`Pengumuman penting: ${data.text}`)
+                addToQueue(`Pengumuman penting: ${data.text}`)
             }
             setTimeout(() => setAnnouncementOverlay(null), 10000)
         })
@@ -186,7 +249,7 @@ export default function TV() {
 
     const enableSound = () => {
         setSoundEnabled(true)
-        speak('Suara diaktifkan')
+        addToQueue('Suara diaktifkan')
     }
 
     // Update clock
