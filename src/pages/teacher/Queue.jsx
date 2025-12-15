@@ -236,13 +236,14 @@ export default function Queue() {
                                         {/* Actions */}
                                         <div className="flex flex-wrap gap-2 sm:flex-col sm:w-auto">
                                             <Button
-                                                variant="outline"
+                                                variant={item.parent_phone ? "outline" : "outline"}
                                                 size="sm"
                                                 onClick={() => handleNotify(item)}
                                                 loading={loading[item.id] === 'notify'}
                                                 disabled={!!loading[item.id]}
                                                 icon={MessageSquare}
-                                                title="Kirim WA Manual"
+                                                title={item.parent_phone ? "Kirim WA ke " + item.parent_phone : "Nomor HP tidak tersedia"}
+                                                className={!item.parent_phone ? 'opacity-50' : ''}
                                             >
                                                 WA
                                             </Button>
