@@ -1,28 +1,17 @@
-import { Users, ClipboardList, Clock, CheckCircle, Megaphone, Plus, Activity } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import Card from '../../components/ui/Card.jsx'
-import Button from '../../components/ui/Button.jsx'
+import { Users, ClipboardList, Clock, CheckCircle, Activity } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-new/card'
+import { Badge } from '@/components/ui-new/badge'
 import { useSettings } from '../../context/SettingsContext.jsx'
-import { useAnnouncements } from '../../context/AnnouncementsContext.jsx'
 import { socketService } from '../../services/socket.js'
 import { queueApi, studentsApi } from '../../services/api.js'
 import { useState, useEffect } from 'react'
-import Modal from '../../components/ui/Modal.jsx'
-import Input from '../../components/ui/Input.jsx'
-import { useToast } from '../../context/ToastContext.jsx'
 import AnnouncementSettings from '../../components/admin/AnnouncementSettings.jsx'
-import './Dashboard.css'
 
 const COLORS = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899']
 
 export default function Dashboard() {
     const { settings } = useSettings()
-    const { announcements, addAnnouncement, removeAnnouncement } = useAnnouncements()
-    const toast = useToast()
-    const [modalOpen, setModalOpen] = useState(false)
-    const [newAnnouncement, setNewAnnouncement] = useState('')
-
-    // Real stats from API
     const [stats, setStats] = useState({
         totals: { waiting: 0, called: 0, finished: 0, total: 0 },
         byClass: []
@@ -30,13 +19,11 @@ export default function Dashboard() {
     const [totalStudents, setTotalStudents] = useState(0)
     const [activities, setActivities] = useState([])
 
-    // Connect to WebSocket
     useEffect(() => {
         socketService.connect()
         socketService.register('admin')
     }, [])
 
-    // Fetch data from API
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -57,7 +44,6 @@ export default function Dashboard() {
         return () => clearInterval(interval)
     }, [])
 
-    // Build class data for charts
     const classData = settings.classes.map((cls) => {
         const classStats = stats.byClass.find(s => s.class === cls) || { waiting: 0, called: 0, finished: 0 }
         return {
@@ -68,28 +54,6 @@ export default function Dashboard() {
             total: (classStats.waiting || 0) + (classStats.called || 0) + (classStats.finished || 0)
         }
     })
-
-    const pieData = [
-        { name: 'Menunggu', value: stats.totals.waiting, color: '#F59E0B' },
-        { name: 'Dipanggil', value: stats.totals.called, color: '#6366F1' },
-        { name: 'Selesai', value: stats.totals.finished, color: '#10B981' },
-    ].filter(d => d.value > 0)
-
-    const handleAddAnnouncement = () => {
-        if (!newAnnouncement.trim()) {
-            toast.error('Pengumuman tidak boleh kosong')
-            return
-        }
-        addAnnouncement(newAnnouncement.trim())
-        toast.success('Pengumuman berhasil ditambahkan')
-        setNewAnnouncement('')
-        setModalOpen(false)
-    }
-
-    const handleBroadcast = (announcement) => {
-        socketService.broadcastAnnouncement(announcement.text)
-        toast.success('Pengumuman dikirim ke TV Display!')
-    }
 
     const formatActivityTime = (activity) => {
         const time = activity.finished_time || activity.called_time || activity.check_in_time
@@ -102,121 +66,142 @@ export default function Dashboard() {
         return 'Check-in'
     }
 
-    const getActivityColor = (activity) => {
-        if (activity.status === 'FINISHED') return 'success'
-        if (activity.status === 'CALLED') return 'warning'
-        return 'info'
-    }
-
     return (
-        <div className="dashboard">
-            <h1 className="page-title">Dashboard</h1>
+        <div className="p-6 space-y-6">
+            <h1 className="text-3xl font-bold">Dashboard</h1>
 
-            {/* Stats Cards */}
-            <div className="stats-grid">
-                <Card className="stat-card stat-card--primary">
-                    <div className="stat-card__icon">
-                        <Users size={24} />
-                    </div>
-                    <div className="stat-card__content">
-                        <span className="stat-card__value">{totalStudents}</span>
-                        <span className="stat-card__label">Total Siswa</span>
-                    </div>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white hover-lift animate-fade-in">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm opacity-90">Total Siswa</p>
+                                <p className="text-4xl font-bold mt-2">{totalStudents}</p>
+                            </div>
+                            <Users className="w-12 h-12 opacity-80" />
+                        </div>
+                    </CardContent>
                 </Card>
 
-                <Card className="stat-card stat-card--warning">
-                    <div className="stat-card__icon">
-                        <ClipboardList size={24} />
-                    </div>
-                    <div className="stat-card__content">
-                        <span className="stat-card__value">{stats.totals.total}</span>
-                        <span className="stat-card__label">Antrian Hari Ini</span>
-                    </div>
+                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white hover-lift animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm opacity-90">Antrian Hari Ini</p>
+                                <p className="text-4xl font-bold mt-2">{stats.totals.total}</p>
+                            </div>
+                            <ClipboardList className="w-12 h-12 opacity-80" />
+                        </div>
+                    </CardContent>
                 </Card>
 
-                <Card className="stat-card stat-card--info">
-                    <div className="stat-card__icon">
-                        <Clock size={24} />
-                    </div>
-                    <div className="stat-card__content">
-                        <span className="stat-card__value">{stats.totals.waiting}</span>
-                        <span className="stat-card__label">Menunggu</span>
-                    </div>
+                <Card className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white hover-lift animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm opacity-90">Menunggu</p>
+                                <p className="text-4xl font-bold mt-2">{stats.totals.waiting}</p>
+                            </div>
+                            <Clock className="w-12 h-12 opacity-80" />
+                        </div>
+                    </CardContent>
                 </Card>
 
-                <Card className="stat-card stat-card--success">
-                    <div className="stat-card__icon">
-                        <CheckCircle size={24} />
-                    </div>
-                    <div className="stat-card__content">
-                        <span className="stat-card__value">{stats.totals.finished}</span>
-                        <span className="stat-card__label">Selesai</span>
-                    </div>
+                <Card className="bg-gradient-to-br from-green-500 to-emerald-600 text-white hover-lift animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm opacity-90">Selesai</p>
+                                <p className="text-4xl font-bold mt-2">{stats.totals.finished}</p>
+                            </div>
+                            <CheckCircle className="w-12 h-12 opacity-80" />
+                        </div>
+                    </CardContent>
                 </Card>
             </div>
 
             {/* Charts Row */}
-            <div className="charts-row">
-                {/* Bar Chart - Antrian per Kelas */}
-                <Card title="Statistik Antrian per Kelas" className="class-stats-card">
-                    {classData.some(d => d.total > 0) ? (
-                        <ResponsiveContainer width="100%" height={280}>
-                            <BarChart data={classData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                                <XAxis dataKey="class" tick={{ fill: '#6B7280' }} />
-                                <YAxis tick={{ fill: '#6B7280' }} />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: 'white',
-                                        border: '1px solid #E5E7EB',
-                                        borderRadius: '8px'
-                                    }}
-                                />
-                                <Legend />
-                                <Bar dataKey="waiting" name="Menunggu" fill="#F59E0B" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="finished" name="Selesai" fill="#10B981" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <div className="empty-chart">
-                            <Clock size={48} />
-                            <p>Belum ada data antrian hari ini</p>
-                        </div>
-                    )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Bar Chart */}
+                <Card className="lg:col-span-2 animate-slide-in">
+                    <CardHeader>
+                        <CardTitle>Statistik Antrian per Kelas</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {classData.some(d => d.total > 0) ? (
+                            <ResponsiveContainer width="100%" height={280}>
+                                <BarChart data={classData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                                    <XAxis dataKey="class" tick={{ fill: '#6B7280' }} />
+                                    <YAxis tick={{ fill: '#6B7280' }} />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: 'white',
+                                            border: '1px solid #E5E7EB',
+                                            borderRadius: '8px'
+                                        }}
+                                    />
+                                    <Legend />
+                                    <Bar dataKey="waiting" name="Menunggu" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="finished" name="Selesai" fill="#10B981" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-[280px] text-muted-foreground">
+                                <Clock size={48} className="mb-4" />
+                                <p>Belum ada data antrian hari ini</p>
+                            </div>
+                        )}
+                    </CardContent>
                 </Card>
 
                 {/* Recent Activity */}
-                <Card title="Aktivitas Terbaru" icon={Activity} className="activity-card">
-                    <div className="activity-list">
-                        {activities.length === 0 ? (
-                            <div className="empty-activity">
-                                <Activity size={32} />
-                                <p>Belum ada aktivitas hari ini</p>
-                            </div>
-                        ) : (
-                            activities.map(activity => (
-                                <div key={activity.id} className="activity-item">
-                                    <div className={`activity-item__badge activity-item__badge--${getActivityColor(activity)}`}>
-                                        {getActivityLabel(activity)}
-                                    </div>
-                                    <div className="activity-item__info">
-                                        <span className="activity-item__name">{activity.student_name}</span>
-                                        <span className="activity-item__class">Kelas {activity.class}</span>
-                                    </div>
-                                    <span className="activity-item__time">{formatActivityTime(activity)}</span>
+                <Card className="animate-slide-in" style={{ animationDelay: '0.2s' }}>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Activity size={20} />
+                            Aktivitas Terbaru
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-3 max-h-[280px] overflow-y-auto">
+                            {activities.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
+                                    <Activity size={32} className="mb-2" />
+                                    <p className="text-sm">Belum ada aktivitas</p>
                                 </div>
-                            ))
-                        )}
-                    </div>
+                            ) : (
+                                activities.map(activity => (
+                                    <div key={activity.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 smooth-transition">
+                                        <div className="flex-1">
+                                            <p className="font-medium text-sm">{activity.student_name}</p>
+                                            <p className="text-xs text-muted-foreground">Kelas {activity.class}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant={activity.status === 'FINISHED' ? 'success' : 'warning'}>
+                                                {getActivityLabel(activity)}
+                                            </Badge>
+                                            <span className="text-xs text-muted-foreground">{formatActivityTime(activity)}</span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </CardContent>
                 </Card>
             </div>
 
             {/* Announcement Section */}
-            <div className="mb-6">
-                <Card title="Pengumuman TV Display" subtitle="Kelola pengumuman yang akan ditampilkan di TV">
+            <Card className="animate-scale-in">
+                <CardHeader>
+                    <CardTitle>Pengumuman TV Display</CardTitle>
+                    <p className="text-sm text-muted-foreground">Kelola pengumuman yang akan ditampilkan di TV</p>
+                </CardHeader>
+                <CardContent>
                     <AnnouncementSettings />
-                </Card>
-            </div>
+                </CardContent>
+            </Card>
         </div>
     )
 }
