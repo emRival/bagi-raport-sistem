@@ -60,7 +60,7 @@ export const userSchema = Joi.object({
     assignedClass: Joi.string().trim().when('role', {
         is: 'teacher',
         then: Joi.required(),
-        otherwise: Joi.optional()
+        otherwise: Joi.optional().allow('', null)
     }).messages({
         'any.required': 'Kelas harus diisi untuk role teacher'
     })
