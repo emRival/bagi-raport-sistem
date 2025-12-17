@@ -42,7 +42,8 @@ const callbacks = {
     'disconnect': [],
     'online-status': [],
     'queue-updated': [],
-    'announcement-updated': []
+    'announcement-updated': [],
+    'teachers-online': []
 }
 
 socket.on('connect', () => {
@@ -144,6 +145,8 @@ export const socketService = {
             }
         }
     },
+
+    getSocket: () => socket,
 
     isConnected: () => isConnected
 }

@@ -128,8 +128,8 @@ io.on('connection', (socket) => {
         if (role === 'teacher' && className) {
             broadcastOnlineClasses()
         }
-        // If TV connects, send current status immediately
-        if (role === 'tv') {
+        // If TV or Admin connects, send current status immediately
+        if (role === 'tv' || role === 'admin') {
             broadcastOnlineClasses()
         }
     })
@@ -171,13 +171,31 @@ io.on('connection', (socket) => {
     // Helper to broadcast online classes
     const broadcastOnlineClasses = () => {
         const onlineClasses = []
+        const onlineTeachers = []
+
         clients['teacher'].forEach((socket) => {
             if (socket.className && !onlineClasses.includes(socket.className)) {
                 onlineClasses.push(socket.className)
             }
+            // Include teacher info for admin dashboard
+            if (socket.user && socket.className) {
+                onlineTeachers.push({
+                    id: socket.user.id,
+                    name: socket.user.name,
+                    username: socket.user.username,
+                    className: socket.className,
+                    connectedAt: socket.handshake?.time || new Date().toISOString()
+                })
+            }
         })
+
         logger.debug('📡 Broadcasting online classes:', onlineClasses)
+        logger.debug('📡 Online teachers:', onlineTeachers.map(t => `${t.name} (${t.className})`))
+
+        // Send to TV displays (simple class list)
         io.emit('online-status', onlineClasses)
+        // Send to admin (detailed teacher list)
+        io.emit('teachers-online', onlineTeachers)
     }
 })
 

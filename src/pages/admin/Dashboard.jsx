@@ -1,11 +1,11 @@
-import { Users, ClipboardList, Clock, CheckCircle, Activity } from 'lucide-react'
+import { Users, ClipboardList, Clock, CheckCircle, Activity, Wifi, WifiOff } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-new/card'
 import { Badge } from '@/components/ui-new/badge'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { socketService } from '../../services/socket.js'
 import { queueApi, studentsApi } from '../../services/api.js'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import AnnouncementSettings from '../../components/admin/AnnouncementSettings.jsx'
 
 const COLORS = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899']
@@ -18,31 +18,68 @@ export default function Dashboard() {
     })
     const [totalStudents, setTotalStudents] = useState(0)
     const [activities, setActivities] = useState([])
+    const [onlineTeachers, setOnlineTeachers] = useState([])
 
+    // Fetch data function
+    const fetchData = useCallback(async () => {
+        try {
+            const [statsData, students, activityData] = await Promise.all([
+                queueApi.getStats(),
+                studentsApi.getAll(),
+                queueApi.getActivity(10)
+            ])
+            setStats(statsData)
+            setTotalStudents(students.length)
+            setActivities(activityData)
+        } catch (error) {
+            console.error('Error fetching data:', error)
+        }
+    }, [])
+
+    // Connect socket and register as admin
     useEffect(() => {
         socketService.connect()
         socketService.register('admin')
     }, [])
 
+    // Listen for realtime updates via socket
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [statsData, students, activityData] = await Promise.all([
-                    queueApi.getStats(),
-                    studentsApi.getAll(),
-                    queueApi.getActivity(10)
-                ])
-                setStats(statsData)
-                setTotalStudents(students.length)
-                setActivities(activityData)
-            } catch (error) {
-                console.error('Error fetching data:', error)
-            }
+        const socket = socketService.getSocket()
+        if (!socket) return
+
+        // Listen for queue updates -> refresh stats
+        const handleQueueUpdate = () => {
+            fetchData()
         }
+
+        // Listen for teacher online status
+        const handleTeachersOnline = (teachers) => {
+            setOnlineTeachers(teachers || [])
+        }
+
+        // Listen for student events
+        const handleStudentCalled = () => fetchData()
+        const handleStudentFinished = () => fetchData()
+
+        socket.on('queue-updated', handleQueueUpdate)
+        socket.on('teachers-online', handleTeachersOnline)
+        socket.on('student-called', handleStudentCalled)
+        socket.on('student-finished', handleStudentFinished)
+
+        return () => {
+            socket.off('queue-updated', handleQueueUpdate)
+            socket.off('teachers-online', handleTeachersOnline)
+            socket.off('student-called', handleStudentCalled)
+            socket.off('student-finished', handleStudentFinished)
+        }
+    }, [fetchData])
+
+    // Initial fetch and backup polling (reduced interval)
+    useEffect(() => {
         fetchData()
-        const interval = setInterval(fetchData, 30000)
+        const interval = setInterval(fetchData, 60000) // Backup poll every 60s
         return () => clearInterval(interval)
-    }, [])
+    }, [fetchData])
 
     const classData = settings.classes.map((cls) => {
         const classStats = stats.byClass.find(s => s.class === cls) || { waiting: 0, called: 0, finished: 0 }
@@ -197,6 +234,49 @@ export default function Dashboard() {
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* Teacher Online Status */}
+                <Card className="animate-slide-in" style={{ animationDelay: '0.3s' }}>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                            <Wifi size={18} className="sm:w-5 sm:h-5 text-green-500" />
+                            Guru Online
+                            <Badge className="ml-2 bg-green-100 text-green-700">{onlineTeachers.length} aktif</Badge>
+                        </CardTitle>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                            Status guru wali kelas yang sedang aktif dalam sistem
+                        </p>
+                    </CardHeader>
+                    <CardContent>
+                        {onlineTeachers.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                                <WifiOff size={32} className="mb-3 opacity-50" />
+                                <p className="text-sm">Tidak ada guru yang sedang online</p>
+                                <p className="text-xs mt-1">Guru akan muncul saat mereka membuka halaman antrian</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                                {onlineTeachers.map((teacher, index) => (
+                                    <div
+                                        key={`${teacher.id}-${index}`}
+                                        className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 smooth-transition"
+                                    >
+                                        <div className="relative">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white font-bold">
+                                                {teacher.name?.charAt(0).toUpperCase() || '?'}
+                                            </div>
+                                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full animate-pulse" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-sm truncate">{teacher.name}</p>
+                                            <p className="text-xs text-green-700">Kelas {teacher.className}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
                 {/* Announcement Section - Mobile Optimized */}
                 <Card className="animate-scale-in">
