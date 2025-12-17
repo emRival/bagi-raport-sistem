@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2, Search, Shield, UserCog, Users as UsersIcon, Tv } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, Shield, UserCog, Users as UsersIcon, Tv, Eye, EyeOff } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-new/card'
 import { Button } from '@/components/ui-new/button'
 import { Input } from '@/components/ui-new/input'
@@ -367,26 +367,32 @@ function UserModal({ isOpen, onClose, onSave, user }) {
         assignedClass: '',
     })
     const [saving, setSaving] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
 
+    // Reset form when modal opens or user changes
     useEffect(() => {
-        if (user) {
-            setFormData({
-                username: user.username,
-                name: user.name,
-                password: '',
-                role: user.role,
-                assignedClass: user.assignedClass || user.assigned_class || '',
-            })
-        } else {
-            setFormData({
-                username: '',
-                name: '',
-                password: '',
-                role: 'satpam',
-                assignedClass: '',
-            })
+        if (isOpen) {
+            if (user) {
+                setFormData({
+                    username: user.username,
+                    name: user.name,
+                    password: '',
+                    role: user.role,
+                    assignedClass: user.assignedClass || user.assigned_class || '',
+                })
+            } else {
+                // Reset to empty form for new user
+                setFormData({
+                    username: '',
+                    name: '',
+                    password: '',
+                    role: 'satpam',
+                    assignedClass: '',
+                })
+            }
+            setShowPassword(false) // Reset password visibility
         }
-    }, [user])
+    }, [isOpen, user])
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -434,14 +440,25 @@ function UserModal({ isOpen, onClose, onSave, user }) {
                         <Label htmlFor="password">
                             {user ? 'Password Baru (kosongkan jika tidak diubah)' : 'Password'}
                         </Label>
-                        <Input
-                            id="password"
-                            type="password"
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            required={!user}
-                            disabled={saving}
-                        />
+                        <div className="relative">
+                            <Input
+                                id="password"
+                                type={showPassword ? 'text' : 'password'}
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                required={!user}
+                                disabled={saving}
+                                className="pr-10"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 smooth-transition"
+                                tabIndex={-1}
+                            >
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                        </div>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="role">Role</Label>
