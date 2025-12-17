@@ -1,100 +1,116 @@
 # HTTPS Configuration for Bagi Raport
 
-## Option 1: Nginx with Let's Encrypt (Recommended)
+## Your Setup: Docker + Nginx Proxy Manager + Cloudflare Tunnel
 
-Create/update your nginx configuration:
+Karena Anda menggunakan **Nginx Proxy Manager (NPM)** dengan **Cloudflare Tunnel**, HTTPS sudah di-handle oleh Cloudflare! 🎉
 
-```nginx
-# /etc/nginx/sites-available/bagi-raport
-server {
-    listen 80;
-    server_name bagi-raport.yourdomain.com;
-    
-    # Redirect all HTTP to HTTPS
-    return 301 https://$server_name$request_uri;
-}
+### ✅ Yang Sudah Aman (Handled by Cloudflare):
+- SSL/TLS encryption (HTTPS)
+- DDoS protection
+- CDN caching
 
-server {
-    listen 443 ssl http2;
-    server_name bagi-raport.yourdomain.com;
-    
-    # SSL Certificates (Let's Encrypt)
-    ssl_certificate /etc/letsencrypt/live/bagi-raport.yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/bagi-raport.yourdomain.com/privkey.pem;
-    
-    # SSL Security Settings
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_prefer_server_ciphers on;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
-    
-    # Security Headers (additional to helmet)
-    add_header X-Content-Type-Options nosniff;
-    add_header X-Frame-Options DENY;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-    
-    # Frontend
-    location / {
-        proxy_pass http://127.0.0.1:80;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-    
-    # Backend API
-    location /api/ {
-        proxy_pass http://127.0.0.1:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-    
-    # WebSocket (Socket.io)
-    location /socket.io/ {
-        proxy_pass http://127.0.0.1:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
+---
 
-## Install Let's Encrypt Certificate:
+## Configuration di Nginx Proxy Manager
 
-```bash
-# Install certbot
-sudo apt install certbot python3-certbot-nginx
+### 1. Proxy Host untuk Frontend
+| Field | Value |
+|-------|-------|
+| Domain | `bagi-raport.yourdomain.com` |
+| Scheme | `http` |
+| Forward Hostname/IP | `bagi-raport-frontend` (nama container) |
+| Forward Port | `80` |
+| Websockets Support | ✅ **ON** |
+| Block Common Exploits | ✅ ON |
 
-# Get certificate
-sudo certbot --nginx -d bagi-raport.yourdomain.com
+### 2. Proxy Host untuk Backend API
+| Field | Value |
+|-------|-------|
+| Domain | `bagi-raport.yourdomain.com` |
+| Scheme | `http` |
+| Forward Hostname/IP | `bagi-raport-backend` (nama container) |
+| Forward Port | `3001` |
+| Websockets Support | ✅ **ON** (penting untuk Socket.io) |
 
-# Auto-renewal is set up automatically
-```
+> ⚠️ **PENTING**: Pastikan **Websockets Support** diaktifkan untuk Socket.io!
 
-## Option 2: Use Cloudflare (Easiest)
+### 3. Custom Locations (Jika Satu Domain)
+Jika frontend dan backend di satu domain:
 
-1. Add your domain to Cloudflare
-2. Enable "Full (strict)" SSL mode
-3. Cloudflare handles HTTPS automatically
-4. Update your DNS to point to Cloudflare
+**Location `/api`:**
+- Forward: `http://bagi-raport-backend:3001`
+- Websockets: ✅ ON
 
-## Update docker-compose.yml for Production:
+**Location `/socket.io`:**
+- Forward: `http://bagi-raport-backend:3001`
+- Websockets: ✅ ON
+
+---
+
+## Update docker-compose.yml
+
+Pastikan containers terhubung ke network NPM:
 
 ```yaml
-environment:
-  - NODE_ENV=production
-  - JWT_SECRET=your-very-long-random-secret-key-at-least-32-characters
-  - CORS_ORIGIN=https://bagi-raport.yourdomain.com
+services:
+  backend:
+    # ... config existing ...
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET}  # WAJIB diisi!
+      - CORS_ORIGIN=https://bagi-raport.yourdomain.com
+    networks:
+      - bagi-raport-network
+      - npm_default  # Network NPM
+
+  frontend:
+    # ... config existing ...
+    networks:
+      - bagi-raport-network
+      - npm_default  # Network NPM
+
+networks:
+  bagi-raport-network:
+    driver: bridge
+  npm_default:
+    external: true  # Connect ke network NPM yang sudah ada
 ```
 
-Generate a secure JWT secret:
+---
+
+## Cloudflare Settings
+
+Di Cloudflare Dashboard:
+1. **SSL/TLS** → **Full (strict)** ✅
+2. **Edge Certificates** → Always Use HTTPS: **ON** ✅
+
+---
+
+## Environment Variables (.env)
+
+Buat file `.env` di folder backend:
+
+```bash
+# WAJIB - Generate dengan: openssl rand -hex 32
+JWT_SECRET=your-super-secret-key-minimum-32-characters-here
+
+# Production settings
+NODE_ENV=production
+PORT=3001
+CORS_ORIGIN=https://bagi-raport.idnbogor.id
+```
+
+Generate JWT secret:
 ```bash
 openssl rand -hex 32
 ```
+
+---
+
+## Checklist Deployment ✅
+
+- [ ] `JWT_SECRET` sudah diset di `.env`
+- [ ] `CORS_ORIGIN` sudah diset ke domain HTTPS
+- [ ] NPM Websockets Support **ON**
+- [ ] Cloudflare SSL mode: **Full (strict)**
+- [ ] `docker-compose up -d --build`
