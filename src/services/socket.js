@@ -10,13 +10,24 @@ const getSocketUrl = () => {
     return 'http://localhost:3001'
 }
 
-// Create socket connection
+// Get auth token for authenticated socket connection
+const getAuthToken = () => localStorage.getItem('auth_token')
+
+// Create socket connection with auth
 const socket = io(getSocketUrl(), {
     autoConnect: false,
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionAttempts: 10,
-    transports: ['websocket', 'polling']
+    transports: ['websocket', 'polling'],
+    auth: {
+        token: getAuthToken()
+    }
+})
+
+// Update auth token on reconnect (in case user logged in after initial connection)
+socket.on('reconnect_attempt', () => {
+    socket.auth = { token: getAuthToken() }
 })
 
 // Connection status

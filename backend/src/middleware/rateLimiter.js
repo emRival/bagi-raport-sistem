@@ -1,5 +1,7 @@
 import rateLimit from 'express-rate-limit'
 
+const NODE_ENV = process.env.NODE_ENV || 'development'
+
 // General API rate limiter - 1000 requests per 15 minutes
 export const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -10,8 +12,8 @@ export const generalLimiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
-    // Skip rate limiting for local development
-    skip: (req) => req.ip === '::1' || req.ip === '127.0.0.1'
+    // Skip rate limiting ONLY for local development, NOT in production
+    skip: (req) => NODE_ENV === 'development' && (req.ip === '::1' || req.ip === '127.0.0.1')
 })
 
 // Strict rate limiter for authentication - 5 attempts per 15 minutes

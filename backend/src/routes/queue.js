@@ -7,6 +7,47 @@ import { authMiddleware } from './auth.js'
 
 const router = express.Router()
 
+// Helper: Verify user can access queue entry (IDOR Protection)
+// Admin/Satpam can access all, Teachers only their assigned class
+const verifyQueueAccess = (req, res, next) => {
+    const queueId = req.params.id
+    const user = req.user
+
+    // Admin and satpam can access everything
+    if (user.role === 'admin' || user.role === 'satpam') {
+        return next()
+    }
+
+    // For teachers, verify the queue entry belongs to their class
+    if (user.role === 'teacher') {
+        // Get teacher's assigned class from database
+        const userData = db.prepare('SELECT assigned_class FROM users WHERE id = ?').get(user.id)
+
+        if (!userData?.assigned_class) {
+            return res.status(403).json({ error: 'Teacher tidak memiliki kelas yang ditugaskan' })
+        }
+
+        // Get queue entry's student class
+        const queue = db.prepare(`
+            SELECT s.class 
+            FROM queue q 
+            JOIN students s ON q.student_id = s.id 
+            WHERE q.id = ?
+        `).get(queueId)
+
+        if (!queue) {
+            return res.status(404).json({ error: 'Queue entry not found' })
+        }
+
+        if (queue.class !== userData.assigned_class) {
+            logger.warn(`IDOR attempt: User ${user.id} tried to access queue ${queueId} of class ${queue.class}`)
+            return res.status(403).json({ error: 'Anda hanya bisa mengakses antrian kelas Anda sendiri' })
+        }
+    }
+
+    next()
+}
+
 // Helper to format phone number to international format (628xxx)
 const formatPhoneNumber = (phone) => {
     if (!phone) return phone
@@ -354,8 +395,8 @@ Terima kasih. 🙏`
     }
 })
 
-// Call student (Protected)
-router.post('/:id/call', authMiddleware, (req, res) => {
+// Call student (Protected + IDOR Check)
+router.post('/:id/call', authMiddleware, verifyQueueAccess, (req, res) => {
     try {
         const userId = req.user?.id
 
@@ -470,8 +511,8 @@ _Terima kasih atas kesabarannya._ 🙏`
     }
 })
 
-// Cancel call (Revert to WAITING) (Protected)
-router.post('/:id/cancel', authMiddleware, (req, res) => {
+// Cancel call (Revert to WAITING) (Protected + IDOR Check)
+router.post('/:id/cancel', authMiddleware, verifyQueueAccess, (req, res) => {
     try {
         db.prepare(`
             UPDATE queue 
@@ -492,8 +533,8 @@ router.post('/:id/cancel', authMiddleware, (req, res) => {
     }
 })
 
-// Manual notify (Protected)
-router.post('/:id/notify', authMiddleware, (req, res) => {
+// Manual notify (Protected + IDOR Check)
+router.post('/:id/notify', authMiddleware, verifyQueueAccess, (req, res) => {
     try {
         const { type, customMessage } = req.body
         const queue = db.prepare(`
@@ -601,8 +642,8 @@ router.post('/:id/notify', authMiddleware, (req, res) => {
     }
 })
 
-// Mark as finished (Protected)
-router.post('/:id/finish', authMiddleware, (req, res) => {
+// Mark as finished (Protected + IDOR Check)
+router.post('/:id/finish', authMiddleware, verifyQueueAccess, (req, res) => {
     try {
         logger.debug('🏁 Finish request for ID:', req.params.id)
         const indonesiaTime = getIndonesiaDateTime()
@@ -640,8 +681,8 @@ router.post('/:id/finish', authMiddleware, (req, res) => {
     }
 })
 
-// Skip student (Protected)
-router.post('/:id/skip', authMiddleware, (req, res) => {
+// Skip student (Protected + IDOR Check)
+router.post('/:id/skip', authMiddleware, verifyQueueAccess, (req, res) => {
     try {
         db.prepare(`
             UPDATE queue 

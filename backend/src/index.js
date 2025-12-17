@@ -2,6 +2,7 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
+import jwt from 'jsonwebtoken'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import logger from './utils/logger.js'
@@ -74,6 +75,37 @@ const clients = {
     teacher: new Map(),
     admin: new Map()
 }
+
+// JWT secret for socket auth (same as auth.js)
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-insecure-fallback-key-12345'
+
+// Socket.io authentication middleware
+io.use((socket, next) => {
+    const token = socket.handshake.auth?.token
+
+    // Allow TV display without token (public display)
+    // but it will have limited access (read-only queue updates)
+    if (!token) {
+        socket.user = null
+        socket.isPublic = true
+        logger.debug(`🔌 Socket ${socket.id} connected as public (no token)`)
+        return next()
+    }
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET)
+        socket.user = decoded
+        socket.isPublic = false
+        logger.debug(`🔌 Socket ${socket.id} authenticated as ${decoded.username} (${decoded.role})`)
+        next()
+    } catch (err) {
+        logger.warn(`🔒 Socket auth failed for ${socket.id}: ${err.message}`)
+        // Allow connection but mark as public
+        socket.user = null
+        socket.isPublic = true
+        next()
+    }
+})
 
 io.on('connection', (socket) => {
     logger.debug(`🔌 Client connected: ${socket.id}`)
