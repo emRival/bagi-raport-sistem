@@ -20,6 +20,7 @@ export default function Settings() {
     const [logoMode, setLogoMode] = useState(settings.schoolLogo?.startsWith('http') ? 'url' : 'upload')
     const [logoUrl, setLogoUrl] = useState(settings.schoolLogo?.startsWith('http') ? settings.schoolLogo : '')
     const [newClass, setNewClass] = useState('')
+    const [draggedIndex, setDraggedIndex] = useState(null)
     const fileInputRef = useRef(null)
 
     const handleSave = (section) => {
@@ -119,6 +120,35 @@ export default function Settings() {
         const newClasses = [...settings.classes]
             ;[newClasses[index], newClasses[index + 1]] = [newClasses[index + 1], newClasses[index]]
         updateSettings({ classes: newClasses })
+    }
+
+    // Drag and drop handlers
+    const handleDragStart = (e, index) => {
+        setDraggedIndex(index)
+        e.dataTransfer.effectAllowed = 'move'
+        e.dataTransfer.setData('text/html', e.target.outerHTML)
+        e.target.style.opacity = '0.5'
+    }
+
+    const handleDragEnd = (e) => {
+        e.target.style.opacity = '1'
+        setDraggedIndex(null)
+    }
+
+    const handleDragOver = (e) => {
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+    }
+
+    const handleDrop = (e, dropIndex) => {
+        e.preventDefault()
+        if (draggedIndex === null || draggedIndex === dropIndex) return
+
+        const newClasses = [...settings.classes]
+        const [draggedItem] = newClasses.splice(draggedIndex, 1)
+        newClasses.splice(dropIndex, 0, draggedItem)
+        updateSettings({ classes: newClasses })
+        setDraggedIndex(null)
     }
 
     return (
@@ -248,16 +278,22 @@ export default function Settings() {
                             <div className="space-y-2">
                                 <Label>Daftar Kelas (Urutan Tampilan TV)</Label>
                                 <p className="text-xs text-muted-foreground mb-2">
-                                    Gunakan tombol ↑ ↓ untuk mengubah urutan. Urutan ini akan ditampilkan di TV.
+                                    Drag & drop atau gunakan tombol ↑ ↓ untuk mengubah urutan.
                                 </p>
                                 <div className="space-y-1">
                                     {settings.classes && settings.classes.length > 0 ? (
                                         settings.classes.map((className, index) => (
                                             <div
                                                 key={className}
-                                                className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg border hover:bg-muted smooth-transition"
+                                                draggable
+                                                onDragStart={(e) => handleDragStart(e, index)}
+                                                onDragEnd={handleDragEnd}
+                                                onDragOver={handleDragOver}
+                                                onDrop={(e) => handleDrop(e, index)}
+                                                className={`flex items-center gap-2 p-2 bg-muted/50 rounded-lg border hover:bg-muted smooth-transition cursor-grab active:cursor-grabbing ${draggedIndex === index ? 'opacity-50 border-blue-400 bg-blue-50' : ''
+                                                    } ${draggedIndex !== null && draggedIndex !== index ? 'border-dashed border-blue-300' : ''}`}
                                             >
-                                                <GripVertical className="w-4 h-4 text-muted-foreground" />
+                                                <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
                                                 <span className="flex-1 font-medium">{className}</span>
                                                 <span className="text-xs text-muted-foreground mr-2">#{index + 1}</span>
                                                 <div className="flex gap-1">
