@@ -223,7 +223,7 @@ export default function AdminLayout() {
                 </header>
 
                 {/* Page content with bottom padding for mobile nav */}
-                <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+                <main className="flex-1 pb-20 lg:pb-0">
                     <Outlet />
                 </main>
 
