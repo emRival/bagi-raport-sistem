@@ -152,11 +152,17 @@ export default function Users() {
 
     const handleSave = async (formData) => {
         try {
+            // Remove empty password from payload
+            const payload = { ...formData }
+            if (!payload.password || payload.password.trim() === '') {
+                delete payload.password
+            }
+
             if (editingUser) {
-                await settingsApi.updateUser(editingUser.id, formData)
+                await settingsApi.updateUser(editingUser.id, payload)
                 toast.success('User berhasil diupdate')
             } else {
-                await settingsApi.createUser(formData)
+                await settingsApi.createUser(payload)
                 toast.success('User berhasil ditambahkan')
             }
             setModalOpen(false)
