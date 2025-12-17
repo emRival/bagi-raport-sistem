@@ -1,102 +1,61 @@
 # HTTPS Configuration for Bagi Raport
 
-## Your Setup: Docker + Nginx Proxy Manager + Cloudflare Tunnel
+## Your Setup: NPM → Frontend Container → Backend (Internal)
 
-Karena Anda menggunakan **Nginx Proxy Manager (NPM)** dengan **Cloudflare Tunnel**, HTTPS sudah di-handle oleh Cloudflare! 🎉
+```
+Internet → Cloudflare → NPM → Frontend (port 80) → Backend (localhost:3001)
+```
 
-### ✅ Yang Sudah Aman (Handled by Cloudflare):
-- SSL/TLS encryption (HTTPS)
-- DDoS protection
-- CDN caching
+Hanya **Frontend** yang di-expose ke domain. Backend berkomunikasi internal via Docker network.
 
 ---
 
 ## Configuration di Nginx Proxy Manager
 
-### 1. Proxy Host untuk Frontend
+### Proxy Host untuk Frontend
 | Field | Value |
 |-------|-------|
-| Domain | `bagi-raport.yourdomain.com` |
+| Domain | `bagi-raport.idnbogor.id` |
 | Scheme | `http` |
-| Forward Hostname/IP | `bagi-raport-frontend` (nama container) |
+| Forward Hostname/IP | `bagi-raport-frontend` atau IP container |
 | Forward Port | `80` |
-| Websockets Support | ✅ **ON** |
+| **Websockets Support** | ✅ **ON** (penting!) |
 | Block Common Exploits | ✅ ON |
+| SSL Certificate | Let's Encrypt atau Cloudflare Origin |
 
-### 2. Proxy Host untuk Backend API
-| Field | Value |
-|-------|-------|
-| Domain | `bagi-raport.yourdomain.com` |
-| Scheme | `http` |
-| Forward Hostname/IP | `bagi-raport-backend` (nama container) |
-| Forward Port | `3001` |
-| Websockets Support | ✅ **ON** (penting untuk Socket.io) |
-
-> ⚠️ **PENTING**: Pastikan **Websockets Support** diaktifkan untuk Socket.io!
-
-### 3. Custom Locations (Jika Satu Domain)
-Jika frontend dan backend di satu domain:
-
-**Location `/api`:**
-- Forward: `http://bagi-raport-backend:3001`
-- Websockets: ✅ ON
-
-**Location `/socket.io`:**
-- Forward: `http://bagi-raport-backend:3001`
-- Websockets: ✅ ON
+> ⚠️ **PENTING**: **Websockets Support = ON** wajib untuk Socket.io!
 
 ---
 
-## Update docker-compose.yml
+## Frontend nginx.conf (Sudah Handle)
 
-Pastikan containers terhubung ke network NPM:
+File `nginx.conf` di frontend sudah menghandle proxy ke backend:
 
-```yaml
-services:
-  backend:
-    # ... config existing ...
-    environment:
-      - NODE_ENV=production
-      - JWT_SECRET=${JWT_SECRET}  # WAJIB diisi!
-      - CORS_ORIGIN=https://bagi-raport.yourdomain.com
-    networks:
-      - bagi-raport-network
-      - npm_default  # Network NPM
+```nginx
+location /api/ {
+    proxy_pass http://backend:3001/api/;  # Internal Docker network
+}
 
-  frontend:
-    # ... config existing ...
-    networks:
-      - bagi-raport-network
-      - npm_default  # Network NPM
-
-networks:
-  bagi-raport-network:
-    driver: bridge
-  npm_default:
-    external: true  # Connect ke network NPM yang sudah ada
+location /socket.io/ {
+    proxy_pass http://backend:3001/socket.io/;
+    # WebSocket upgrade headers
+}
 ```
 
----
-
-## Cloudflare Settings
-
-Di Cloudflare Dashboard:
-1. **SSL/TLS** → **Full (strict)** ✅
-2. **Edge Certificates** → Always Use HTTPS: **ON** ✅
+Jadi Anda **tidak perlu** setup proxy host terpisah untuk backend di NPM.
 
 ---
 
-## Environment Variables (.env)
+## Environment Variables
 
-Buat file `.env` di folder backend:
+Buat file `.env` di root folder:
 
 ```bash
 # WAJIB - Generate dengan: openssl rand -hex 32
-JWT_SECRET=your-super-secret-key-minimum-32-characters-here
+JWT_SECRET=your-super-secret-key-minimum-32-characters
 
 # Production settings
 NODE_ENV=production
-PORT=3001
 CORS_ORIGIN=https://bagi-raport.idnbogor.id
 ```
 
@@ -107,10 +66,17 @@ openssl rand -hex 32
 
 ---
 
+## Cloudflare Settings
+
+1. **SSL/TLS** → **Full (strict)** ✅
+2. **Edge Certificates** → Always Use HTTPS: **ON** ✅
+
+---
+
 ## Checklist Deployment ✅
 
 - [ ] `JWT_SECRET` sudah diset di `.env`
-- [ ] `CORS_ORIGIN` sudah diset ke domain HTTPS
-- [ ] NPM Websockets Support **ON**
-- [ ] Cloudflare SSL mode: **Full (strict)**
+- [ ] `CORS_ORIGIN` = `https://bagi-raport.idnbogor.id`
+- [ ] NPM **Websockets Support = ON**
+- [ ] Cloudflare SSL: **Full (strict)**
 - [ ] `docker-compose up -d --build`
