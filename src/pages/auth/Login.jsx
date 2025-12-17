@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
+import { useSettings } from '../../context/SettingsContext.jsx'
 import { GraduationCap, User, Lock } from 'lucide-react'
 import { settingsApi } from '../../services/api.js'
 import { Button } from '@/components/ui-new/button'
@@ -12,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 export default function Login() {
     const navigate = useNavigate()
     const { login } = useAuth()
+    const { refreshSettings } = useSettings()
     const toast = useToast()
     const [loading, setLoading] = useState(false)
     const [schoolLogo, setSchoolLogo] = useState('')
@@ -40,6 +42,9 @@ export default function Login() {
 
         if (result.success) {
             toast.success(`Selamat datang, ${result.user.name}!`)
+
+            // Refresh settings to get protected values (like WA template)
+            refreshSettings()
 
             // Navigate based on role
             const roleRoutes = {

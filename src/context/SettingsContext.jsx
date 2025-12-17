@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { settingsApi } from '../services/api'
 
 const SettingsContext = createContext(null)
@@ -38,20 +38,22 @@ export function SettingsProvider({ children }) {
     const [settings, setSettings] = useState(DEFAULT_SETTINGS)
     const [loading, setLoading] = useState(true)
 
-    // Load settings from API on mount
-    useEffect(() => {
-        const loadSettings = async () => {
-            try {
-                const data = await settingsApi.getAll()
-                setSettings(prev => ({ ...prev, ...data }))
-            } catch (error) {
-                console.error('Failed to load settings:', error)
-            } finally {
-                setLoading(false)
-            }
+    // Load settings from API
+    const loadSettings = useCallback(async () => {
+        try {
+            setLoading(true)
+            const data = await settingsApi.getAll()
+            setSettings(prev => ({ ...prev, ...data }))
+        } catch (error) {
+            console.error('Failed to load settings:', error)
+        } finally {
+            setLoading(false)
         }
-        loadSettings()
     }, [])
+
+    useEffect(() => {
+        loadSettings()
+    }, [loadSettings])
 
     const updateSettings = async (updates) => {
         // Optimistic update
@@ -98,7 +100,8 @@ export function SettingsProvider({ children }) {
         addClass,
         removeClass,
         updateClass,
-        loading
+        loading,
+        refreshSettings: loadSettings
     }
 
     return (

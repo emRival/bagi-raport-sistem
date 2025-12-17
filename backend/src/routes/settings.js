@@ -1,4 +1,5 @@
 import express from 'express'
+import jwt from 'jsonwebtoken'
 import db from '../db.js'
 import { authMiddleware } from './auth.js'
 import bcrypt from 'bcryptjs'
@@ -8,11 +9,15 @@ import { modifyLimiter } from '../middleware/rateLimiter.js'
 
 const router = express.Router()
 
-// Get all settings (Public)
+
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-please-set-env-var'
+
+// Get all settings (Public/Protected mixed)
 router.get('/', (req, res) => {
     try {
         const settings = db.prepare('SELECT * FROM settings').all()
         const result = {}
+
         settings.forEach(s => {
             try {
                 result[s.key] = JSON.parse(s.value)
@@ -20,6 +25,34 @@ router.get('/', (req, res) => {
                 result[s.key] = s.value
             }
         })
+
+        // Check Authentication
+        const authHeader = req.headers.authorization
+        let isAuthenticated = false
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1]
+            try {
+                jwt.verify(token, JWT_SECRET)
+                isAuthenticated = true
+            } catch (e) {
+                // Invalid token
+            }
+        }
+
+        // Helper to check for specific roles if needed, currently just valid token = full access
+        // But ideally only admin/teacher should see waToken? 
+        // For now, if logged in, show all. If public, show limited.
+
+        if (!isAuthenticated) {
+            const PUBLIC_KEYS = ['schoolName', 'schoolLogo', 'classes']
+            const filtered = {}
+            PUBLIC_KEYS.forEach(key => {
+                if (result[key] !== undefined) filtered[key] = result[key]
+            })
+            return res.json(filtered)
+        }
+
         res.json(result)
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' })

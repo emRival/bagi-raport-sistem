@@ -12,7 +12,7 @@ export function AnnouncementsProvider({ children }) {
     const fetchAnnouncements = useCallback(async () => {
         try {
             const data = await settingsApi.getAnnouncements()
-            console.log('🔍 Debug Context: Fetched announcements:', data)
+
             setAnnouncements(data)
         } catch (error) {
             console.error('Failed to fetch announcements:', error)
