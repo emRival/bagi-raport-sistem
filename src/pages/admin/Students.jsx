@@ -48,6 +48,7 @@ export default function Students() {
     const [modalOpen, setModalOpen] = useState(false)
     const [editStudent, setEditStudent] = useState(null)
     const [currentPage, setCurrentPage] = useState(1)
+    const [bulkClass, setBulkClass] = useState('')
     const fileInputRef = useRef(null)
 
     const classes = settings.classes
@@ -153,14 +154,19 @@ export default function Students() {
         }
     }
 
-    const handleBulkChangeClass = async (newClass) => {
-        if (!newClass) return
+    const handleBulkChangeClass = async () => {
+        const newClass = bulkClass.trim().toUpperCase()
+        if (!newClass) {
+            toast.error('Masukkan nama kelas')
+            return
+        }
         if (!confirm(`Pindahkan ${selectedIds.length} siswa ke kelas ${newClass}?`)) return
 
         try {
             await studentsApi.bulkUpdateClass(selectedIds, newClass)
             toast.success(`${selectedIds.length} siswa berhasil dipindahkan ke ${newClass}`)
             setSelectedIds([])
+            setBulkClass('')
             fetchStudents()
         } catch (error) {
             toast.error('Gagal memindahkan siswa')
@@ -333,16 +339,27 @@ export default function Students() {
 
                             {/* Bulk Change Class */}
                             <div className="flex items-center gap-2">
-                                <Select onValueChange={handleBulkChangeClass}>
-                                    <SelectTrigger className="w-40 bg-white">
-                                        <SelectValue placeholder="Pindah ke kelas..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {classes.map(cls => (
-                                            <SelectItem key={cls} value={cls}>{cls}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <Input
+                                    placeholder="Nama kelas baru..."
+                                    value={bulkClass}
+                                    onChange={(e) => setBulkClass(e.target.value)}
+                                    className="w-40 bg-white"
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault()
+                                            handleBulkChangeClass()
+                                        }
+                                    }}
+                                />
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleBulkChangeClass}
+                                    disabled={!bulkClass.trim()}
+                                    className="bg-white"
+                                >
+                                    Pindahkan
+                                </Button>
                             </div>
 
                             <div className="flex-1" />
@@ -367,7 +384,7 @@ export default function Students() {
                     <CardTitle className="text-lg">Daftar Siswa</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                    <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+                    <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>

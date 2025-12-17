@@ -90,7 +90,7 @@ export default function Dashboard() {
                             <div className="flex items-center justify-between">
                                 <div className="flex-1">
                                     <p className="text-xs sm:text-sm opacity-90">Antrian Hari Ini</p>
-                                    <p className="text-2xl sm:text-4xl font-bold mt-1 sm:mt-2">{stats.totals.total}</p>
+                                    <p className="text-2xl sm:text-4xl font-bold mt-1 sm:mt-2">{stats.totals?.total ?? 0}</p>
                                 </div>
                                 <ClipboardList className="w-8 h-8 sm:w-12 sm:h-12 opacity-80" />
                             </div>
@@ -102,7 +102,7 @@ export default function Dashboard() {
                             <div className="flex items-center justify-between">
                                 <div className="flex-1">
                                     <p className="text-xs sm:text-sm opacity-90">Menunggu</p>
-                                    <p className="text-2xl sm:text-4xl font-bold mt-1 sm:mt-2">{stats.totals.waiting}</p>
+                                    <p className="text-2xl sm:text-4xl font-bold mt-1 sm:mt-2">{stats.totals?.waiting ?? 0}</p>
                                 </div>
                                 <Clock className="w-8 h-8 sm:w-12 sm:h-12 opacity-80" />
                             </div>
@@ -114,7 +114,7 @@ export default function Dashboard() {
                             <div className="flex items-center justify-between">
                                 <div className="flex-1">
                                     <p className="text-xs sm:text-sm opacity-90">Selesai</p>
-                                    <p className="text-2xl sm:text-4xl font-bold mt-1 sm:mt-2">{stats.totals.finished}</p>
+                                    <p className="text-2xl sm:text-4xl font-bold mt-1 sm:mt-2">{stats.totals?.finished ?? 0}</p>
                                 </div>
                                 <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 opacity-80" />
                             </div>
