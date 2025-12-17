@@ -38,6 +38,7 @@ import {
     PaginationPrevious,
 } from '@/components/ui-new/pagination'
 import { useToast } from '../../context/ToastContext.jsx'
+import { useSettings } from '../../context/SettingsContext.jsx'
 import { settingsApi } from '../../services/api.js'
 
 const ROLES = [
@@ -47,7 +48,7 @@ const ROLES = [
     { value: 'tv', label: 'TV Display', icon: Tv, color: 'bg-purple-100 text-purple-700' },
 ]
 
-const CLASSES = ['7A', '7B', '7C', '8A', '8B', '8C', '9A', '9B', '9C']
+
 const ITEMS_PER_PAGE = 10
 
 export default function Users() {
@@ -351,6 +352,7 @@ export default function Users() {
 }
 
 function UserModal({ isOpen, onClose, onSave, user }) {
+    const { settings } = useSettings()
     const [formData, setFormData] = useState({
         username: '',
         name: '',
@@ -458,7 +460,7 @@ function UserModal({ isOpen, onClose, onSave, user }) {
                                     <SelectValue placeholder="Pilih Kelas" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {CLASSES.map(cls => (
+                                    {settings.classes.map(cls => (
                                         <SelectItem key={cls} value={cls}>
                                             {cls}
                                         </SelectItem>

@@ -53,9 +53,9 @@ export const userSchema = Joi.object({
         .messages({
             'any.required': 'Nama wajib diisi'
         }),
-    role: Joi.string().valid('admin', 'teacher', 'guard').required()
+    role: Joi.string().valid('admin', 'teacher', 'satpam', 'tv').required()
         .messages({
-            'any.only': 'Role harus admin, teacher, atau guard'
+            'any.only': 'Role harus admin, teacher, satpam, atau tv'
         }),
     assignedClass: Joi.string().trim().when('role', {
         is: 'teacher',
@@ -71,7 +71,7 @@ export const userUpdateSchema = Joi.object({
     username: Joi.string().trim().alphanum().min(3).max(30).optional(),
     password: Joi.string().min(6).max(100).optional(),
     name: Joi.string().trim().max(100).optional(),
-    role: Joi.string().valid('admin', 'teacher', 'guard').optional(),
+    role: Joi.string().valid('admin', 'teacher', 'satpam', 'tv').optional(),
     assignedClass: Joi.string().trim().optional().allow('', null)
 })
 
