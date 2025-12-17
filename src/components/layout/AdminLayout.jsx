@@ -46,11 +46,11 @@ export default function AdminLayout() {
     }
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50">
+        <div className="flex h-screen bg-slate-50">
             {/* Desktop Sidebar - Hidden on Mobile */}
             <aside
                 className={cn(
-                    "hidden lg:flex sticky top-0 left-0 h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 flex-col shadow-2xl smooth-transition",
+                    "hidden lg:flex fixed top-0 left-0 h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 flex-col shadow-2xl smooth-transition z-30",
                     sidebarOpen ? "w-64" : "w-20"
                 )}
             >
@@ -147,8 +147,11 @@ export default function AdminLayout() {
                 </div>
             </aside>
 
-            {/* Main content */}
-            <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Main content - offset by sidebar width on desktop */}
+            <div className={cn(
+                "flex-1 flex flex-col min-h-screen",
+                sidebarOpen ? "lg:ml-64" : "lg:ml-20"
+            )}>
                 {/* Top header - Desktop only */}
                 <header className="hidden lg:flex h-16 bg-white border-b border-slate-200 items-center px-4 sm:px-6 shadow-sm">
                     <div className="flex-1" />
