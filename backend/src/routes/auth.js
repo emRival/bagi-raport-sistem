@@ -8,12 +8,18 @@ import { loginSchema, validate } from '../utils/validators.js'
 const router = express.Router()
 
 // Load JWT secret from environment
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-please-set-env-var'
+const JWT_SECRET = process.env.JWT_SECRET
+const NODE_ENV = process.env.NODE_ENV || 'development'
 
-if (!process.env.JWT_SECRET) {
-    logger.warn('⚠️  JWT_SECRET not set in environment! Using fallback (INSECURE)')
+if (!JWT_SECRET) {
+    if (NODE_ENV === 'production') {
+        throw new Error('CRITICAL: JWT_SECRET must be set in production environment!')
+    } else {
+        logger.warn('⚠️  JWT_SECRET not set! Using insecure fallback for development only.')
+    }
 }
 
+const EFFECTIVE_JWT_SECRET = JWT_SECRET || 'dev-only-insecure-fallback-key-12345'
 const JWT_EXPIRES = '24h'
 
 // Login
@@ -37,7 +43,7 @@ router.post('/login', validate(loginSchema), (req, res) => {
 
         const token = jwt.sign(
             { id: user.id, username: user.username, role: user.role },
-            JWT_SECRET,
+            EFFECTIVE_JWT_SECRET,
             { expiresIn: JWT_EXPIRES }
         )
 
@@ -69,7 +75,7 @@ router.get('/verify', (req, res) => {
     const token = authHeader.split(' ')[1]
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET)
+        const decoded = jwt.verify(token, EFFECTIVE_JWT_SECRET)
         const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id)
 
         if (!user) {
@@ -100,7 +106,7 @@ export function authMiddleware(req, res, next) {
     const token = authHeader.split(' ')[1]
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET)
+        const decoded = jwt.verify(token, EFFECTIVE_JWT_SECRET)
         req.user = decoded
         next()
     } catch (error) {

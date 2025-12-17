@@ -3,6 +3,7 @@ import db from '../db.js'
 import logger from '../utils/logger.js'
 import { checkInSchema, validate } from '../utils/validators.js'
 import { checkInLimiter } from '../middleware/rateLimiter.js'
+import { authMiddleware } from './auth.js'
 
 const router = express.Router()
 
@@ -353,8 +354,8 @@ Terima kasih. 🙏`
     }
 })
 
-// Call student
-router.post('/:id/call', (req, res) => {
+// Call student (Protected)
+router.post('/:id/call', authMiddleware, (req, res) => {
     try {
         const userId = req.user?.id
 
@@ -469,8 +470,8 @@ _Terima kasih atas kesabarannya._ 🙏`
     }
 })
 
-// Cancel call (Revert to WAITING)
-router.post('/:id/cancel', (req, res) => {
+// Cancel call (Revert to WAITING) (Protected)
+router.post('/:id/cancel', authMiddleware, (req, res) => {
     try {
         db.prepare(`
             UPDATE queue 
@@ -491,8 +492,8 @@ router.post('/:id/cancel', (req, res) => {
     }
 })
 
-// Manual notify
-router.post('/:id/notify', (req, res) => {
+// Manual notify (Protected)
+router.post('/:id/notify', authMiddleware, (req, res) => {
     try {
         const { type, customMessage } = req.body
         const queue = db.prepare(`
@@ -600,8 +601,8 @@ router.post('/:id/notify', (req, res) => {
     }
 })
 
-// Mark as finished
-router.post('/:id/finish', (req, res) => {
+// Mark as finished (Protected)
+router.post('/:id/finish', authMiddleware, (req, res) => {
     try {
         logger.debug('🏁 Finish request for ID:', req.params.id)
         const indonesiaTime = getIndonesiaDateTime()
@@ -639,8 +640,8 @@ router.post('/:id/finish', (req, res) => {
     }
 })
 
-// Skip student
-router.post('/:id/skip', (req, res) => {
+// Skip student (Protected)
+router.post('/:id/skip', authMiddleware, (req, res) => {
     try {
         db.prepare(`
             UPDATE queue 
@@ -660,8 +661,8 @@ router.post('/:id/skip', (req, res) => {
     }
 })
 
-// Uncheckin (Delete queue item)
-router.delete('/:id', (req, res) => {
+// Uncheckin (Delete queue item) (Protected)
+router.delete('/:id', authMiddleware, (req, res) => {
     try {
         db.prepare('DELETE FROM queue WHERE id = ?').run(req.params.id)
 
@@ -675,8 +676,8 @@ router.delete('/:id', (req, res) => {
     }
 })
 
-// Reset queue (admin only)
-router.delete('/reset', (req, res) => {
+// Reset queue (admin only) (Protected)
+router.delete('/reset', authMiddleware, (req, res) => {
     try {
         const today = getIndonesiaDate()
         db.prepare('DELETE FROM queue WHERE date = ?').run(today)

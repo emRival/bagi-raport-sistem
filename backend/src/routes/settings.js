@@ -1,16 +1,16 @@
 import express from 'express'
 import jwt from 'jsonwebtoken'
 import db from '../db.js'
-import { authMiddleware } from './auth.js'
+import { authMiddleware, adminOnly } from './auth.js'
 import bcrypt from 'bcryptjs'
 import logger from '../utils/logger.js'
-import { settingsSchema, userSchema, userUpdateSchema, validate } from '../utils/validators.js'
+import { settingsSchema, userSchema, userUpdateSchema, announcementSchema, validate } from '../utils/validators.js'
 import { modifyLimiter } from '../middleware/rateLimiter.js'
 
 const router = express.Router()
 
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-please-set-env-var'
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-insecure-fallback-key-12345'
 
 // Get all settings (Public/Protected mixed)
 router.get('/', (req, res) => {
@@ -75,7 +75,7 @@ router.put('/:key', authMiddleware, modifyLimiter, validate(settingsSchema), (re
 
 
 // Get users (admin only)
-router.get('/users', authMiddleware, (req, res) => {
+router.get('/users', authMiddleware, adminOnly, (req, res) => {
     try {
         const users = db.prepare(`
             SELECT id, username, name, role, assigned_class, created_at 
@@ -87,8 +87,8 @@ router.get('/users', authMiddleware, (req, res) => {
     }
 })
 
-// Create user
-router.post('/users', authMiddleware, modifyLimiter, validate(userSchema), async (req, res) => {
+// Create user (admin only)
+router.post('/users', authMiddleware, adminOnly, modifyLimiter, validate(userSchema), async (req, res) => {
     try {
         const { username, password, name, role, assignedClass } = req.body
 
@@ -118,8 +118,8 @@ router.post('/users', authMiddleware, modifyLimiter, validate(userSchema), async
     }
 })
 
-// Update user
-router.put('/users/:id', authMiddleware, modifyLimiter, validate(userUpdateSchema), async (req, res) => {
+// Update user (admin only)
+router.put('/users/:id', authMiddleware, adminOnly, modifyLimiter, validate(userUpdateSchema), async (req, res) => {
     try {
         const { username, password, name, role, assignedClass } = req.body
         const userId = req.params.id
@@ -145,8 +145,8 @@ router.put('/users/:id', authMiddleware, modifyLimiter, validate(userUpdateSchem
     }
 })
 
-// Delete user
-router.delete('/users/:id', authMiddleware, (req, res) => {
+// Delete user (admin only)
+router.delete('/users/:id', authMiddleware, adminOnly, (req, res) => {
     try {
         const userId = req.params.id
         // Prevent deleting self? Frontend handles caution.
@@ -158,8 +158,8 @@ router.delete('/users/:id', authMiddleware, (req, res) => {
 })
 
 
-// Broadcast announcement (Trigger Popup)
-router.post('/announcements/:id/broadcast', (req, res) => {
+// Broadcast announcement (Trigger Popup) (Protected)
+router.post('/announcements/:id/broadcast', authMiddleware, (req, res) => {
     try {
         const announcement = db.prepare('SELECT * FROM announcements WHERE id = ?').get(req.params.id)
 
@@ -192,7 +192,7 @@ router.get('/announcements', (req, res) => {
     }
 })
 
-router.post('/announcements', authMiddleware, (req, res) => {
+router.post('/announcements', authMiddleware, validate(announcementSchema), (req, res) => {
     try {
         const { text, is_active = 1 } = req.body
         const result = db.prepare('INSERT INTO announcements (text, is_active) VALUES (?, ?)').run(text, is_active)

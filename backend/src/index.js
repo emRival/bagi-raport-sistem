@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import logger from './utils/logger.js'
@@ -32,6 +33,12 @@ const io = new Server(httpServer, {
         methods: ['GET', 'POST']
     }
 })
+
+// Security headers with helmet
+app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP for easier frontend integration
+    crossOriginEmbedderPolicy: false,
+}))
 
 // Middleware
 app.set('trust proxy', 1) // For rate limiting behind reverse proxy
