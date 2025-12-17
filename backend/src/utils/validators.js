@@ -69,7 +69,7 @@ export const userSchema = Joi.object({
 // User update schema (password optional)
 export const userUpdateSchema = Joi.object({
     username: Joi.string().trim().alphanum().min(3).max(30).optional(),
-    password: Joi.string().min(6).max(100).optional(),
+    password: Joi.string().min(6).max(100).optional().allow(''),
     name: Joi.string().trim().max(100).optional(),
     role: Joi.string().valid('admin', 'teacher', 'satpam', 'tv').optional(),
     assignedClass: Joi.string().trim().optional().allow('', null)
