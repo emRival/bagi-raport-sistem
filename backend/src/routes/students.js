@@ -110,6 +110,36 @@ router.delete('/:id', (req, res) => {
     }
 })
 
+// Bulk update class for multiple students
+router.put('/bulk/class', modifyLimiter, (req, res) => {
+    try {
+        const { studentIds, newClass } = req.body
+
+        if (!Array.isArray(studentIds) || studentIds.length === 0) {
+            return res.status(400).json({ error: 'studentIds harus berupa array yang tidak kosong' })
+        }
+
+        if (!newClass || typeof newClass !== 'string') {
+            return res.status(400).json({ error: 'newClass harus berupa string' })
+        }
+
+        const placeholders = studentIds.map(() => '?').join(',')
+        const stmt = db.prepare(`
+            UPDATE students 
+            SET class = ? 
+            WHERE id IN (${placeholders})
+        `)
+
+        stmt.run(newClass, ...studentIds)
+
+        logger.info(`Bulk class update: ${studentIds.length} students moved to ${newClass}`)
+        res.json({ success: true, count: studentIds.length, newClass })
+    } catch (error) {
+        logger.error('Bulk class update error:', error)
+        res.status(500).json({ error: 'Internal server error' })
+    }
+})
+
 // Bulk import students (no phone)
 router.post('/import', (req, res) => {
     try {

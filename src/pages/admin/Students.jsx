@@ -153,6 +153,20 @@ export default function Students() {
         }
     }
 
+    const handleBulkChangeClass = async (newClass) => {
+        if (!newClass) return
+        if (!confirm(`Pindahkan ${selectedIds.length} siswa ke kelas ${newClass}?`)) return
+
+        try {
+            await studentsApi.bulkUpdateClass(selectedIds, newClass)
+            toast.success(`${selectedIds.length} siswa berhasil dipindahkan ke ${newClass}`)
+            setSelectedIds([])
+            fetchStudents()
+        } catch (error) {
+            toast.error('Gagal memindahkan siswa')
+        }
+    }
+
     const handleDownloadTemplate = () => {
         const wb = XLSX.utils.book_new()
         const headers = ['NIS', 'Nama Siswa', 'Kelas', 'Nama Ortu', 'No. HP']
@@ -314,9 +328,25 @@ export default function Students() {
             {someSelected && (
                 <Card className="border-blue-200 bg-blue-50">
                     <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
                             <Badge className="bg-blue-600 text-white">{selectedIds.length} dipilih</Badge>
+
+                            {/* Bulk Change Class */}
+                            <div className="flex items-center gap-2">
+                                <Select onValueChange={handleBulkChangeClass}>
+                                    <SelectTrigger className="w-40 bg-white">
+                                        <SelectValue placeholder="Pindah ke kelas..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {classes.map(cls => (
+                                            <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
                             <div className="flex-1" />
+
                             <Button
                                 variant="outline"
                                 size="sm"

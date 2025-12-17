@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Save, TestTube, Eye, EyeOff, Upload, Link, Image, Trash2, Plus, X, Settings as SettingsIcon, MessageSquare, Volume2 } from 'lucide-react'
+import { Save, TestTube, Eye, EyeOff, Upload, Link, Image, Trash2, Plus, X, Settings as SettingsIcon, MessageSquare, Volume2, ChevronUp, ChevronDown, GripVertical } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui-new/card'
 import { Button } from '@/components/ui-new/button'
 import { Input } from '@/components/ui-new/input'
@@ -92,7 +92,8 @@ export default function Settings() {
             return
         }
 
-        const updatedClasses = [...settings.classes, className].sort()
+        // Add to end of list (no auto-sort to preserve admin order)
+        const updatedClasses = [...settings.classes, className]
         updateSettings({ classes: updatedClasses })
         setNewClass('')
         toast.success(`Kelas ${className} berhasil ditambahkan`)
@@ -104,6 +105,20 @@ export default function Settings() {
             updateSettings({ classes: updatedClasses })
             toast.success(`Kelas ${className} berhasil dihapus`)
         }
+    }
+
+    const moveClassUp = (index) => {
+        if (index === 0) return
+        const newClasses = [...settings.classes]
+            ;[newClasses[index - 1], newClasses[index]] = [newClasses[index], newClasses[index - 1]]
+        updateSettings({ classes: newClasses })
+    }
+
+    const moveClassDown = (index) => {
+        if (index === settings.classes.length - 1) return
+        const newClasses = [...settings.classes]
+            ;[newClasses[index], newClasses[index + 1]] = [newClasses[index + 1], newClasses[index]]
+        updateSettings({ classes: newClasses })
     }
 
     return (
@@ -231,26 +246,49 @@ export default function Settings() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label>Daftar Kelas</Label>
-                                <div className="flex flex-wrap gap-2">
+                                <Label>Daftar Kelas (Urutan Tampilan TV)</Label>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                    Gunakan tombol ↑ ↓ untuk mengubah urutan. Urutan ini akan ditampilkan di TV.
+                                </p>
+                                <div className="space-y-1">
                                     {settings.classes && settings.classes.length > 0 ? (
-                                        settings.classes.map(className => (
-                                            <Badge
+                                        settings.classes.map((className, index) => (
+                                            <div
                                                 key={className}
-                                                variant="outline"
-                                                className="px-3 py-1.5 hover:bg-muted"
+                                                className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg border hover:bg-muted smooth-transition"
                                             >
-                                                {className}
-                                                <button
-                                                    onClick={() => handleRemoveClass(className)}
-                                                    className="ml-2 hover:text-red-600"
-                                                >
-                                                    <X className="w-3 h-3" />
-                                                </button>
-                                            </Badge>
+                                                <GripVertical className="w-4 h-4 text-muted-foreground" />
+                                                <span className="flex-1 font-medium">{className}</span>
+                                                <span className="text-xs text-muted-foreground mr-2">#{index + 1}</span>
+                                                <div className="flex gap-1">
+                                                    <button
+                                                        onClick={() => moveClassUp(index)}
+                                                        disabled={index === 0}
+                                                        className="p-1 rounded hover:bg-background disabled:opacity-30 disabled:cursor-not-allowed smooth-transition"
+                                                        title="Pindah ke atas"
+                                                    >
+                                                        <ChevronUp className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => moveClassDown(index)}
+                                                        disabled={index === settings.classes.length - 1}
+                                                        className="p-1 rounded hover:bg-background disabled:opacity-30 disabled:cursor-not-allowed smooth-transition"
+                                                        title="Pindah ke bawah"
+                                                    >
+                                                        <ChevronDown className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleRemoveClass(className)}
+                                                        className="p-1 rounded hover:bg-red-50 hover:text-red-600 smooth-transition ml-1"
+                                                        title="Hapus kelas"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
                                         ))
                                     ) : (
-                                        <p className="text-sm text-muted-foreground">Belum ada kelas</p>
+                                        <p className="text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg text-center">Belum ada kelas</p>
                                     )}
                                 </div>
                             </div>

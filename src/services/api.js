@@ -67,6 +67,11 @@ export const studentsApi = {
     import: (students) => api('/students/import', {
         method: 'POST',
         body: JSON.stringify({ students })
+    }),
+
+    bulkUpdateClass: (studentIds, newClass) => api('/students/bulk/class', {
+        method: 'PUT',
+        body: JSON.stringify({ studentIds, newClass })
     })
 }
 
