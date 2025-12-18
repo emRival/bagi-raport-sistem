@@ -43,7 +43,8 @@ const callbacks = {
     'online-status': [],
     'queue-updated': [],
     'announcement-updated': [],
-    'teachers-online': []
+    'teachers-online': [],
+    'settings-updated': []
 }
 
 socket.on('connect', () => {

@@ -13,7 +13,7 @@ export default function TV() {
     const navigate = useNavigate()
     const { logout } = useAuth()
     const { announcements, refreshAnnouncements } = useAnnouncements()
-    const { settings } = useSettings()
+    const { settings, refreshSettings } = useSettings()
 
     // --- STATE ---
     const [soundEnabled, setSoundEnabled] = useState(false)
@@ -121,12 +121,21 @@ export default function TV() {
             }
         }
 
+        const handleSettingsUpdate = (data) => {
+            console.log('Settings Updated:', data)
+            // Refresh settings when TTS settings change
+            if (data.key && (data.key.startsWith('tts') || data.key === 'schoolName' || data.key === 'schoolLogo')) {
+                refreshSettings()
+            }
+        }
+
         socketService.on('connect', handleConnect)
         socketService.on('disconnect', handleDisconnect)
         socketService.on('online-status', handleTeacherStatus)
         socketService.on('student-called', handleCall)
         socketService.on('student-finished', handleFinished)
         socketService.on('announcement', handleAnnouncement)
+        socketService.on('settings-updated', handleSettingsUpdate)
 
         return () => {
             socketService.off('connect', handleConnect)
@@ -135,8 +144,9 @@ export default function TV() {
             socketService.off('student-called', handleCall)
             socketService.off('student-finished', handleFinished)
             socketService.off('announcement', handleAnnouncement)
+            socketService.off('settings-updated', handleSettingsUpdate)
         }
-    }, [refreshAnnouncements])
+    }, [refreshAnnouncements, refreshSettings])
 
     // --- DATA FETCHING ---
     const fetchStats = async () => {
@@ -181,6 +191,7 @@ export default function TV() {
             utterance.lang = 'id-ID'
             utterance.rate = settings.ttsRate || 0.8
             utterance.pitch = settings.ttsPitch || 1.0
+            utterance.volume = settings.ttsVolume || 1.0
 
             // Voice selection logic
             const voices = speechSynthesis.getVoices()
