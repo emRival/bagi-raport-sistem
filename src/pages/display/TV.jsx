@@ -34,11 +34,13 @@ export default function TV() {
     const soundEnabledRef = useRef(soundEnabled)
     const isSpeakingRef = useRef(isSpeaking)
     const ttsQueueRef = useRef(ttsQueue)
+    const settingsRef = useRef(settings)
 
     // Sync refs
     useEffect(() => { soundEnabledRef.current = soundEnabled }, [soundEnabled])
     useEffect(() => { isSpeakingRef.current = isSpeaking }, [isSpeaking])
     useEffect(() => { ttsQueueRef.current = ttsQueue }, [ttsQueue])
+    useEffect(() => { settingsRef.current = settings }, [settings])
 
     // --- INITIALIZATION ---
     useEffect(() => {
@@ -187,11 +189,14 @@ export default function TV() {
         }
 
         if ('speechSynthesis' in window) {
+            const currentSettings = settingsRef.current
             const utterance = new SpeechSynthesisUtterance(item.text)
             utterance.lang = 'id-ID'
-            utterance.rate = settings.ttsRate || 0.8
-            utterance.pitch = settings.ttsPitch || 1.0
-            utterance.volume = settings.ttsVolume || 1.0
+            utterance.rate = currentSettings.ttsRate || 0.8
+            utterance.pitch = currentSettings.ttsPitch || 1.0
+            utterance.volume = currentSettings.ttsVolume || 1.0
+
+            console.log('TTS Settings Used:', { rate: utterance.rate, pitch: utterance.pitch, volume: utterance.volume })
 
             // Voice selection logic
             const voices = speechSynthesis.getVoices()
