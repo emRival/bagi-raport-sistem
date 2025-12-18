@@ -42,7 +42,7 @@ router.post('/login', validate(loginSchema), (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: user.id, username: user.username, role: user.role },
+            { id: user.id, username: user.username, name: user.name, role: user.role },
             EFFECTIVE_JWT_SECRET,
             { expiresIn: JWT_EXPIRES }
         )
