@@ -249,24 +249,22 @@ export default function Students() {
 
     return (
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
-            {/* Header - Match pattern with Users/Dashboard */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold">Data Siswa</h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        {students.length} siswa terdaftar
-                        {someSelected && ` • ${selectedIds.length} terpilih`}
-                    </p>
-                </div>
-                <Button onClick={() => setModalOpen(true)} icon={Plus} className="w-full sm:w-auto">
-                    Tambah Siswa
-                </Button>
+            {/* Header - Match pattern with History */}
+            <div>
+                <h1 className="text-2xl sm:text-3xl font-bold">Data Siswa</h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                    {students.length} siswa terdaftar
+                    {someSelected && ` • ${selectedIds.length} terpilih`}
+                </p>
             </div>
 
             {/* Import/Export Card */}
             <Card>
                 <CardContent className="p-4">
                     <div className="flex flex-col sm:flex-row gap-2">
+                        <Button onClick={() => setModalOpen(true)} icon={Plus} className="flex-1 sm:flex-none">
+                            Tambah Siswa
+                        </Button>
                         <Button
                             variant="outline"
                             onClick={handleDownloadTemplate}

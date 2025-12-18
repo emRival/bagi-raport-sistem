@@ -198,14 +198,9 @@ export default function Users() {
     return (
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold">Manajemen User</h1>
-                    <p className="text-sm text-muted-foreground mt-1">{users.length} user terdaftar</p>
-                </div>
-                <Button onClick={handleCreate} icon={Plus} className="w-full sm:w-auto">
-                    Tambah User
-                </Button>
+            <div>
+                <h1 className="text-2xl sm:text-3xl font-bold">Manajemen User</h1>
+                <p className="text-sm text-muted-foreground mt-1">{users.length} user terdaftar</p>
             </div>
 
             {/* Filters Card */}
@@ -233,6 +228,9 @@ export default function Users() {
                                 ))}
                             </SelectContent>
                         </Select>
+                        <Button onClick={handleCreate} icon={Plus} className="w-full sm:w-auto">
+                            Tambah User
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
