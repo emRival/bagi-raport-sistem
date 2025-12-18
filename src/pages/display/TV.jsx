@@ -435,9 +435,10 @@ export default function TV() {
                             )
                         })()}
                     </div>
-                    <div className="flex items-center gap-3 text-xs ml-4">
+                    <div className="flex items-center gap-4 text-xs ml-4">
                         <span>Selesai: <strong className="text-lg">{stats.totals.finished}</strong></span>
                         <span>{onlineClasses.length > 0 ? '🟢' : '⚪'} {onlineClasses.length} Guru</span>
+                        <span className="text-blue-200 border-l border-blue-400 pl-4">Powered by <strong>Bagi Raport</strong> @em_rival</span>
                     </div>
                 </div>
             </footer>
