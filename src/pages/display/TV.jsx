@@ -499,7 +499,7 @@ export default function TV() {
 
             <style>{`
                 @keyframes marquee {
-                    0% { transform: translateX(0%); }
+                    0% { transform: translateX(100%); }
                     100% { transform: translateX(-100%); }
                 }
                 .animate-marquee {
