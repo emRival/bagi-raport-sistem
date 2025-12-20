@@ -16,13 +16,13 @@ export const generalLimiter = rateLimit({
     skip: (req) => NODE_ENV === 'development' && (req.ip === '::1' || req.ip === '127.0.0.1')
 })
 
-// Strict rate limiter for authentication - 5 attempts per 15 minutes
+// Strict rate limiter for authentication - 10 attempts per 2 minutes
 export const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 5,
+    windowMs: 2 * 60 * 1000, // 2 minutes (reduced from 15)
+    max: 10, // 10 attempts (increased from 5)
     message: {
-        error: 'Terlalu banyak percobaan login, silakan coba lagi nanti',
-        retryAfter: '15 menit'
+        error: 'Terlalu banyak percobaan login, silakan coba lagi dalam 2 menit',
+        retryAfter: '2 menit'
     },
     standardHeaders: true,
     legacyHeaders: false,
