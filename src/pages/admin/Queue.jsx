@@ -14,7 +14,10 @@ import {
     MessageSquare,
     XCircle,
     Users,
-    Filter
+    Filter,
+    Undo2,
+    ChevronDown,
+    ChevronUp
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-new/card'
 import { Button } from '@/components/ui-new/button'
@@ -34,6 +37,7 @@ export default function AdminQueue() {
     const [queue, setQueue] = useState([])
     const [loading, setLoading] = useState({})
     const [selectedClass, setSelectedClass] = useState('all')
+    const [showFinished, setShowFinished] = useState(false)
 
     const classes = settings.classes || []
 
@@ -44,6 +48,7 @@ export default function AdminQueue() {
 
     const waitingQueue = filteredQueue.filter(q => q.status === 'WAITING')
     const calledQueue = filteredQueue.filter(q => q.status === 'CALLED')
+    const finishedQueue = filteredQueue.filter(q => q.status === 'FINISHED')
 
     const fetchQueue = async () => {
         try {
@@ -154,6 +159,19 @@ export default function AdminQueue() {
             toast.success(`Notifikasi terkirim ke wali ${item.name}`)
         } catch (error) {
             toast.error('Gagal mengirim notifikasi')
+        } finally {
+            setLoading({ ...loading, [item.id]: null })
+        }
+    }
+
+    const handleRevertFinish = async (item) => {
+        setLoading({ ...loading, [item.id]: 'revert' })
+        try {
+            await queueApi.revertFinish(item.id)
+            fetchQueue()
+            toast.success(`Status ${item.name} dikembalikan ke Dipanggil`)
+        } catch (error) {
+            toast.error('Gagal mengembalikan status: ' + (error.message || 'Unknown error'))
         } finally {
             setLoading({ ...loading, [item.id]: null })
         }
@@ -348,6 +366,51 @@ export default function AdminQueue() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Finished Queue - Collapsible */}
+            {finishedQueue.length > 0 && (
+                <Card>
+                    <CardHeader
+                        className="cursor-pointer hover:bg-slate-50 transition-colors"
+                        onClick={() => setShowFinished(!showFinished)}
+                    >
+                        <CardTitle className="flex items-center justify-between text-lg">
+                            <div className="flex items-center gap-2">
+                                <CheckCircle className="w-5 h-5 text-green-500" />
+                                Selesai Hari Ini ({finishedQueue.length})
+                            </div>
+                            {showFinished ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                        </CardTitle>
+                    </CardHeader>
+                    {showFinished && (
+                        <CardContent className="space-y-2 max-h-[40vh] overflow-y-auto">
+                            {finishedQueue.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between"
+                                >
+                                    <div>
+                                        <p className="font-medium">{item.name}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {item.class} • Selesai: {formatTime(item.finished_time)}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleRevertFinish(item)}
+                                        loading={loading[item.id] === 'revert'}
+                                        icon={Undo2}
+                                        className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                                    >
+                                        Kembalikan
+                                    </Button>
+                                </div>
+                            ))}
+                        </CardContent>
+                    )}
+                </Card>
+            )}
         </div>
     )
 }

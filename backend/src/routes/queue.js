@@ -709,6 +709,45 @@ router.post('/:id/skip', authMiddleware, verifyQueueAccess, (req, res) => {
     }
 })
 
+// Revert finished (Return FINISHED to CALLED) - Admin only
+router.post('/:id/revert-finish', authMiddleware, verifyQueueAccess, (req, res) => {
+    try {
+        // Check if user is admin
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Hanya admin yang dapat mengembalikan status selesai' })
+        }
+
+        const queue = db.prepare('SELECT * FROM queue WHERE id = ?').get(req.params.id)
+
+        if (!queue) {
+            return res.status(404).json({ error: 'Queue entry not found' })
+        }
+
+        if (queue.status !== 'FINISHED') {
+            return res.status(400).json({ error: 'Hanya bisa mengembalikan status dari FINISHED' })
+        }
+
+        db.prepare(`
+            UPDATE queue 
+            SET status = 'CALLED', finished_time = NULL
+            WHERE id = ?
+        `).run(req.params.id)
+
+        const updatedQueue = db.prepare('SELECT * FROM queue WHERE id = ?').get(req.params.id)
+
+        logger.info(`Admin ${req.user.username} reverted queue ${req.params.id} from FINISHED to CALLED`)
+
+        if (req.io) {
+            req.io.emit('queue-updated')
+        }
+
+        res.json(updatedQueue)
+    } catch (error) {
+        logger.error('Revert finish error:', error)
+        res.status(500).json({ error: 'Internal server error' })
+    }
+})
+
 // Uncheckin (Delete queue item) (Protected)
 router.delete('/:id', authMiddleware, (req, res) => {
     try {

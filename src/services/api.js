@@ -104,6 +104,8 @@ export const queueApi = {
 
     skip: (id) => api(`/queue/${id}/skip`, { method: 'POST' }),
 
+    revertFinish: (id) => api(`/queue/${id}/revert-finish`, { method: 'POST' }),
+
     notify: (id, type) => api(`/queue/${id}/notify`, {
         method: 'POST',
         body: JSON.stringify({ type })
