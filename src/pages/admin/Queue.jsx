@@ -83,7 +83,7 @@ export default function AdminQueue() {
             const result = await queueApi.call(item.id)
             fetchQueue()
             if (result.broadcast) {
-                socketService.callStudent(result.broadcast.studentName, result.broadcast.className)
+                socketService.callStudent(result.broadcast.studentName, result.broadcast.className, false)
             }
             toast.success(`Memanggil ${item.name}`)
         } catch (error) {
@@ -98,7 +98,7 @@ export default function AdminQueue() {
         try {
             const result = await queueApi.call(item.id)
             if (result.broadcast) {
-                socketService.callStudent(result.broadcast.studentName, result.broadcast.className)
+                socketService.callStudent(result.broadcast.studentName, result.broadcast.className, true)
             }
             toast.success(`Memanggil ulang ${item.name}`)
         } catch (error) {

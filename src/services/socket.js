@@ -114,8 +114,8 @@ export const socketService = {
         }
     },
 
-    callStudent: (studentName, className) => {
-        socket.emit('call-student', { studentName, className, timestamp: Date.now() })
+    callStudent: (studentName, className, isRecall = false) => {
+        socket.emit('call-student', { studentName, className, isRecall, timestamp: Date.now() })
     },
 
     finishStudent: (studentName, className) => {

@@ -97,8 +97,20 @@ export default function TV() {
             fetchStats()
 
             if (soundEnabledRef.current) {
-                const text = `Panggilan untuk wali siswa ${data.studentName}, kelas ${data.className}. Silakan menuju ruang kelas sekarang.`
-                addToQueue(text, { type: 'call', name: data.studentName, class: data.className })
+                const normalText = `Panggilan untuk wali siswa ${data.studentName}, kelas ${data.className}. Silakan menuju ruang kelas sekarang.`
+                const repeatText = `Diulangi. Panggilan untuk wali siswa ${data.studentName}, kelas ${data.className}. Silakan menuju ruang kelas sekarang.`
+
+                if (data.isRecall) {
+                    // Recall button pressed - only play "diulangi" version once
+                    addToQueue(repeatText, { type: 'call', name: data.studentName, class: data.className, isRepeat: true })
+                } else {
+                    // First call - play normal first, then "diulangi" version
+                    addToQueue(normalText, { type: 'call', name: data.studentName, class: data.className })
+                    // Add repeat version with slight delay identifier to prevent duplicate detection
+                    setTimeout(() => {
+                        addToQueue(repeatText, { type: 'call', name: data.studentName, class: data.className, isRepeat: true })
+                    }, 100)
+                }
             }
         }
 

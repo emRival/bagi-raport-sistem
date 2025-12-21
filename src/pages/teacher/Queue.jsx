@@ -67,7 +67,7 @@ export default function Queue() {
                 q.id === item.id ? { ...q, status: 'CALLED' } : q
             ))
             if (result.broadcast) {
-                socketService.callStudent(result.broadcast.studentName, result.broadcast.className)
+                socketService.callStudent(result.broadcast.studentName, result.broadcast.className, false)
             }
             toast.success(`Memanggil ${item.name}`)
         } catch (error) {
@@ -82,7 +82,7 @@ export default function Queue() {
         try {
             const result = await queueApi.call(item.id)
             if (result.broadcast) {
-                socketService.callStudent(result.broadcast.studentName, result.broadcast.className)
+                socketService.callStudent(result.broadcast.studentName, result.broadcast.className, true)
             }
             toast.success(`Memanggil ulang ${item.name}`)
         } catch (error) {
