@@ -326,7 +326,9 @@ export default function AdminQueue() {
                                             variant="outline"
                                             onClick={() => handleNotify(item, 'call')}
                                             loading={loading[item.id] === 'notify'}
+                                            disabled={!!loading[item.id] || !item.parent_phone}
                                             icon={MessageSquare}
+                                            title={item.parent_phone ? `Kirim WA ke ${item.parent_phone}` : 'Nomor HP tidak tersedia'}
                                         >
                                             WA
                                         </Button>
