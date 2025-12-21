@@ -609,6 +609,10 @@ router.post('/:id/notify', authMiddleware, verifyQueueAccess, (req, res) => {
                 message = message
                     .replace(/{name}/g, queue.name)
                     .replace(/{class}/g, queue.class)
+                    .replace(/{nis}/g, queue.nis || '-')
+                    .replace(/{parent_name}/g, queue.parent_name || 'Wali')
+                    .replace(/{date}/g, getIndonesiaDate())
+                    .replace(/{time}/g, getIndonesiaDateTime().split('T')[1].substring(0, 5))
 
                 logger.debug('Sending Manual WA to:', queue.parent_phone, 'Message:', message)
 
