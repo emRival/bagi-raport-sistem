@@ -479,6 +479,8 @@ _Terima kasih atas kesabarannya._ 🙏`
                     .replace(/{nis}/g, queue.nis || '-')
                     .replace(/{parent_name}/g, queue.parent_name || 'Wali')
                     .replace(/{queue_number}/g, queue.queue_number || '-')
+                    .replace(/{date}/g, getIndonesiaDate())
+                    .replace(/{time}/g, getIndonesiaDateTime().split('T')[1].substring(0, 5))
 
                 logger.debug('Sending WA Call to:', queueData.parent_phone, 'Message:', message)
 
@@ -611,6 +613,7 @@ router.post('/:id/notify', authMiddleware, verifyQueueAccess, (req, res) => {
                     .replace(/{class}/g, queue.class)
                     .replace(/{nis}/g, queue.nis || '-')
                     .replace(/{parent_name}/g, queue.parent_name || 'Wali')
+                    .replace(/{queue_number}/g, queue.queue_number || '-')
                     .replace(/{date}/g, getIndonesiaDate())
                     .replace(/{time}/g, getIndonesiaDateTime().split('T')[1].substring(0, 5))
 
