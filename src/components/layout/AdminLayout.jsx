@@ -14,6 +14,7 @@ import {
     ChevronLeft,
     History,
     MoreHorizontal,
+    ClipboardList,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -21,6 +22,7 @@ const navItems = [
     { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/admin/users', label: 'Users', icon: Users },
     { path: '/admin/students', label: 'Siswa', icon: GraduationCap },
+    { path: '/admin/queue', label: 'Antrian', icon: ClipboardList },
     { path: '/admin/history', label: 'History', icon: History },
     { path: '/admin/settings', label: 'Settings', icon: Settings },
 ]
@@ -29,6 +31,7 @@ const mobileNavItems = [
     { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/admin/users', label: 'Users', icon: Users },
     { path: '/admin/students', label: 'Siswa', icon: GraduationCap },
+    { path: '/admin/queue', label: 'Antrian', icon: ClipboardList },
     { path: '/admin/history', label: 'History', icon: History },
     { path: '/admin/settings', label: 'Settings', icon: Settings },
 ]

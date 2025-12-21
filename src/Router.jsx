@@ -13,6 +13,7 @@ import AdminStudents from './pages/admin/Students.jsx'
 import AdminSettings from './pages/admin/Settings.jsx'
 import AdminClasses from './pages/admin/Classes.jsx'
 import AdminHistory from './pages/admin/History.jsx'
+import AdminQueue from './pages/admin/Queue.jsx'
 import GuardCheckin from './pages/guard/Checkin.jsx'
 import TeacherQueue from './pages/teacher/Queue.jsx'
 import TeacherHistory from './pages/teacher/History.jsx'
@@ -94,6 +95,7 @@ export default function Router() {
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="students" element={<AdminStudents />} />
                 <Route path="history" element={<AdminHistory />} />
+                <Route path="queue" element={<AdminQueue />} />
                 <Route path="classes" element={<AdminClasses />} />
                 <Route path="settings" element={<AdminSettings />} />
             </Route>
