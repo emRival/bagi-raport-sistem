@@ -1,33 +1,29 @@
 import { useState, useEffect } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { io } from 'socket.io-client'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui-new/card'
-import { Badge } from '@/components/ui-new/badge'
-import { GraduationCap, Clock, Users, BellRing, CheckCircle2 } from 'lucide-react'
+import { GraduationCap, Clock, Users, BellRing, CheckCircle2, QrCode } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // Use a clean URL without /api for the socket connection
 const SOCKET_URL = import.meta.env.PROD ? window.location.origin : 'http://localhost:3001'
 
 export default function TrackQueue() {
-    const { id } = useParams() // Optional specific queue ID
+    const { id } = useParams()
     const [searchParams, setSearchParams] = useSearchParams()
     
-    // We can search by NIS or Queue ID
     const [nisInput, setNisInput] = useState(searchParams.get('nis') || '')
     const [queueData, setQueueData] = useState(null)
-    const [schoolInfo, setSchoolInfo] = useState({ name: 'Bagi Raport', logo: '' })
+    const [schoolInfo, setSchoolInfo] = useState({ name: 'Sistem Antrian', logo: '' })
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [socketConnected, setSocketConnected] = useState(false)
 
-    // Fetch school info for branding
     useEffect(() => {
         fetch('/api/settings?_t=' + Date.now())
             .then(res => res.json())
             .then(data => {
                 setSchoolInfo({
-                    name: data.schoolName || 'Bagi Raport',
+                    name: data.schoolName || 'Sistem Antrian',
                     logo: data.schoolLogo || ''
                 })
             })
@@ -47,7 +43,7 @@ export default function TrackQueue() {
             }
 
             const res = await fetch(url)
-            if (!res.ok) throw new Error('Data antrian tidak ditemukan. Pastikan Anda sudah check-in.')
+            if (!res.ok) throw new Error('Antrian tidak ditemukan. Periksa kembali NIS atau pastikan sudah check-in.')
             const data = await res.json()
             setQueueData(data)
         } catch (err) {
@@ -58,7 +54,6 @@ export default function TrackQueue() {
         }
     }
 
-    // Initial load
     useEffect(() => {
         if (id || nisInput) {
             fetchQueueStatus(id, nisInput)
@@ -67,7 +62,6 @@ export default function TrackQueue() {
         }
     }, [id])
 
-    // Socket Connection for Real-time updates
     useEffect(() => {
         if (!queueData) return
 
@@ -80,12 +74,11 @@ export default function TrackQueue() {
         socket.on('disconnect', () => setSocketConnected(false))
 
         socket.on('queue-updated', () => {
-            // Re-fetch data to get latest status and people ahead
             fetchQueueStatus(id, nisInput)
         })
 
         return () => socket.disconnect()
-    }, [queueData?.id]) // Re-run if queue ID changes
+    }, [queueData?.id])
 
     const handleSearch = (e) => {
         e.preventDefault()
@@ -97,150 +90,168 @@ export default function TrackQueue() {
 
     if (loading && !queueData) {
         return (
-            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-                <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="mt-4 text-slate-500 font-medium">Memuat data antrian...</p>
+            <div className="min-h-[100dvh] bg-slate-50 flex items-center justify-center p-6 selection:bg-blue-200">
+                <div className="w-8 h-8 rounded-full border-[3px] border-slate-200 border-t-slate-800 animate-spin"></div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center p-4 pb-20">
-            {/* Header */}
-            <div className="w-full max-w-md flex flex-col items-center mb-8 mt-6">
+        <div className="min-h-[100dvh] bg-slate-50 flex flex-col items-center p-4 sm:p-8 pb-24 selection:bg-blue-200">
+            {/* Minimalist Header */}
+            <header className="w-full max-w-lg flex flex-col items-center mb-10 mt-4 sm:mt-10 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out fill-mode-both">
                 {schoolInfo.logo ? (
-                    <img src={schoolInfo.logo} alt="Logo" className="w-20 h-20 object-contain mb-4 shadow-lg rounded-2xl bg-white p-2" />
+                    <img src={schoolInfo.logo} alt="" className="w-16 h-16 object-contain mb-5" />
                 ) : (
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg mb-4">
-                        <GraduationCap className="w-10 h-10 text-white" />
+                    <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center shadow-sm mb-5">
+                        <GraduationCap className="w-6 h-6 text-white" />
                     </div>
                 )}
-                <h1 className="text-2xl font-black text-slate-900 tracking-tight text-center">{schoolInfo.name}</h1>
-                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Live Tracking Antrian</p>
-            </div>
+                <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight text-center">{schoolInfo.name}</h1>
+                <p className="text-sm text-slate-500 mt-1">Live Tracking Antrian</p>
+            </header>
 
-            <div className="w-full max-w-md w-full space-y-4">
+            <main className="w-full max-w-lg">
                 {!queueData ? (
-                    <Card className="shadow-xl border-none ring-1 ring-slate-200">
-                        <CardHeader>
-                            <CardTitle className="text-center">Cek Status Antrian</CardTitle>
-                            <CardDescription className="text-center">Masukkan NIS siswa yang telah melakukan Check-in di gerbang.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleSearch} className="space-y-4">
+                    <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 ease-out fill-mode-both">
+                        <div className="text-center mb-8">
+                            <h2 className="text-lg font-medium text-slate-900 mb-2">Cek Status</h2>
+                            <p className="text-sm text-slate-500 leading-relaxed">Masukkan Nomor Induk Siswa (NIS) untuk melihat posisi antrian secara real-time.</p>
+                        </div>
+                        
+                        <form onSubmit={handleSearch} className="space-y-4">
+                            <div className="space-y-1.5">
+                                <label htmlFor="nis" className="text-xs font-medium text-slate-700 ml-1">NIS Siswa</label>
                                 <input
+                                    id="nis"
                                     type="text"
-                                    placeholder="Masukkan NIS Siswa..."
-                                    className="w-full p-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-center text-xl font-black tracking-wider transition-all outline-none"
+                                    inputMode="numeric"
+                                    placeholder="Contoh: 10123"
+                                    className="w-full p-4 rounded-2xl bg-slate-50 border-0 focus:ring-2 focus:ring-slate-900 text-lg font-medium transition-shadow outline-none placeholder:text-slate-400 text-center"
                                     value={nisInput}
                                     onChange={(e) => setNisInput(e.target.value)}
                                 />
-                                {error && (
-                                    <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm font-medium text-center border border-red-100">
-                                        {error}
-                                    </div>
-                                )}
-                                <button
-                                    type="submit"
-                                    disabled={loading || !nisInput.trim()}
-                                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-lg shadow-lg shadow-blue-200 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {loading ? 'Mencari...' : 'CEK SEKARANG'}
-                                </button>
-                            </form>
-                        </CardContent>
-                    </Card>
+                            </div>
+                            
+                            {error && (
+                                <div className="p-3 bg-red-50 text-red-700 rounded-xl text-sm font-medium text-center">
+                                    {error}
+                                </div>
+                            )}
+                            
+                            <button
+                                type="submit"
+                                disabled={loading || !nisInput.trim()}
+                                className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-medium text-base transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                            >
+                                {loading ? 'Mencari...' : 'Cari Antrian'}
+                            </button>
+                        </form>
+                    </div>
                 ) : (
-                    <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
-                        {/* Status Banner */}
+                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out fill-mode-both">
+                        
+                        {/* Dynamic Status Banner */}
                         <div className={cn(
-                            "p-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg",
-                            queueData.status === 'WAITING' ? "bg-orange-500 text-white" :
-                            queueData.status === 'CALLED' ? "bg-blue-600 text-white animate-pulse" :
-                            "bg-emerald-500 text-white"
+                            "px-5 py-4 rounded-3xl flex items-center justify-center gap-3 transition-colors duration-500 border",
+                            queueData.status === 'WAITING' ? "bg-amber-50 text-amber-900 border-amber-200/50" :
+                            queueData.status === 'CALLED' ? "bg-blue-600 text-white border-blue-600 shadow-xl shadow-blue-600/20" :
+                            "bg-emerald-50 text-emerald-900 border-emerald-200/50"
                         )}>
-                            {queueData.status === 'WAITING' && <Clock className="w-6 h-6" />}
-                            {queueData.status === 'CALLED' && <BellRing className="w-6 h-6" />}
-                            {queueData.status === 'FINISHED' && <CheckCircle2 className="w-6 h-6" />}
-                            <span className="font-black text-lg tracking-wide uppercase">
-                                {queueData.status === 'WAITING' ? 'Harap Menunggu' :
-                                 queueData.status === 'CALLED' ? 'Giliran Anda Tiba!' :
+                            {queueData.status === 'WAITING' && <Clock className="w-5 h-5" />}
+                            {queueData.status === 'CALLED' && <BellRing className="w-5 h-5 animate-[ring_2s_ease-in-out_infinite]" />}
+                            {queueData.status === 'FINISHED' && <CheckCircle2 className="w-5 h-5" />}
+                            <span className="font-medium tracking-wide">
+                                {queueData.status === 'WAITING' ? 'Dalam Antrian' :
+                                 queueData.status === 'CALLED' ? 'Menuju Ruang Kelas' :
                                  'Selesai'}
                             </span>
                         </div>
 
-                        {/* Main Info Card */}
-                        <Card className="shadow-xl border-none ring-1 ring-slate-200 overflow-hidden relative">
-                            {/* Decorative background circle */}
-                            <div className="absolute -right-16 -top-16 w-40 h-40 bg-blue-50 rounded-full blur-3xl opacity-50"></div>
+                        {/* Bento Grid Layout */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Primary Number Card */}
+                            <div className="col-span-2 bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col items-center justify-center relative overflow-hidden">
+                                {/* Subtle mesh background hint */}
+                                <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-900 via-transparent to-transparent"></div>
+                                
+                                <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-2 z-10">Nomor Anda</p>
+                                <div className="text-8xl font-light text-slate-900 tracking-tighter z-10 mb-4 tabular-nums">
+                                    {queueData.queue_number}
+                                </div>
+                                <div className="px-4 py-1.5 rounded-full bg-slate-100 text-slate-600 text-sm font-medium z-10">
+                                    Kelas {queueData.class}
+                                </div>
+                            </div>
+
+                            {/* Identity Card */}
+                            <div className="col-span-2 sm:col-span-1 bg-white rounded-3xl p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 flex flex-col justify-between">
+                                <div>
+                                    <p className="text-xs font-medium text-slate-500 mb-1">Siswa</p>
+                                    <p className="text-lg font-medium text-slate-900 leading-tight">{queueData.name}</p>
+                                </div>
+                                <div className="mt-6 pt-4 border-t border-slate-50">
+                                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Waktu Tiba</p>
+                                    <p className="text-sm font-medium text-slate-700">
+                                        {new Date(queueData.check_in_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Dynamic Context Card (Queue Info) */}
+                            {queueData.status === 'WAITING' && (
+                                <div className="col-span-2 sm:col-span-1 bg-slate-900 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex flex-col justify-between relative overflow-hidden text-white">
+                                    <div>
+                                        <p className="text-xs font-medium text-slate-400 mb-1">Sisa Antrian</p>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-5xl font-light tabular-nums">{queueData.peopleAhead}</span>
+                                            <span className="text-sm text-slate-400 font-medium">orang</span>
+                                        </div>
+                                    </div>
+                                    <Users className="absolute -right-4 -bottom-4 w-24 h-24 text-slate-800 opacity-50" />
+                                </div>
+                            )}
+
+                            {queueData.status === 'CALLED' && (
+                                <div className="col-span-2 sm:col-span-1 bg-blue-50 rounded-3xl p-6 border border-blue-100 flex flex-col justify-center">
+                                    <p className="text-sm font-medium text-blue-900 leading-relaxed">
+                                        Silakan masuk ke kelas. Guru wali kelas sedang menunggu.
+                                    </p>
+                                </div>
+                            )}
                             
-                            <CardContent className="p-6 relative">
-                                <div className="text-center mb-6">
-                                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Nomor Antrian</p>
-                                    <div className="text-7xl font-black text-slate-900 tracking-tighter">
-                                        {queueData.queue_number}
-                                    </div>
-                                    <Badge variant="outline" className="mt-3 text-sm px-4 py-1 border-blue-200 text-blue-700 bg-blue-50 font-black">
-                                        KELAS {queueData.class}
-                                    </Badge>
+                            {queueData.status === 'FINISHED' && (
+                                <div className="col-span-2 sm:col-span-1 bg-emerald-50 rounded-3xl p-6 border border-emerald-100 flex flex-col justify-center">
+                                    <p className="text-sm font-medium text-emerald-900 leading-relaxed">
+                                        Proses pembagian raport telah selesai. Terima kasih atas kehadirannya.
+                                    </p>
                                 </div>
+                            )}
+                        </div>
 
-                                <div className="space-y-4 border-t border-slate-100 pt-6">
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Siswa</p>
-                                        <p className="text-xl font-bold text-slate-900">{queueData.name}</p>
-                                        <p className="text-sm font-medium text-slate-500">NIS: {queueData.nis}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Waktu Check-in</p>
-                                        <p className="text-base font-bold text-slate-900">
-                                            {new Date(queueData.check_in_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Info / Estimation Card */}
-                        {queueData.status === 'WAITING' && (
-                            <Card className="shadow-md border-none bg-slate-800 text-white">
-                                <CardContent className="p-5 flex items-center justify-between">
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Siswa di Depan Anda</p>
-                                        <p className="text-3xl font-black text-white">{queueData.peopleAhead}</p>
-                                    </div>
-                                    <Users className="w-12 h-12 text-slate-600" />
-                                </CardContent>
-                            </Card>
-                        )}
-                        
-                        {queueData.status === 'CALLED' && (
-                            <Card className="shadow-md border-none bg-blue-50 border border-blue-200">
-                                <CardContent className="p-5 text-center">
-                                    <h3 className="text-blue-900 font-black text-lg mb-2">Segera Menuju Ruang Kelas</h3>
-                                    <p className="text-blue-700 text-sm font-medium">Guru wali kelas Anda sudah menunggu di ruangan untuk membagikan raport.</p>
-                                </CardContent>
-                            </Card>
-                        )}
-
-                        <div className="text-center pt-4">
-                            <button onClick={() => { setQueueData(null); setSearchParams({}); setNisInput('') }} className="text-sm font-bold text-slate-500 hover:text-slate-900 underline underline-offset-4">
-                                Cek NIS Lain
+                        {/* Reset Action */}
+                        <div className="text-center pt-8">
+                            <button 
+                                onClick={() => { setQueueData(null); setSearchParams({}); setNisInput('') }} 
+                                className="text-sm font-medium text-slate-400 hover:text-slate-900 transition-colors"
+                            >
+                                Cek siswa lain
                             </button>
                         </div>
                     </div>
                 )}
-            </div>
+            </main>
 
-            {/* Connection Status Indicator */}
+            {/* Connection Indicator - Minimalist */}
             {queueData && (
                 <div className={cn(
-                    "fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg backdrop-blur-md border transition-colors",
+                    "fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-medium backdrop-blur-md border transition-all duration-500",
                     socketConnected 
-                        ? "bg-emerald-50/80 text-emerald-700 border-emerald-200" 
-                        : "bg-red-50/80 text-red-700 border-red-200 animate-pulse"
+                        ? "bg-white/80 text-slate-500 border-slate-200/50 shadow-sm opacity-50 hover:opacity-100" 
+                        : "bg-red-50 text-red-600 border-red-200 shadow-md"
                 )}>
-                    {socketConnected ? '🟢 Live Sync Aktif' : '🔴 Terputus - Mencoba Hubung Ulang...'}
+                    <div className={cn("w-1.5 h-1.5 rounded-full", socketConnected ? "bg-emerald-500" : "bg-red-500 animate-pulse")} />
+                    {socketConnected ? 'Live' : 'Mencoba terhubung...'}
                 </div>
             )}
         </div>
