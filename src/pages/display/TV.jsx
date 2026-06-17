@@ -136,15 +136,14 @@ export default function TV() {
         }
 
         const handleSettingsUpdate = (data) => {
-            console.log('Settings Updated:', data)
-            // Refresh settings when TTS settings change
-            if (data.key && (data.key.startsWith('tts') || data.key === 'schoolName' || data.key === 'schoolLogo')) {
-                refreshSettings().then(newSettings => {
-                    if (newSettings) {
-                        settingsRef.current = newSettings
-                    }
-                })
-            }
+            console.log('📢 Settings Updated via Socket:', data)
+            // Always refresh settings to stay in sync
+            refreshSettings().then(newSettings => {
+                if (newSettings) {
+                    console.log('✅ TV Settings Synced:', newSettings)
+                    settingsRef.current = { ...settingsRef.current, ...newSettings }
+                }
+            })
         }
 
         socketService.on('connect', handleConnect)
@@ -207,12 +206,18 @@ export default function TV() {
         if ('speechSynthesis' in window) {
             const currentSettings = settingsRef.current
             const utterance = new SpeechSynthesisUtterance(item.text)
-            utterance.lang = 'id-ID'
-            utterance.rate = currentSettings.ttsRate || 0.8
-            utterance.pitch = currentSettings.ttsPitch || 1.0
-            utterance.volume = currentSettings.ttsVolume || 1.0
 
-            console.log('TTS Settings Used:', { rate: utterance.rate, pitch: utterance.pitch, volume: utterance.volume })
+            // Explicitly cast to Number to ensure browser compatibility
+            const pitch = parseFloat(currentSettings.ttsPitch ?? 1.0)
+            const rate = parseFloat(currentSettings.ttsRate ?? 0.8)
+            const volume = parseFloat(currentSettings.ttsVolume ?? 1.0)
+
+            utterance.lang = 'id-ID'
+            utterance.pitch = pitch
+            utterance.rate = rate
+            utterance.volume = volume
+
+            console.log('🗣️ Speaking with settings:', { pitch, rate, volume, text: item.text.substring(0, 20) + '...' })
 
             // Voice selection logic
             const voices = speechSynthesis.getVoices()
