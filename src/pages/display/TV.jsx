@@ -140,8 +140,10 @@ export default function TV() {
             // Always refresh settings to stay in sync
             refreshSettings().then(newSettings => {
                 if (newSettings) {
-                    console.log('✅ TV Settings Synced:', newSettings)
-                    settingsRef.current = { ...settingsRef.current, ...newSettings }
+                    console.log('✅ TV Settings Synced from DB:', newSettings)
+                    // CRITICAL: Manually update the Ref immediately because processQueue 
+                    // uses the Ref to get the absolute latest values before speaking
+                    settingsRef.current = newSettings
                 }
             })
         }
