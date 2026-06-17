@@ -230,10 +230,10 @@ export default function TrackQueue() {
                         </div>
 
                         {/* Reset Action */}
-                        <div className="text-center pt-8">
+                        <div className="text-center pt-8 pb-12">
                             <button 
                                 onClick={() => { setQueueData(null); setSearchParams({}); setNisInput('') }} 
-                                className="text-sm font-medium text-slate-400 hover:text-slate-900 transition-colors"
+                                className="text-sm font-medium text-slate-400 hover:text-slate-900 transition-colors py-2 px-4 rounded-full hover:bg-slate-100"
                             >
                                 Cek siswa lain
                             </button>
@@ -245,7 +245,7 @@ export default function TrackQueue() {
             {/* Connection Indicator - Minimalist */}
             {queueData && (
                 <div className={cn(
-                    "fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-medium backdrop-blur-md border transition-all duration-500",
+                    "fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-medium backdrop-blur-md border transition-all duration-500 z-50",
                     socketConnected 
                         ? "bg-white/80 text-slate-500 border-slate-200/50 shadow-sm opacity-50 hover:opacity-100" 
                         : "bg-red-50 text-red-600 border-red-200 shadow-md"
