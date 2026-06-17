@@ -38,7 +38,7 @@ export default function TrackQueue() {
         setLoading(true)
         setError(null)
         try {
-            let url = `/api/public/track?`
+            let url = `/api/queue/public/track?`
             if (queueId) url += `id=${queueId}`
             else if (nis) url += `nis=${nis}`
             else {
