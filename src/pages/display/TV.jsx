@@ -137,12 +137,19 @@ export default function TV() {
 
         const handleSettingsUpdate = (data) => {
             console.log('📢 Settings Updated via Socket:', data)
-            // Always refresh settings to stay in sync
+            if (data && data.key && data.value !== undefined) {
+                // Update Ref immediately so the VERY NEXT speech uses these settings
+                settingsRef.current = { 
+                    ...settingsRef.current, 
+                    [data.key]: data.value 
+                }
+                console.log(`✅ TV System Sync: ${data.key} set to ${data.value}`)
+            }
+            
+            // Still refresh context to keep other UI elements in sync
             refreshSettings().then(newSettings => {
                 if (newSettings) {
-                    console.log('✅ TV Settings Synced from DB:', newSettings)
-                    // CRITICAL: Manually update the Ref immediately because processQueue 
-                    // uses the Ref to get the absolute latest values before speaking
+                    console.log('🔄 TV Full Context Synced')
                     settingsRef.current = newSettings
                 }
             })
