@@ -206,42 +206,37 @@ export default function TV() {
         }
 
         if ('speechSynthesis' in window) {
-            // Cancel any ongoing speech to clear the buffer
+            // Cancel any ongoing speech
             window.speechSynthesis.cancel()
 
             const currentSettings = settingsRef.current
             const utterance = new SpeechSynthesisUtterance(item.text)
 
-            // Explicitly cast to Number
-            const pitch = parseFloat(currentSettings.ttsPitch ?? 1.0)
-            const rate = parseFloat(currentSettings.ttsRate ?? 0.8)
-            const volume = parseFloat(currentSettings.ttsVolume ?? 1.0)
+            // Cast values to Number safely
+            const pitch = Number(currentSettings.ttsPitch || 1.0)
+            const rate = Number(currentSettings.ttsRate || 0.8)
+            const volume = Number(currentSettings.ttsVolume || 1.0)
 
-            // IMPORTANT: Set properties BEFORE setting voice
             utterance.lang = 'id-ID'
             utterance.pitch = pitch
             utterance.rate = rate
             utterance.volume = volume
 
-            // Voice selection logic - try to get fresh voices
-            const voices = window.speechSynthesis.getVoices()
+            // Get available voices
+            let voices = window.speechSynthesis.getVoices()
             
-            // LOG ALL VOICES (Debug)
-            console.log('🔊 [TV] Available Voices:', voices.map(v => `${v.name} (${v.lang}) ${v.localService ? '[Local]' : '[Network]'}`))
-
-            // Prefer Local ID-ID voice as it supports Pitch changes better than Google Network voices
-            const idVoices = voices.filter(v => v.lang.includes('id'))
-            const selectedVoice = idVoices.find(v => v.localService && v.name.toLowerCase().includes('male'))
-                || idVoices.find(v => v.localService)
-                || idVoices.find(v => v.name.toLowerCase().includes('male'))
-                || idVoices[0]
+            // Debug: Log all voices found to console
+            console.log(`🔊 [TV] Found ${voices.length} voices`)
+            
+            // Simple selection logic: Find ID-ID, prefer any if not found
+            let selectedVoice = voices.find(v => v.lang.includes('id')) || voices[0]
             
             if (selectedVoice) {
                 utterance.voice = selectedVoice
-                console.log('✅ [TV] Using Voice:', selectedVoice.name, selectedVoice.localService ? '(Local)' : '(Network)')
+                console.log(`✅ [TV] Using: ${selectedVoice.name} | Pitch: ${pitch} | Rate: ${rate}`)
+            } else {
+                console.warn('⚠️ [TV] No voice found, using browser default')
             }
-
-            console.log('🗣️ [TV] Speaking with settings:', { pitch, rate, volume, text: item.text.substring(0, 30) + '...' })
 
             utterance.onstart = () => {
                 console.log('🏁 [TV] TTS Started')
@@ -255,16 +250,14 @@ export default function TV() {
                 }, 2000)
             }
 
-            utterance.onerror = (event) => {
-                console.error('❌ [TV] TTS Error:', event)
+            utterance.onerror = (e) => {
+                console.error('❌ [TV] TTS Error:', e)
                 setOverlay(null)
                 setIsSpeaking(false)
             }
 
-            // Small delay to ensure cancel() has finished processing in some browsers
-            setTimeout(() => {
-                window.speechSynthesis.speak(utterance)
-            }, 50)
+            // Speak
+            window.speechSynthesis.speak(utterance)
         } else {
             // Fallback if no TTS
             setTimeout(() => {
