@@ -202,11 +202,15 @@ export default function TV() {
     }
 
     const processQueue = () => {
+        // Use Ref for consistency inside the function
         if (isSpeakingRef.current || ttsQueueRef.current.length === 0) return
 
         const item = ttsQueueRef.current[0]
+        
+        // Update state and ref immediately
         setTtsQueue(prev => prev.slice(1))
         setIsSpeaking(true)
+        isSpeakingRef.current = true 
 
         // Show Overlay
         if (item.overlay) {
@@ -217,6 +221,7 @@ export default function TV() {
             // Cancel any ongoing speech
             window.speechSynthesis.cancel()
 
+            // CRITICAL: Always read from Ref at the exact moment of speaking
             const currentSettings = settingsRef.current
             const utterance = new SpeechSynthesisUtterance(item.text)
 
@@ -233,18 +238,16 @@ export default function TV() {
             // Get available voices
             let voices = window.speechSynthesis.getVoices()
             
-            // Debug: Log all voices found to console
-            console.log(`🔊 [TV] Found ${voices.length} voices`)
-            
-            // Simple selection logic: Find ID-ID, prefer any if not found
-            let selectedVoice = voices.find(v => v.lang.includes('id')) || voices[0]
+            // Selection logic
+            let selectedVoice = voices.find(v => v.name === currentSettings.ttsVoice)
+                || voices.find(v => v.lang.includes('id'))
+                || voices[0]
             
             if (selectedVoice) {
                 utterance.voice = selectedVoice
-                console.log(`✅ [TV] Using: ${selectedVoice.name} | Pitch: ${pitch} | Rate: ${rate}`)
-            } else {
-                console.warn('⚠️ [TV] No voice found, using browser default')
             }
+
+            console.log(`🗣️ [TV] SPEAKING NOW: ${selectedVoice?.name} | P: ${pitch} | R: ${rate} | V: ${volume}`)
 
             utterance.onstart = () => {
                 console.log('🏁 [TV] TTS Started')
@@ -255,6 +258,7 @@ export default function TV() {
                 setTimeout(() => {
                     setOverlay(null)
                     setIsSpeaking(false)
+                    isSpeakingRef.current = false
                 }, 2000)
             }
 
@@ -262,15 +266,19 @@ export default function TV() {
                 console.error('❌ [TV] TTS Error:', e)
                 setOverlay(null)
                 setIsSpeaking(false)
+                isSpeakingRef.current = false
             }
 
-            // Speak
-            window.speechSynthesis.speak(utterance)
+            // Speak with a tiny delay to ensure cancel finished
+            setTimeout(() => {
+                window.speechSynthesis.speak(utterance)
+            }, 100)
         } else {
             // Fallback if no TTS
             setTimeout(() => {
                 setOverlay(null)
                 setIsSpeaking(false)
+                isSpeakingRef.current = false
             }, 5000)
         }
     }

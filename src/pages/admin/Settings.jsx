@@ -22,6 +22,7 @@ export default function Settings() {
     // Local state for form fields to avoid per-keystroke API calls
     const [localSettings, setLocalSettings] = useState(null)
     const [testPhone, setTestPhone] = useState('')
+    const [availableVoices, setAvailableVoices] = useState([])
 
     // Initialize local settings from context
     useEffect(() => {
@@ -29,6 +30,21 @@ export default function Settings() {
             setLocalSettings(settings)
         }
     }, [settings, localSettings])
+
+    // Load available voices
+    useEffect(() => {
+        const loadVoices = () => {
+            const voices = window.speechSynthesis.getVoices()
+            const idVoices = voices.filter(v => v.lang.includes('id') || v.lang.includes('ID'))
+            setAvailableVoices(idVoices.length > 0 ? idVoices : voices.slice(0, 10))
+        }
+
+        loadVoices()
+        window.speechSynthesis.onvoiceschanged = loadVoices
+        return () => {
+            window.speechSynthesis.onvoiceschanged = null
+        }
+    }, [])
 
     const [logoMode, setLogoMode] = useState(settings.schoolLogo?.startsWith('http') ? 'url' : 'upload')
     const [logoUrl, setLogoUrl] = useState(settings.schoolLogo?.startsWith('http') ? settings.schoolLogo : '')
@@ -550,6 +566,28 @@ export default function Settings() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="space-y-3">
+                                <Label>Pilih Suara (Voice)</Label>
+                                <Select 
+                                    value={localSettings.ttsVoice} 
+                                    onValueChange={(value) => handleLocalChange({ ttsVoice: value })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Pilih Suara..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {availableVoices.map(voice => (
+                                            <SelectItem key={voice.name} value={voice.name}>
+                                                {voice.name} {voice.localService ? '(Lokal)' : '(Online)'}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-[10px] text-muted-foreground italic">
+                                    * Pilihan suara tergantung pada browser dan sistem operasi yang digunakan.
+                                </p>
+                            </div>
+
+                            <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <Label>Nada Suara (Pitch)</Label>
                                     <span className="text-sm font-medium">{localSettings.ttsPitch || 1.0}</span>
@@ -616,7 +654,7 @@ export default function Settings() {
                                 <Button variant="outline" onClick={handleTestSuara} icon={Volume2}>
                                     Test Suara
                                 </Button>
-                                <Button onClick={() => handleSave('suara', ['ttsPitch', 'ttsRate', 'ttsVolume'])} loading={saving} icon={Save}>
+                                <Button onClick={() => handleSave('suara', ['ttsVoice', 'ttsPitch', 'ttsRate', 'ttsVolume'])} loading={saving} icon={Save}>
                                     Simpan
                                 </Button>
                             </div>
