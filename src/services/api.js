@@ -125,9 +125,9 @@ export const settingsApi = {
         body: JSON.stringify({ value })
     }),
 
-    testWaConnection: (url, token) => api('/settings/wa-test', {
+    testWaConnection: (url, token, phone) => api('/settings/wa-test', {
         method: 'POST',
-        body: JSON.stringify({ url, token })
+        body: JSON.stringify({ url, token, phone })
     }),
 
     // User Management

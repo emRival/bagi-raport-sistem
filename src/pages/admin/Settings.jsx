@@ -21,6 +21,7 @@ export default function Settings() {
 
     // Local state for form fields to avoid per-keystroke API calls
     const [localSettings, setLocalSettings] = useState(null)
+    const [testPhone, setTestPhone] = useState('')
 
     // Initialize local settings from context
     useEffect(() => {
@@ -72,10 +73,15 @@ export default function Settings() {
             return
         }
 
+        if (!testPhone.trim()) {
+            toast.error('Masukan nomor telepon untuk pengetesan')
+            return
+        }
+
         setTesting(true)
         try {
-            await settingsApi.testWaConnection(localSettings.waApiUrl, localSettings.waApiToken)
-            toast.success('Koneksi ke WhatsApp Gateway berhasil! Cek n8n Anda.')
+            await settingsApi.testWaConnection(localSettings.waApiUrl, localSettings.waApiToken, testPhone)
+            toast.success('Koneksi berhasil! Pesan test telah dikirim ke ' + testPhone)
         } catch (error) {
             console.error('Test error:', error)
             toast.error(error.message || 'Gagal terhubung ke WhatsApp Gateway')
@@ -477,12 +483,26 @@ export default function Settings() {
                                 </div>
                             </div>
 
-                            <div className="flex gap-2">
-                                <Button variant="outline" onClick={handleTest} loading={testing} icon={TestTube}>
-                                    Test
-                                </Button>
-                                <Button onClick={() => handleSave('WhatsApp', ['waEnabled', 'waApiUrl', 'waApiToken', 'waCheckinTemplate', 'waCallTemplate'])} loading={saving} icon={Save}>
-                                    Simpan
+                            <div className="pt-4 border-t space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="testPhone">Nomor Telepon Test (Gunakan format 628xxx)</Label>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            id="testPhone"
+                                            placeholder="Contoh: 628123456789"
+                                            value={testPhone}
+                                            onChange={(e) => setTestPhone(e.target.value)}
+                                        />
+                                        <Button variant="outline" onClick={handleTest} loading={testing} icon={TestTube} className="whitespace-nowrap">
+                                            Test Koneksi
+                                        </Button>
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground italic">
+                                        * Pesan test akan dikirim langsung ke nomor ini untuk memvalidasi konfigurasi.
+                                    </p>
+                                </div>
+                                <Button onClick={() => handleSave('WhatsApp', ['waEnabled', 'waApiUrl', 'waApiToken', 'waCheckinTemplate', 'waCallTemplate'])} loading={saving} icon={Save} className="w-full sm:w-auto">
+                                    Simpan Semua Pengaturan WhatsApp
                                 </Button>
                             </div>
                         </CardContent>

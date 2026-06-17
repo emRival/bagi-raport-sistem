@@ -81,13 +81,29 @@ router.put('/:key', authMiddleware, modifyLimiter, validate(settingsSchema), (re
 // Test WhatsApp Connection (Protected)
 router.post('/wa-test', authMiddleware, async (req, res) => {
     try {
-        const { url, token } = req.body
+        const { url, token, phone } = req.body
 
         if (!url) {
             return res.status(400).json({ error: 'API URL is required' })
         }
 
-        logger.debug('Testing WA Connection to:', url)
+        if (!phone) {
+            return res.status(400).json({ error: 'Nomor telepon tujuan test diperlukan' })
+        }
+
+        logger.debug('Testing WA Connection to:', url, 'for phone:', phone)
+
+        const testMessage = `*🧪 TES KONEKSI WHATSAPP GATEWAY*
+---------------------------------------
+Halo Bapak/Ibu, ini adalah pesan percobaan dari *Sistem Antrian Bagi Raport*.
+
+✅ *Status:* Terkoneksi
+✅ *Waktu:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}
+
+Koneksi antara sistem dan WhatsApp Gateway Anda (n8n) telah berhasil dikonfigurasi dengan benar.
+
+_Pesan ini dikirim secara otomatis untuk validasi sistem._
+---------------------------------------`
 
         const response = await fetch(url, {
             method: 'POST',
@@ -96,26 +112,25 @@ router.post('/wa-test', authMiddleware, async (req, res) => {
                 'Authorization': token
             },
             body: JSON.stringify({
-                phone: '628123456789',
-                message: 'Test connection from Bagi Raport System'
+                phone: phone,
+                message: testMessage
             })
         })
 
         const responseText = await response.text()
         logger.debug('WA Test Response Status:', response.status)
-        logger.debug('WA Test Response Body:', responseText)
 
         if (response.ok) {
-            res.json({ success: true, message: 'Connection successful', details: responseText })
+            res.json({ success: true, message: 'Koneksi berhasil! Pesan test telah dikirim.', details: responseText })
         } else {
             res.status(response.status).json({
-                error: `Gateway returned error ${response.status}`,
+                error: `Gateway mengembalikan error ${response.status}`,
                 details: responseText
             })
         }
     } catch (error) {
         logger.error('WA Test Error:', error)
-        res.status(500).json({ error: 'Failed to connect to WhatsApp Gateway', details: error.message })
+        res.status(500).json({ error: 'Gagal terhubung ke WhatsApp Gateway', details: error.message })
     }
 })
 
