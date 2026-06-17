@@ -104,8 +104,8 @@ export default function TV() {
             fetchStats()
 
             if (soundEnabledRef.current) {
-                const normalText = `Panggilan untuk wali siswa ${data.studentName}, kelas ${data.className}. Silakan menuju ruang kelas sekarang.`
-                const repeatText = `Diulangi. Panggilan untuk wali siswa ${data.studentName}, kelas ${data.className}. Silakan menuju ruang kelas sekarang.`
+                const normalText = `Panggilan kepada wali siswa atas nama ${data.studentName}, kelas ${data.className}. Silakan menuju ruang kelas sekarang.`
+                const repeatText = `Diulangi. Panggilan kepada wali siswa atas nama ${data.studentName}, kelas ${data.className}. Silakan menuju ruang kelas sekarang.`
 
                 if (data.isRecall) {
                     // Recall button pressed - only play "diulangi" version once
