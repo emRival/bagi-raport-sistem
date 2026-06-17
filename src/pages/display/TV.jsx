@@ -5,9 +5,8 @@ import { useAnnouncements } from '../../context/AnnouncementsContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { socketService } from '../../services/socket.js'
 import { queueApi } from '../../services/api.js'
-import { Volume2, Megaphone, VolumeX, Wifi, WifiOff, LogOut } from 'lucide-react'
-import { Badge } from '@/components/ui-new/badge'
-import { Button } from '@/components/ui-new/button'
+import { Volume2, Megaphone, VolumeX, Wifi, WifiOff, LogOut, GraduationCap } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export default function TV() {
     const navigate = useNavigate()
