@@ -215,22 +215,31 @@ export default function TV() {
             const rate = parseFloat(currentSettings.ttsRate ?? 0.8)
             const volume = parseFloat(currentSettings.ttsVolume ?? 1.0)
 
+            // IMPORTANT: Set properties BEFORE setting voice
             utterance.lang = 'id-ID'
             utterance.pitch = pitch
             utterance.rate = rate
             utterance.volume = volume
 
-            console.log('🗣️ [TV] Speaking with settings:', { pitch, rate, volume, text: item.text.substring(0, 30) + '...' })
-
             // Voice selection logic - try to get fresh voices
             const voices = window.speechSynthesis.getVoices()
-            const maleVoice = voices.find(v => v.lang.includes('id') && v.name.toLowerCase().includes('male'))
-                || voices.find(v => v.lang.includes('id'))
             
-            if (maleVoice) {
-                utterance.voice = maleVoice
-                console.log('✅ [TV] Voice selected:', maleVoice.name)
+            // LOG ALL VOICES (Debug)
+            console.log('🔊 [TV] Available Voices:', voices.map(v => `${v.name} (${v.lang}) ${v.localService ? '[Local]' : '[Network]'}`))
+
+            // Prefer Local ID-ID voice as it supports Pitch changes better than Google Network voices
+            const idVoices = voices.filter(v => v.lang.includes('id'))
+            const selectedVoice = idVoices.find(v => v.localService && v.name.toLowerCase().includes('male'))
+                || idVoices.find(v => v.localService)
+                || idVoices.find(v => v.name.toLowerCase().includes('male'))
+                || idVoices[0]
+            
+            if (selectedVoice) {
+                utterance.voice = selectedVoice
+                console.log('✅ [TV] Using Voice:', selectedVoice.name, selectedVoice.localService ? '(Local)' : '(Network)')
             }
+
+            console.log('🗣️ [TV] Speaking with settings:', { pitch, rate, volume, text: item.text.substring(0, 30) + '...' })
 
             utterance.onstart = () => {
                 console.log('🏁 [TV] TTS Started')

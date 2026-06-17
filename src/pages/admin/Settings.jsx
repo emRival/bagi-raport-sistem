@@ -201,7 +201,7 @@ export default function Settings() {
         // Cancel previous speech
         window.speechSynthesis.cancel()
 
-        const text = 'Satu, dua, tiga. Ini adalah percobaan suara untuk antrian raport.'
+        const text = 'M M G Mas Bahlil Ganteng, Buah Apa yang Manis BAHLIL'
         const utterance = new SpeechSynthesisUtterance(text)
         
         const pitch = parseFloat(localSettings.ttsPitch ?? 1.0)
