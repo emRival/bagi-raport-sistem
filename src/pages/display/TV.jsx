@@ -1,30 +1,14 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useAnnouncements } from '../../context/AnnouncementsContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { socketService } from '../../services/socket.js'
 import { queueApi } from '../../services/api.js'
-import { Volume2, Megaphone, VolumeX, Wifi, WifiOff, LogOut } from 'lucide-react'
-import { Badge } from '@/components/ui-new/badge'
+import { Volume2, Megaphone, VolumeX, Wifi, WifiOff, LogOut, GraduationCap, Clock as ClockIcon, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui-new/button'
-
-function getDisplayFontSize(name) {
-  const len = name?.length || 0
-  if (len <= 8) return 'text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl'
-  if (len <= 15) return 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl'
-  if (len <= 22) return 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl'
-  if (len <= 30) return 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl'
-  return 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl'
-}
-
-function getAnnouncementFontSize(text) {
-  const len = text?.length || 0
-  if (len <= 50) return 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl'
-  if (len <= 100) return 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl'
-  if (len <= 200) return 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl'
-  return 'text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl'
-}
+import { Badge } from '@/components/ui-new/badge'
+import { cn } from '@/lib/utils'
 
 export default function TV() {
     const navigate = useNavigate()
@@ -42,7 +26,7 @@ export default function TV() {
     const [onlineClasses, setOnlineClasses] = useState([])
 
     // Overlays
-    const [overlay, setOverlay] = useState(null) // { type: 'call'|'announcement', data: ... }
+    const [overlay, setOverlay] = useState(null) 
 
     // TTS Queue
     const [ttsQueue, setTtsQueue] = useState([])
@@ -58,7 +42,6 @@ export default function TV() {
     useEffect(() => {
         setLocalSettings(settings)
         settingsRef.current = settings
-        console.log('🔄 TV Initial Settings Loaded:', settings)
     }, [settings])
 
     // Sync refs
@@ -66,16 +49,28 @@ export default function TV() {
     useEffect(() => { isSpeakingRef.current = isSpeaking }, [isSpeaking])
     useEffect(() => { ttsQueueRef.current = ttsQueue }, [ttsQueue])
 
+    // --- DATA FETCHING ---
+    const fetchStats = async () => {
+        try {
+            const data = await queueApi.getStats()
+            if (data) {
+                setStats(data)
+                if (data.onlineClasses && Array.isArray(data.onlineClasses)) {
+                    setOnlineClasses(data.onlineClasses)
+                }
+            }
+        } catch (error) {
+            console.error('Fetch Stats Error:', error)
+        }
+    }
+
     // --- INITIALIZATION ---
     useEffect(() => {
         refreshAnnouncements()
-
-        // Initial Fetch
         fetchStats()
-        const interval = setInterval(fetchStats, 5000) // Faster polling (5s)
+        const interval = setInterval(fetchStats, 5000)
         const timeInterval = setInterval(() => setCurrentTime(new Date()), 1000)
 
-        // Socket Connection
         socketService.connect()
         socketService.register({ role: 'display' })
 
@@ -90,33 +85,17 @@ export default function TV() {
     useEffect(() => {
         const handleConnect = () => {
             setConnected(true)
-            console.log('TV Connected')
             socketService.register({ role: 'display' })
         }
 
-        const handleDisconnect = () => {
-            setConnected(false)
-            console.log('TV Disconnected')
-        }
+        const handleDisconnect = () => setConnected(false)
 
         const handleTeacherStatus = (data) => {
-            console.log('Online Status Update:', data)
-            // Handle both array ['7A'] and object { onlineClasses: ['7A'] } formats
-            if (Array.isArray(data)) {
-                setOnlineClasses(data)
-            } else if (data && data.onlineClasses) {
-                setOnlineClasses(data.onlineClasses)
-            } else if (data && data.status) {
-                // Fallback for single updates
-                setOnlineClasses(prev => {
-                    if (data.status === 'online') return [...new Set([...prev, data.className])]
-                    return prev.filter(c => c !== data.className)
-                })
-            }
+            if (Array.isArray(data)) setOnlineClasses(data)
+            else if (data && data.onlineClasses) setOnlineClasses(data.onlineClasses)
         }
 
         const handleCall = (data) => {
-            console.log('Student Called:', data)
             setActiveCalls(prev => ({ ...prev, [data.className]: data.studentName }))
             fetchStats()
 
@@ -125,12 +104,9 @@ export default function TV() {
                 const repeatText = `Diulangi. Panggilan kepada wali siswa atas nama ${data.studentName}, kelas ${data.className}. Silakan menuju ruang kelas sekarang.`
 
                 if (data.isRecall) {
-                    // Recall button pressed - only play "diulangi" version once
                     addToQueue(repeatText, { type: 'call', name: data.studentName, class: data.className, isRepeat: true })
                 } else {
-                    // First call - play normal first, then "diulangi" version
                     addToQueue(normalText, { type: 'call', name: data.studentName, class: data.className })
-                    // Add repeat version with slight delay identifier to prevent duplicate detection
                     setTimeout(() => {
                         addToQueue(repeatText, { type: 'call', name: data.studentName, class: data.className, isRepeat: true })
                     }, 100)
@@ -139,7 +115,6 @@ export default function TV() {
         }
 
         const handleFinished = (data) => {
-            console.log('Student Finished:', data)
             if (data && data.className) {
                 setActiveCalls(prev => {
                     const newCalls = { ...prev }
@@ -151,23 +126,17 @@ export default function TV() {
         }
 
         const handleAnnouncement = (data) => {
-            console.log('Announcement:', data)
             refreshAnnouncements()
             if (soundEnabledRef.current) {
-                const text = `Pengumuman penting. ${data.text}`
-                addToQueue(text, { type: 'announcement', text: data.text })
+                addToQueue(`Pengumuman penting. ${data.text}`, { type: 'announcement', text: data.text })
             }
         }
 
         const handleSettingsUpdate = (data) => {
-            console.log('📢 Incoming Socket Setting:', data)
             if (data && data.key && data.value !== undefined) {
-                // Update local state to force re-render
                 setLocalSettings(prev => {
                     const updated = { ...prev, [data.key]: data.value }
-                    // Update Ref immediately for the TTS engine
                     settingsRef.current = updated
-                    console.log(`⚡ TV Internal Sync: [${data.key}] is now [${data.value}]`)
                     return updated
                 })
             }
@@ -190,88 +159,41 @@ export default function TV() {
             socketService.off('announcement', handleAnnouncement)
             socketService.off('settings-updated', handleSettingsUpdate)
         }
-    }, [refreshAnnouncements, refreshSettings])
-
-    // --- DATA FETCHING ---
-    const fetchStats = async () => {
-        try {
-            const data = await queueApi.getStats()
-            if (data) {
-                setStats(data)
-                // Update onlineClasses from API to ensure state is correct on refresh
-                if (data.onlineClasses && Array.isArray(data.onlineClasses) && data.onlineClasses.length > 0) {
-                    setOnlineClasses(data.onlineClasses)
-                }
-            }
-        } catch (error) {
-            console.error('Fetch Stats Error:', error)
-        }
-    }
+    }, [refreshAnnouncements])
 
     // --- TTS LOGIC ---
     const addToQueue = (text, overlayData = null) => {
-        // Prevent duplicates in queue
-        setTtsQueue(prev => {
-            const isDuplicate = prev.some(item => item.text === text)
-            if (isDuplicate) return prev
-            return [...prev, { text, overlay: overlayData }]
-        })
+        setTtsQueue(prev => [...prev, { text, overlay: overlayData }])
     }
 
-    const processQueue = () => {
-        // Use Ref for consistency inside the function
+    const processQueue = useCallback(() => {
         if (isSpeakingRef.current || ttsQueueRef.current.length === 0) return
 
         const item = ttsQueueRef.current[0]
-        
-        // Update state and ref immediately
         setTtsQueue(prev => prev.slice(1))
         setIsSpeaking(true)
         isSpeakingRef.current = true 
 
-        // Show Overlay
-        if (item.overlay) {
-            setOverlay(item.overlay)
-        }
+        if (item.overlay) setOverlay(item.overlay)
 
         if ('speechSynthesis' in window) {
-            // Cancel any ongoing speech
             window.speechSynthesis.cancel()
-
-            // CRITICAL: Always read from Ref at the exact moment of speaking
             const currentSettings = settingsRef.current
             const utterance = new SpeechSynthesisUtterance(item.text)
 
-            // Cast values to Number safely
-            const pitch = Number(currentSettings.ttsPitch || 1.0)
-            const rate = Number(currentSettings.ttsRate || 0.8)
-            const volume = Number(currentSettings.ttsVolume || 1.0)
-
+            utterance.pitch = Number(currentSettings.ttsPitch || 1.0)
+            utterance.rate = Number(currentSettings.ttsRate || 0.8)
+            utterance.volume = Number(currentSettings.ttsVolume || 1.0)
             utterance.lang = 'id-ID'
-            utterance.pitch = pitch
-            utterance.rate = rate
-            utterance.volume = volume
 
-            // Get available voices
-            let voices = window.speechSynthesis.getVoices()
-            
-            // Selection logic
-            let selectedVoice = voices.find(v => v.name === currentSettings.ttsVoice)
+            const voices = window.speechSynthesis.getVoices()
+            const selectedVoice = voices.find(v => v.name === currentSettings.ttsVoice)
                 || voices.find(v => v.lang.includes('id'))
                 || voices[0]
             
-            if (selectedVoice) {
-                utterance.voice = selectedVoice
-            }
-
-            console.log(`🗣️ [TV] SPEAKING NOW: ${selectedVoice?.name} | P: ${pitch} | R: ${rate} | V: ${volume}`)
-
-            utterance.onstart = () => {
-                console.log('🏁 [TV] TTS Started')
-            }
+            if (selectedVoice) utterance.voice = selectedVoice
 
             utterance.onend = () => {
-                console.log('✅ [TV] TTS Finished')
                 setTimeout(() => {
                     setOverlay(null)
                     setIsSpeaking(false)
@@ -279,48 +201,39 @@ export default function TV() {
                 }, 2000)
             }
 
-            utterance.onerror = (e) => {
-                console.error('❌ [TV] TTS Error:', e)
+            utterance.onerror = () => {
                 setOverlay(null)
                 setIsSpeaking(false)
                 isSpeakingRef.current = false
             }
 
-            // Speak with a tiny delay to ensure cancel finished
-            setTimeout(() => {
-                window.speechSynthesis.speak(utterance)
-            }, 100)
+            setTimeout(() => window.speechSynthesis.speak(utterance), 100)
         } else {
-            // Fallback if no TTS
             setTimeout(() => {
                 setOverlay(null)
                 setIsSpeaking(false)
                 isSpeakingRef.current = false
             }, 5000)
         }
-    }
+    }, [])
 
     useEffect(() => {
         if (ttsQueue.length > 0 && !isSpeaking) {
             processQueue()
         }
-    }, [ttsQueue, isSpeaking])
-
-    // --- RENDER HELPERS ---
-    const formatTime = (date) => date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    const formatDate = (date) => date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    }, [ttsQueue, isSpeaking, processQueue])
 
     const enableSound = () => {
         setSoundEnabled(true)
-        localStorage.setItem('tv_sound_enabled', 'true')
-        // Test sound
         const u = new SpeechSynthesisUtterance("Suara diaktifkan")
         u.lang = 'id-ID'
-        speechSynthesis.speak(u)
+        window.speechSynthesis.speak(u)
     }
 
-    // Prepare Grid Data - use localSettings for real-time reactivity
-    const classesList = localSettings?.classes || ['7A', '7B', '7C', '8A', '8B', '8C', '9A', '9B', '9C']
+    const formatTime = (date) => date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    const formatDate = (date) => date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+
+    const classesList = localSettings?.classes || []
     const classData = classesList.map(cls => {
         const s = stats.byClass.find(i => i.class === cls) || { waiting: 0, finished: 0 }
         return { id: cls, name: `Kelas ${cls}`, waiting: s.waiting, finished: s.finished }
@@ -330,76 +243,57 @@ export default function TV() {
     const schoolName = localSettings?.schoolName || 'Sistem Antrian Bagi Raport'
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col overflow-hidden">
+        <div className="min-h-[100dvh] bg-slate-50 flex flex-col overflow-hidden font-sans text-slate-900 selection:bg-blue-100">
             {/* Header */}
-            <header className="bg-white border-b border-slate-200 shadow-sm z-10 sticky top-0">
-                <div className="px-6 py-4 flex items-center justify-between gap-4">
-                    {/* Left: Identity */}
-                    <div className="flex items-center gap-4 min-w-0 flex-1">
-                        {schoolLogo ? (
-                            <img src={schoolLogo} alt="Logo" className="w-12 h-12 object-contain" />
-                        ) : (
-                            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-md">
-                                <span className="text-2xl">🎓</span>
-                            </div>
-                        )}
-                        <div className="min-w-0">
-                            <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">ANTRIAN RAPORT</h1>
-                            <p className="text-sm font-medium text-slate-500 truncate">{schoolName}</p>
+            <header className="relative z-10 px-8 py-5 flex items-center justify-between border-b border-slate-200 bg-white shadow-sm">
+                <div className="flex items-center gap-5">
+                    {schoolLogo ? (
+                        <div className="w-16 h-16 bg-white p-1 rounded-2xl border border-slate-100 flex items-center justify-center">
+                            <img src={schoolLogo} alt="Logo" className="max-w-full max-h-full object-contain" />
                         </div>
+                    ) : (
+                        <div className="w-16 h-16 rounded-2xl bg-slate-900 flex items-center justify-center shadow-lg">
+                            <GraduationCap className="w-8 h-8 text-white" />
+                        </div>
+                    )}
+                    <div>
+                        <h1 className="text-3xl font-black tracking-tight text-slate-900 leading-none mb-1">ANTRIAN RAPORT</h1>
+                        <p className="text-base font-bold text-slate-500">{schoolName}</p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-8">
+                    <div className="flex items-center gap-2 opacity-20 hover:opacity-100 transition-opacity">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={soundEnabled ? () => setSoundEnabled(false) : enableSound}
+                            className={cn("h-10 font-bold", soundEnabled ? "text-emerald-600 border-emerald-200 bg-emerald-50" : "text-slate-400")}
+                        >
+                            {soundEnabled ? <Volume2 size={18} className="mr-2" /> : <VolumeX size={18} className="mr-2" />}
+                            {soundEnabled ? 'SUARA ON' : 'SUARA OFF'}
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => { logout(); navigate('/login') }}>
+                            <LogOut size={20} className="text-slate-400" />
+                        </Button>
                     </div>
 
-                    {/* Right: Controls & Info */}
-                    <div className="flex items-center gap-6 flex-shrink-0">
-                        <div className="flex items-center gap-3 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
-                            <Badge
-                                variant={connected ? "default" : "destructive"}
-                                className={`${connected ? "bg-emerald-500 hover:bg-emerald-600" : "bg-red-500 hover:bg-red-600"} h-8 px-3 text-sm font-bold shadow-sm transition-all`}
-                            >
-                                {connected ? <><Wifi className="w-4 h-4 mr-1.5" />Online</> : <><WifiOff className="w-4 h-4 mr-1.5" />Offline</>}
-                            </Badge>
+                    <div className="w-px h-12 bg-slate-200"></div>
 
-                            <Button
-                                size="sm"
-                                variant={soundEnabled ? "default" : "outline"}
-                                onClick={soundEnabled ? () => setSoundEnabled(false) : enableSound}
-                                className={`h-8 font-bold text-xs ${soundEnabled ? "bg-blue-600 hover:bg-blue-700 shadow-md" : "border-slate-300 text-slate-600 hover:bg-slate-200"}`}
-                            >
-                                {soundEnabled ? <Volume2 className="w-4 h-4 mr-1.5" /> : <VolumeX className="w-4 h-4 mr-1.5" />}
-                                {soundEnabled ? 'SUARA ON' : 'SUARA OFF'}
-                            </Button>
+                    <div className="text-right">
+                        <div className="text-4xl font-black tabular-nums text-slate-900 tracking-tighter leading-none">
+                            {formatTime(currentTime)}
                         </div>
-
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                                logout()
-                                navigate('/login')
-                            }}
-                            className="h-8 px-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
-                            title="Keluar"
-                        >
-                            <LogOut className="w-4 h-4" />
-                        </Button>
-
-                        <div className="h-10 w-px bg-slate-200"></div>
-
-                        <div className="text-right">
-                            <div className="text-3xl font-black text-slate-900 tabular-nums leading-none tracking-tight">
-                                {formatTime(currentTime)}
-                            </div>
-                            <div className="text-xs font-bold text-slate-500 uppercase tracking-wide mt-1">
-                                {formatDate(currentTime)}
-                            </div>
+                        <div className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">
+                            {formatDate(currentTime)}
                         </div>
                     </div>
                 </div>
             </header>
 
-            {/* Main Content */}
-            <main className="flex-1 p-4 overflow-hidden flex flex-col">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 h-full content-start">
+            {/* Main Content - Class Bento Grid */}
+            <main className="relative z-10 flex-1 p-8 overflow-hidden flex flex-col">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 h-full auto-rows-max content-start">
                     {classData.map(cls => {
                         const isOnline = onlineClasses.includes(cls.id)
                         const activeStudent = activeCalls[cls.id]
@@ -408,205 +302,133 @@ export default function TV() {
                         return (
                             <div
                                 key={cls.id}
-                                className={`
-                                    relative flex flex-col bg-white rounded-xl shadow-sm border transition-all duration-300 overflow-hidden group
-                                    ${isActiveCall
-                                        ? 'border-blue-500 ring-4 ring-blue-500/20 shadow-xl scale-[1.02] z-10'
+                                className={cn(
+                                    "relative flex flex-col rounded-[2rem] border transition-all duration-500 ease-out overflow-hidden min-h-[180px]",
+                                    isActiveCall
+                                        ? "bg-blue-600 border-blue-500 shadow-[0_20px_50px_-12px_rgba(37,99,235,0.4)] scale-[1.03] z-20 text-white"
                                         : isOnline
-                                            ? 'border-slate-200 hover:border-blue-300 hover:shadow-md'
-                                            : 'border-slate-100 bg-slate-50 opacity-90 grayscale-[0.5]'
-                                    }
-                                `}
-                            >
-                                {isActiveCall && (
-                                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-500 animate-shimmer bg-[length:200%_100%]"></div>
+                                            ? "bg-white border-slate-200 shadow-sm hover:border-blue-300"
+                                            : "bg-slate-100/50 border-slate-200 opacity-60 grayscale-[0.5]"
                                 )}
+                            >
+                                <div className="p-6 flex flex-col h-full relative z-10">
+                                    <div className="flex items-center justify-between mb-4 border-b border-inherit pb-4 opacity-80">
+                                        <div className="text-xl font-black tracking-tight uppercase">{cls.name}</div>
+                                        <div className={cn("w-2.5 h-2.5 rounded-full shadow-sm", isActiveCall ? "bg-white animate-pulse" : isOnline ? "bg-emerald-500 animate-pulse" : "bg-slate-400")} />
+                                    </div>
 
-                                <div className={`px-5 py-4 border-b flex justify-between items-center ${isActiveCall ? 'bg-blue-50/50 border-blue-100' : 'bg-transparent border-slate-100'}`}>
-                                    <h2 className={`text-2xl font-black tracking-tight ${isActiveCall ? 'text-blue-700' : 'text-slate-800'}`}>
-                                        {cls.name}
-                                    </h2>
-                                    {isOnline ? (
-                                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-extrabold uppercase tracking-wide border border-emerald-200">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                                            Online
-                                        </span>
-                                    ) : (
-                                        <span className="px-2.5 py-1 rounded-full bg-slate-200 text-slate-500 text-[10px] font-bold uppercase tracking-wide">
-                                            Offline
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="flex-1 p-5 flex flex-col justify-center">
-                                    {isActiveCall ? (
-                                        <div className="text-center animate-in fade-in zoom-in duration-300">
-                                            <div className="inline-flex items-center justify-center p-3 bg-blue-100 text-blue-600 rounded-full mb-3 animate-bounce">
-                                                <Volume2 className="w-8 h-8" />
+                                    <div className="flex-1 flex flex-col justify-center">
+                                        {isActiveCall ? (
+                                            <div className="animate-in fade-in zoom-in duration-300 text-center">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-2 opacity-80 text-blue-100">Sedang Dipanggil</p>
+                                                <p className="text-2xl font-black leading-tight line-clamp-2">{activeStudent}</p>
                                             </div>
-                                            <div className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-1">Sedang Dipanggil</div>
-                                            <div className="text-xl font-bold text-slate-900 leading-tight line-clamp-2 px-2">
-                                                {activeStudent}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className={`text-center space-y-2 ${!isOnline && 'opacity-50'}`}>
-                                            {isOnline ? (
-                                                <div className="text-slate-400 text-sm font-medium">Menunggu Antrian...</div>
-                                            ) : (
-                                                <div className="flex flex-col items-center justify-center py-2">
-                                                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-2">
-                                                        <WifiOff className="w-5 h-5 text-slate-400" />
-                                                    </div>
-                                                    <div className="text-slate-400 text-sm font-medium">Guru Offline</div>
+                                        ) : (
+                                            <div className="flex items-baseline gap-2">
+                                                <div className="text-6xl font-black tracking-tighter tabular-nums leading-none text-slate-900">
+                                                    {cls.waiting}
                                                 </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-2 border-t border-slate-100 divide-x divide-slate-100 bg-slate-50/50">
-                                    <div className="p-3 flex flex-col items-center justify-center hover:bg-orange-50/50 transition-colors">
-                                        <div className="text-[10px] font-bold text-orange-600 uppercase tracking-wider mb-0.5">Menunggu</div>
-                                        <div className="text-2xl font-black text-slate-700 tabular-nums">{cls.waiting}</div>
-                                    </div>
-                                    <div className="p-3 flex flex-col items-center justify-center hover:bg-emerald-50/50 transition-colors">
-                                        <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">Selesai</div>
-                                        <div className="text-2xl font-black text-slate-700 tabular-nums">{cls.finished}</div>
+                                                <div className="text-xs font-black text-slate-400 uppercase tracking-widest">Antri</div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
+                                <div className={cn("h-2 w-full absolute bottom-0", isActiveCall ? "bg-white/20" : isOnline ? "bg-blue-500" : "bg-slate-300")} />
                             </div>
                         )
                     })}
                 </div>
             </main>
 
-            {/* Footer marquee */}
-            <footer className="fixed bottom-0 left-0 right-0 bg-blue-600 text-white shadow-lg py-2 px-6 z-20">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex-1 overflow-hidden">
-                        {(() => {
-                            // Debug logging
-                            console.log('TV Announcements Raw:', announcements)
-                            const activeAnnouncements = announcements.filter(a => a.is_active == 1 || a.is_active === true)
-                            console.log('TV Announcements Active:', activeAnnouncements)
-
-                            return activeAnnouncements.length > 0 ? (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-lg">📢</span>
-                                    <div className="overflow-hidden">
-                                        <div className="whitespace-nowrap animate-marquee">
-                                            {activeAnnouncements.map((a, i, arr) => (
-                                                <span key={a.id} className="inline-block mr-12">
-                                                    {a.text}{i < arr.length - 1 ? ' • ' : ''}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="text-center text-sm">Selamat Datang di Sistem Antrian Bagi Raport</div>
-                            )
-                        })()}
-                    </div>
-                    <div className="flex items-center gap-4 text-xs ml-4">
-                        <span>Selesai: <strong className="text-lg">{stats.totals.finished}</strong></span>
-                        <span>{onlineClasses.length > 0 ? '🟢' : '⚪'} {onlineClasses.length} Guru</span>
-                        <span className="text-blue-200 border-l border-blue-400 pl-4">Powered by <strong>Bagi Raport</strong> @em_rival</span>
+            {/* Announcements Ticker */}
+            {announcements.filter(a => a.is_active).length > 0 && (
+                <div className="relative z-20 border-t border-slate-200 bg-white py-3 overflow-hidden shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)] h-[60px] flex items-center">
+                    <div className="flex items-center h-full">
+                        <div className="flex items-center gap-3 bg-blue-600 text-white px-6 py-3 h-full z-20 font-black tracking-widest text-sm uppercase rounded-r-full shadow-lg">
+                            <Megaphone className="w-5 h-5" />
+                            INFO
+                        </div>
+                        <div className="flex-1 overflow-hidden relative">
+                            <div className="whitespace-nowrap animate-marquee inline-block pl-[100%]">
+                                {announcements.filter(a => a.is_active).map(a => (
+                                    <span key={a.id} className="inline-flex items-center mx-8 text-xl text-slate-700 font-bold tracking-tight">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-blue-500 mr-3 shadow-sm"></span>
+                                        {a.text}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </footer>
+            )}
 
-            {/* ── FULL SCREEN OVERLAY: CALL ── */}
+            {/* Cinematic Full Screen Overlay - ZOOM & RESPONSIVE FRIENDLY */}
             {overlay && overlay.type === 'call' && (
-                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-800 animate-in fade-in duration-300">
-                    <div className="flex flex-col items-center justify-center text-center px-6 sm:px-10 lg:px-16 w-full max-w-7xl mx-auto space-y-6 sm:space-y-8 lg:space-y-10">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-28 lg:h-28 rounded-full bg-white/15 flex items-center justify-center border border-white/20 shadow-2xl animate-bounce-slow">
-                            <Volume2 className="w-8 h-8 sm:w-10 sm:h-10 lg:w-14 lg:h-14 text-white" />
-                        </div>
-
-                        <div>
-                            <p className="text-sm sm:text-base lg:text-2xl font-bold text-blue-200 uppercase tracking-[0.15em] mb-2 sm:mb-3 lg:mb-4">
-                                Panggilan Ke Ruang
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-10 bg-white/95 backdrop-blur-3xl animate-in fade-in duration-300">
+                    <div className="w-full max-w-[95vw] max-h-[95vh] rounded-[2rem] sm:rounded-[4rem] p-6 sm:p-12 md:p-20 flex flex-col items-center justify-center text-center relative overflow-y-auto overflow-x-hidden shadow-[0_40px_100px_rgba(0,0,0,0.2)] border-2 border-blue-100 bg-white animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 no-scrollbar">
+                        <div className="absolute top-0 left-0 w-full h-3 sm:h-5 bg-blue-600"></div>
+                        
+                        <div className="space-y-6 sm:space-y-10 md:space-y-14 w-full flex flex-col items-center">
+                            <div className="inline-flex items-center justify-center p-5 sm:p-8 bg-blue-50 text-blue-600 rounded-full animate-bounce-slow border-2 border-blue-100 shadow-inner">
+                                <Volume2 className="w-12 h-12 sm:w-20 sm:h-20" />
+                            </div>
+                            
+                            <h2 className="text-xl sm:text-3xl md:text-4xl font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.4em]">
+                                Panggilan Ke Ruang {overlay.class}
+                            </h2>
+                            
+                            <div className="text-4xl sm:text-6xl md:text-8xl lg:text-[10rem] font-black tracking-tighter leading-[1.1] text-slate-900 drop-shadow-sm break-words max-w-full">
+                                {overlay.name}
+                            </div>
+                            
+                            <p className="text-lg sm:text-2xl md:text-4xl text-blue-600 font-black tracking-tight bg-blue-50 py-3 sm:py-6 px-8 sm:px-16 rounded-full inline-block border-2 border-blue-100 shadow-sm">
+                                Segera Menuju Ruang Kelas
                             </p>
-                            <span className="inline-block text-base sm:text-lg lg:text-3xl font-black text-yellow-300 uppercase tracking-wider bg-white/10 px-4 sm:px-6 lg:px-10 py-1.5 sm:py-2 lg:py-3 rounded-full border border-white/20 shadow-lg">
-                                {overlay.class}
-                            </span>
                         </div>
-
-                        <p className={`
-                            font-black tracking-tighter leading-[1.15] text-white drop-shadow-lg break-words max-w-full
-                            ${getDisplayFontSize(overlay.name)}
-                        `}>
-                            {overlay.name}
-                        </p>
-
-                        <p className="text-base sm:text-lg lg:text-2xl text-blue-100 font-semibold tracking-wide bg-white/10 py-2 sm:py-3 lg:py-4 px-6 sm:px-8 lg:px-12 rounded-full border border-white/10">
-                            Silakan menuju kelas {overlay.class}
-                        </p>
                     </div>
                 </div>
             )}
 
-            {/* ── FULL SCREEN OVERLAY: ANNOUNCEMENT ── */}
+            {/* Announcement Overlay - ZOOM & RESPONSIVE FRIENDLY */}
             {overlay && overlay.type === 'announcement' && (
-                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-orange-600 via-orange-500 to-amber-700 animate-in fade-in duration-300">
-                    <div className="flex flex-col items-center justify-center text-center px-6 sm:px-10 lg:px-16 w-full max-w-7xl mx-auto space-y-6 sm:space-y-8 lg:space-y-10">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-28 lg:h-28 rounded-full bg-white/15 flex items-center justify-center border border-white/20 shadow-2xl animate-bounce-slow">
-                            <Megaphone className="w-8 h-8 sm:w-10 sm:h-10 lg:w-14 lg:h-14 text-white" />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-10 bg-white/95 backdrop-blur-3xl animate-in fade-in duration-300">
+                    <div className="w-full max-w-[95vw] max-h-[95vh] rounded-[2rem] sm:rounded-[4rem] p-8 sm:p-20 flex flex-col items-center justify-center text-center bg-white border-4 border-orange-100 shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 overflow-y-auto no-scrollbar">
+                        <div className="space-y-8 sm:space-y-12">
+                            <div className="inline-flex items-center justify-center p-6 sm:p-10 bg-orange-50 text-orange-500 rounded-full border-2 border-orange-100 shadow-inner">
+                                <Megaphone className="w-12 h-12 sm:w-24 sm:h-24 animate-pulse" />
+                            </div>
+                            <h2 className="text-xl sm:text-4xl font-black text-slate-400 uppercase tracking-[0.3em]">PENGUMUMAN</h2>
+                            <div className="text-2xl sm:text-5xl md:text-7xl font-black leading-tight tracking-tight text-slate-900 max-w-5xl break-words">
+                                {overlay.text}
+                            </div>
                         </div>
-
-                        <p className="text-sm sm:text-base lg:text-2xl font-bold text-yellow-200 uppercase tracking-[0.15em]">
-                            Pengumuman
-                        </p>
-
-                        <p className={`
-                            font-black leading-tight tracking-tight text-white drop-shadow-lg max-w-full break-words
-                            ${getAnnouncementFontSize(overlay.text)}
-                        `}>
-                            {overlay.text}
-                        </p>
                     </div>
                 </div>
             )}
 
-            {/* Sound Activation Overlay - Forces user interaction for Autoplay Policy */}
+            {/* Sound Activation Modal */}
             {!soundEnabled && (
-                <div
-                    onClick={enableSound}
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center cursor-pointer animate-in fade-in duration-500 hover:bg-black/70 transition-colors"
-                >
-                    <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 text-center shadow-2xl animate-bounce-slow">
-                        <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600">
-                            <VolumeX className="w-10 h-10" />
+                <div onClick={enableSound} className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center cursor-pointer animate-in fade-in">
+                    <div className="bg-white rounded-[2rem] sm:rounded-[3rem] p-8 sm:p-16 max-w-xl w-[90vw] text-center shadow-2xl animate-bounce-slow border-b-8 border-blue-600">
+                        <div className="w-20 h-20 sm:w-32 sm:h-32 bg-red-50 border-2 border-red-100 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-10 text-red-500 shadow-inner">
+                            <VolumeX className="w-10 h-10 sm:w-16 sm:h-16" />
                         </div>
-                        <h3 className="text-2xl font-bold text-slate-900 mb-2">Suara Nonaktif</h3>
-                        <p className="text-slate-600 mb-8 max-w-sm mx-auto">
-                            Klik di mana saja pada layar untuk mengaktifkan suara notifikasi panggilan.
-                        </p>
-                        <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6 shadow-lg shadow-blue-200">
-                            <Volume2 className="w-6 h-6 mr-2" />
-                            Aktifkan Suara
+                        <h3 className="text-3xl sm:text-5xl font-black text-slate-900 mb-3 tracking-tighter uppercase">SUARA OFF</h3>
+                        <p className="text-slate-500 mb-8 sm:mb-12 text-sm sm:text-xl font-bold uppercase tracking-widest">Klik Layar Untuk Mengaktifkan</p>
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-lg sm:text-2xl py-6 sm:py-10 font-black shadow-2xl shadow-blue-600/30 rounded-[1.5rem] sm:rounded-[2rem]">
+                            AKTIFKAN SEKARANG
                         </Button>
                     </div>
                 </div>
             )}
 
             <style>{`
-                @keyframes marquee {
-                    0% { transform: translateX(100%); }
-                    100% { transform: translateX(-100%); }
-                }
-                .animate-marquee {
-                    animation: marquee 30s linear infinite;
-                }
-                @keyframes bounce-slow {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-10px); }
-                }
-                .animate-bounce-slow {
-                    animation: bounce-slow 3s infinite ease-in-out;
-                }
+                @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+                .animate-marquee { animation: marquee 35s linear infinite; }
+                @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+                .animate-bounce-slow { animation: bounce-slow 4s infinite ease-in-out; }
+                .no-scrollbar::-webkit-scrollbar { display: none; }
+                .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
         </div>
     )
