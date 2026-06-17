@@ -24,6 +24,36 @@ export default function Settings() {
     const [localSettings, setLocalSettings] = useState(null)
     const [testPhone, setTestPhone] = useState('')
     const [availableVoices, setAvailableVoices] = useState([])
+    const [voicesLoading, setVoicesLoading] = useState(false)
+
+    // Load available voices
+    const loadVoices = useCallback(() => {
+        setVoicesLoading(true)
+        // Give browser time to load voices
+        setTimeout(() => {
+            const voices = window.speechSynthesis.getVoices()
+            // Filter Indonesian or common fallback voices
+            const filtered = voices.filter(v => 
+                v.lang.includes('id') || 
+                v.lang.includes('ID') || 
+                v.name.toLowerCase().includes('indonesian')
+            )
+            
+            // If no ID voices, show top 20 available voices instead of just 10
+            const finalVoices = filtered.length > 0 ? filtered : voices.slice(0, 20)
+            setAvailableVoices(finalVoices)
+            setVoicesLoading(false)
+            console.log('📡 Voices Loaded:', finalVoices.length)
+        }, 100)
+    }, [])
+
+    useEffect(() => {
+        loadVoices()
+        window.speechSynthesis.onvoiceschanged = loadVoices
+        return () => {
+            window.speechSynthesis.onvoiceschanged = null
+        }
+    }, [loadVoices])
 
     // Initialize local settings from context
     useEffect(() => {
@@ -31,21 +61,6 @@ export default function Settings() {
             setLocalSettings(settings)
         }
     }, [settings, localSettings])
-
-    // Load available voices
-    useEffect(() => {
-        const loadVoices = () => {
-            const voices = window.speechSynthesis.getVoices()
-            const idVoices = voices.filter(v => v.lang.includes('id') || v.lang.includes('ID'))
-            setAvailableVoices(idVoices.length > 0 ? idVoices : voices.slice(0, 10))
-        }
-
-        loadVoices()
-        window.speechSynthesis.onvoiceschanged = loadVoices
-        return () => {
-            window.speechSynthesis.onvoiceschanged = null
-        }
-    }, [])
 
     const [logoMode, setLogoMode] = useState(settings.schoolLogo?.startsWith('http') ? 'url' : 'upload')
     const [logoUrl, setLogoUrl] = useState(settings.schoolLogo?.startsWith('http') ? settings.schoolLogo : '')
@@ -567,24 +582,41 @@ export default function Settings() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="space-y-3">
-                                <Label>Pilih Suara (Voice)</Label>
+                                <div className="flex items-center justify-between">
+                                    <Label>Pilih Suara (Voice)</Label>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-7 text-[10px] uppercase font-bold" 
+                                        onClick={loadVoices}
+                                        disabled={voicesLoading}
+                                    >
+                                        {voicesLoading ? 'Loading...' : 'Refresh Daftar Suara'}
+                                    </Button>
+                                </div>
                                 <Select 
                                     value={localSettings.ttsVoice} 
                                     onValueChange={(value) => handleLocalChange({ ttsVoice: value })}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className="font-medium">
                                         <SelectValue placeholder="Pilih Suara..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {availableVoices.map(voice => (
-                                            <SelectItem key={voice.name} value={voice.name}>
-                                                {voice.name} {voice.localService ? '(Lokal)' : '(Online)'}
-                                            </SelectItem>
-                                        ))}
+                                        {availableVoices.length > 0 ? (
+                                            availableVoices.map(voice => (
+                                                <SelectItem key={`${voice.name}-${voice.lang}`} value={voice.name}>
+                                                    {voice.name} ({voice.lang}) {voice.localService ? '✓' : '🌐'}
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <SelectItem value="none" disabled>Tidak ada suara tersedia</SelectItem>
+                                        )}
                                     </SelectContent>
                                 </Select>
-                                <p className="text-[10px] text-muted-foreground italic">
-                                    * Pilihan suara tergantung pada browser dan sistem operasi yang digunakan.
+                                <p className="text-[10px] text-muted-foreground italic leading-tight">
+                                    * {availableVoices.some(v => v.lang.includes('id')) 
+                                        ? 'Suara Bahasa Indonesia ditemukan.' 
+                                        : '⚠️ Suara Bahasa Indonesia tidak ditemukan di sistem ini. Menggunakan suara global.'}
                                 </p>
                             </div>
 

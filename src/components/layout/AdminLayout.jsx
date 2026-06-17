@@ -49,7 +49,7 @@ export default function AdminLayout() {
     const currentNavItem = [...navItems, ...mobileNavItems].find(item => location.pathname === item.path) || { label: 'Admin', icon: GraduationCap }
 
     return (
-        <div className="flex h-screen bg-slate-50">
+        <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row overflow-x-hidden">
             {/* Desktop Sidebar - Hidden on Mobile */}
             <aside
                 className={cn(
@@ -152,11 +152,11 @@ export default function AdminLayout() {
 
             {/* Main content - offset by sidebar width on desktop */}
             <div className={cn(
-                "flex-1 flex flex-col min-h-screen",
-                sidebarOpen ? "lg:ml-64" : "lg:ml-20"
+                "flex-1 flex flex-col min-h-screen w-full",
+                sidebarOpen ? "lg:pl-64" : "lg:pl-20"
             )}>
                 {/* Top header - Desktop only */}
-                <header className="hidden lg:flex h-16 bg-white border-b border-slate-200 items-center px-6 shadow-sm z-20 sticky top-0">
+                <header className="hidden lg:flex h-16 bg-white border-b border-slate-200 items-center px-6 shadow-sm z-20 sticky top-0 w-full">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
                             <currentNavItem.icon className="w-5 h-5" />
@@ -178,27 +178,27 @@ export default function AdminLayout() {
                 </header>
 
                 {/* Mobile Top Bar */}
-                <header className="lg:hidden h-14 bg-white border-b border-slate-200 flex items-center px-4 shadow-sm relative z-20 sticky top-0">
-                    <div className="flex items-center gap-2.5">
+                <header className="lg:hidden h-14 bg-white border-b border-slate-200 flex items-center px-4 shadow-sm relative z-20 sticky top-0 w-full">
+                    <div className="flex items-center gap-2.5 min-w-0">
                         {settings.schoolLogo ? (
-                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow border border-slate-100 overflow-hidden">
+                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow border border-slate-100 overflow-hidden flex-shrink-0">
                                 <img src={settings.schoolLogo} alt="Logo" className="w-full h-full object-contain" />
                             </div>
                         ) : (
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg flex-shrink-0">
                                 <GraduationCap className="w-5 h-5 text-white" />
                             </div>
                         )}
-                        <div>
-                            <h1 className="text-sm font-bold text-slate-900 leading-tight">
+                        <div className="min-w-0">
+                            <h1 className="text-sm font-bold text-slate-900 leading-tight truncate">
                                 {settings.schoolName || 'Bagi Raport'}
                             </h1>
-                            <p className="text-[10px] text-slate-500 font-medium">{currentNavItem.label}</p>
+                            <p className="text-[10px] text-slate-500 font-medium truncate">{currentNavItem.label}</p>
                         </div>
                     </div>
                     <div className="flex-1" />
                     {user && (
-                        <div className="relative">
+                        <div className="relative flex-shrink-0">
                             <button
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                                 className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md active:scale-90 smooth-transition"
@@ -209,7 +209,7 @@ export default function AdminLayout() {
                             {/* Dropdown Menu */}
                             {mobileMenuOpen && (
                                 <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setMobileMenuOpen(false)} />
+                                    <div className="fixed inset-0 z-40 bg-black/5" onClick={() => setMobileMenuOpen(false)} />
                                     <div className="absolute right-0 top-11 w-56 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
                                         <div className="p-4 bg-slate-50 border-b border-slate-100">
                                             <p className="text-sm font-bold text-slate-900 truncate">{user.name}</p>
@@ -235,37 +235,37 @@ export default function AdminLayout() {
                 </header>
 
                 {/* Page content with bottom padding for mobile nav */}
-                <main className="flex-1 pb-20 lg:pb-0 overflow-y-auto">
+                <main className="flex-1 pb-24 lg:pb-0 overflow-x-hidden w-full">
                     <Outlet />
                 </main>
 
                 {/* Modern Bottom Navigation - Mobile Only */}
-                <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 shadow-2xl z-40">
-                    <div className="flex items-center justify-around px-2 py-2 safe-bottom">
+                <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 shadow-[0_-5px_20px_rgba(0,0,0,0.05)] z-40">
+                    <div className="flex items-center justify-around px-2 py-3 safe-bottom max-w-lg mx-auto">
                         {mobileNavItems.map((item) => (
                             <NavLink
                                 key={item.path}
                                 to={item.path}
                                 className={({ isActive }) =>
                                     cn(
-                                        "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl smooth-transition min-w-[60px] relative",
+                                        "flex flex-col items-center justify-center gap-1.5 px-3 py-1 rounded-xl smooth-transition min-w-[64px] relative",
                                         isActive
                                             ? "text-blue-600"
-                                            : "text-slate-400"
+                                            : "text-slate-400 hover:text-slate-600"
                                     )
                                 }
                             >
                                 {({ isActive }) => (
                                     <>
                                         {isActive && (
-                                            <div className="absolute inset-0 bg-blue-50 rounded-xl animate-in fade-in zoom-in-95 duration-200"></div>
+                                            <div className="absolute inset-x-1 inset-y-0 bg-blue-50 rounded-xl animate-in fade-in zoom-in-95 duration-200"></div>
                                         )}
                                         <item.icon className={cn(
-                                            "w-6 h-6 relative z-10 smooth-transition",
+                                            "w-5 h-5 relative z-10 smooth-transition",
                                             isActive && "scale-110"
                                         )} />
                                         <span className={cn(
-                                            "text-[10px] font-bold relative z-10",
+                                            "text-[9px] font-bold relative z-10 tracking-tight",
                                             isActive && "text-blue-700"
                                         )}>
                                             {item.label}
