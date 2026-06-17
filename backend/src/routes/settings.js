@@ -44,7 +44,7 @@ router.get('/', (req, res) => {
 
         // Only Admin can see sensitive data (WhatsApp tokens, etc.)
         if (!isAdmin) {
-            const PUBLIC_KEYS = ['schoolName', 'schoolLogo', 'classes']
+            const PUBLIC_KEYS = ['schoolName', 'schoolLogo', 'classes', 'ttsPitch', 'ttsRate', 'ttsVolume']
             const filtered = {}
             PUBLIC_KEYS.forEach(key => {
                 if (result[key] !== undefined) filtered[key] = result[key]
