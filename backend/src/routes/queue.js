@@ -830,7 +830,7 @@ router.get('/public/track', (req, res) => {
 
         if (id) {
             query += ' AND q.id = ?'
-            params.push(id)
+            params.push(parseInt(id))
         } else {
             query += ' AND s.nis = ?'
             params.push(nis)
@@ -859,7 +859,7 @@ router.get('/public/track', (req, res) => {
         res.json(data)
     } catch (error) {
         logger.error('Track error:', error)
-        res.status(500).json({ error: 'Internal server error' })
+        res.status(500).json({ error: 'Internal server error', details: error.message })
     }
 })
 
