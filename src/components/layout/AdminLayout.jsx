@@ -1,19 +1,15 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import {
     LayoutDashboard,
     Users,
     GraduationCap,
-    BookOpen,
     Settings,
     LogOut,
-    Menu,
-    X,
     ChevronLeft,
     History,
-    MoreHorizontal,
     ClipboardList,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -271,53 +267,6 @@ export default function AdminLayout() {
                                         <span className={cn(
                                             "text-[10px] font-bold relative z-10",
                                             isActive && "text-blue-700"
-                                        )}>
-                                            {item.label}
-                                        </span>
-                                    </>
-                                )}
-                            </NavLink>
-                        ))}
-                    </div>
-                </nav>
-            </div>
-        </div>
-    )
-}
-
-                {/* Page content with bottom padding for mobile nav */}
-                <main className="flex-1 pb-20 lg:pb-0">
-                    <Outlet />
-                </main>
-
-                {/* Modern Bottom Navigation - Mobile Only */}
-                <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-2xl z-40">
-                    <div className="flex items-center justify-around px-2 py-2 safe-bottom">
-                        {mobileNavItems.map((item) => (
-                            <NavLink
-                                key={item.path}
-                                to={item.path}
-                                className={({ isActive }) =>
-                                    cn(
-                                        "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl smooth-transition min-w-[60px] relative",
-                                        isActive
-                                            ? "text-blue-600"
-                                            : "text-slate-500"
-                                    )
-                                }
-                            >
-                                {({ isActive }) => (
-                                    <>
-                                        {isActive && (
-                                            <div className="absolute inset-0 bg-blue-50 rounded-xl animate-in fade-in zoom-in-95 duration-200"></div>
-                                        )}
-                                        <item.icon className={cn(
-                                            "w-6 h-6 relative z-10 smooth-transition",
-                                            isActive && "scale-110"
-                                        )} />
-                                        <span className={cn(
-                                            "text-xs font-medium relative z-10",
-                                            isActive && "font-semibold"
                                         )}>
                                             {item.label}
                                         </span>
