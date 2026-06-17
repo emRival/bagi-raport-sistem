@@ -139,7 +139,11 @@ export default function TV() {
             console.log('Settings Updated:', data)
             // Refresh settings when TTS settings change
             if (data.key && (data.key.startsWith('tts') || data.key === 'schoolName' || data.key === 'schoolLogo')) {
-                refreshSettings()
+                refreshSettings().then(newSettings => {
+                    if (newSettings) {
+                        settingsRef.current = newSettings
+                    }
+                })
             }
         }
 

@@ -44,8 +44,10 @@ export function SettingsProvider({ children }) {
             setLoading(true)
             const data = await settingsApi.getAll()
             setSettings(prev => ({ ...prev, ...data }))
+            return data
         } catch (error) {
             console.error('Failed to load settings:', error)
+            return null
         } finally {
             setLoading(false)
         }
