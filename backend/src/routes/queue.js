@@ -364,7 +364,6 @@ router.post('/checkin', checkInLimiter, validate(checkInSchema), (req, res) => {
 
                 // Prepare message
                 const defaultCheckin = `*👋 Assalamu'alaikum, Selamat Pagi!*
-Bapak/Ibu *{parent_name}*,
 
 Ananda *{name}* (Kelas {class}) telah berhasil check-in.
 Nomor Antrian: *{queue_number}*

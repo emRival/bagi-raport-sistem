@@ -16,7 +16,6 @@ const DEFAULT_SETTINGS = {
     waApiUrl: '',
     waApiToken: '',
     waCheckinTemplate: `*👋 Assalamu'alaikum, Selamat Pagi!*
-Bapak/Ibu *{parent_name}*,
 
 Ananda *{name}* (Kelas {class}) telah berhasil check-in.
 Nomor Antrian: *{queue_number}*
@@ -29,7 +28,6 @@ _Mohon menunggu giliran dipanggil._
 Terima kasih. 🙏`,
 
     waCallTemplate: `*🔔 PANGGILAN ANTRIAN*
-Bapak/Ibu *{parent_name}*,
 
 Giliran ananda *{name}* (Kelas {class}) untuk pengambilan raport.
 Silakan menuju ke ruang kelas sekarang.
