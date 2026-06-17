@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui-new/button'
 import { Input } from '@/components/ui-new/input'
 import { Badge } from '@/components/ui-new/badge'
+import { AlertDialog } from '@/components/ui-new/alert-dialog'
 import { cn } from '@/lib/utils'
 
 export default function Checkin() {
@@ -27,6 +28,7 @@ export default function Checkin() {
     const [stats, setStats] = useState({ waiting: 0, finished: 0, total: 0 })
     const [recentCheckins, setRecentCheckins] = useState([])
     const [checkedInIds, setCheckedInIds] = useState(new Set())
+    const [deleteModal, setDeleteModal] = useState({ open: false, id: null, name: '' })
     
     const inputRef = useRef(null)
     const phoneInputRef = useRef(null)
@@ -114,15 +116,10 @@ export default function Checkin() {
         }
     }
 
-    const handleUncheckin = async (id, name) => {
-        // Confirmation prompt added back as requested
-        if (!window.confirm(`Apakah Anda yakin ingin membatalkan check-in untuk ${name}?`)) {
-            return
-        }
-
+    const handleUncheckin = async () => {
         try {
-            await queueApi.remove(id)
-            toast.success(`Check-in ${name} telah dibatalkan`)
+            await queueApi.remove(deleteModal.id)
+            toast.success(`Check-in ${deleteModal.name} telah dibatalkan`)
             fetchData()
         } catch (error) {
             console.error('Error undoing checkin:', error)
@@ -373,7 +370,7 @@ export default function Checkin() {
                                         <Button 
                                             variant="ghost" 
                                             size="sm" 
-                                            onClick={() => handleUncheckin(item.id, item.name)}
+                                            onClick={() => setDeleteModal({ open: true, id: item.id, name: item.name })}
                                             className="h-8 w-8 p-0 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-full"
                                             title="Batalkan"
                                         >
@@ -386,6 +383,15 @@ export default function Checkin() {
                     </CardContent>
                 </Card>
             </main>
+
+            <AlertDialog
+                open={deleteModal.open}
+                onOpenChange={(open) => setDeleteModal(prev => ({ ...prev, open }))}
+                title="Batalkan Check-in?"
+                description={`Apakah Anda yakin ingin membatalkan check-in untuk ${deleteModal.name}?`}
+                confirmText="Ya, Batalkan"
+                onConfirm={handleUncheckin}
+            />
             
             {/* Footer Watermark */}
             <footer className="mt-auto py-4 text-center">

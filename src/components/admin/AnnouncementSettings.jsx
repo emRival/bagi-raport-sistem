@@ -5,6 +5,7 @@ import { Button } from '@/components/ui-new/button'
 import { Input } from '@/components/ui-new/input'
 import { Label } from '@/components/ui-new/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui-new/dialog'
+import { AlertDialog } from '@/components/ui-new/alert-dialog'
 import { Save, Eye, EyeOff, Megaphone, Plus } from 'lucide-react'
 
 export default function AnnouncementSettings() {
@@ -16,6 +17,7 @@ export default function AnnouncementSettings() {
     const [editText, setEditText] = useState('')
     const [sending, setSending] = useState(false)
     const [modalOpen, setModalOpen] = useState(false)
+    const [deleteModal, setDeleteModal] = useState({ open: false, id: null })
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -56,11 +58,9 @@ export default function AnnouncementSettings() {
         }
     }
 
-    const handleDelete = async (id) => {
-        if (!confirm('Yakin ingin menghapus pengumuman ini?')) return
-
+    const handleDelete = async () => {
         try {
-            await removeAnnouncement(id)
+            await removeAnnouncement(deleteModal.id)
             toast.success('Pengumuman dihapus')
         } catch (error) {
             toast.error('Gagal menghapus pengumuman')
@@ -205,7 +205,7 @@ export default function AnnouncementSettings() {
 
                                 <button
                                     className="p-2 rounded hover:bg-red-100 text-red-600 smooth-transition"
-                                    onClick={() => handleDelete(ann.id)}
+                                    onClick={() => setDeleteModal({ open: true, id: ann.id })}
                                     title="Hapus"
                                 >
                                     <span>🗑️</span>
@@ -215,6 +215,15 @@ export default function AnnouncementSettings() {
                     </div>
                 ))}
             </div>
+
+            <AlertDialog
+                open={deleteModal.open}
+                onOpenChange={(open) => setDeleteModal(prev => ({ ...prev, open }))}
+                title="Hapus Pengumuman?"
+                description="Apakah Anda yakin ingin menghapus pengumuman ini secara permanen?"
+                confirmText="Hapus Sekarang"
+                onConfirm={handleDelete}
+            />
         </div>
     )
 }
