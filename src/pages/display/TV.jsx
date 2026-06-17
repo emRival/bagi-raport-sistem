@@ -7,6 +7,7 @@ import { socketService } from '../../services/socket.js'
 import { queueApi } from '../../services/api.js'
 import { Volume2, Megaphone, VolumeX, Wifi, WifiOff, LogOut, GraduationCap } from 'lucide-react'
 import { Button } from '@/components/ui-new/button'
+import { Badge } from '@/components/ui-new/badge'
 import { cn } from '@/lib/utils'
 
 export default function TV() {
