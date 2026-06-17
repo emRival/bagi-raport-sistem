@@ -115,7 +115,11 @@ export default function Checkin() {
     }
 
     const handleUncheckin = async (id, name) => {
-        // No confirmation popup as requested by user
+        // Confirmation prompt added back as requested
+        if (!window.confirm(`Apakah Anda yakin ingin membatalkan check-in untuk ${name}?`)) {
+            return
+        }
+
         try {
             await queueApi.remove(id)
             toast.success(`Check-in ${name} telah dibatalkan`)

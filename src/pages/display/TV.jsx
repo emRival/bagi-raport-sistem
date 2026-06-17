@@ -16,6 +16,7 @@ export default function TV() {
     const { settings, refreshSettings } = useSettings()
 
     // --- STATE ---
+    const [localSettings, setLocalSettings] = useState(settings)
     const [soundEnabled, setSoundEnabled] = useState(false)
     const [connected, setConnected] = useState(false)
     const [stats, setStats] = useState({ byClass: [], totals: { waiting: 0, finished: 0, total: 0 } })
@@ -36,11 +37,17 @@ export default function TV() {
     const ttsQueueRef = useRef(ttsQueue)
     const settingsRef = useRef(settings)
 
+    // Sync local state when context/initial load happens
+    useEffect(() => {
+        setLocalSettings(settings)
+        settingsRef.current = settings
+        console.log('🔄 TV Initial Settings Loaded:', settings)
+    }, [settings])
+
     // Sync refs
     useEffect(() => { soundEnabledRef.current = soundEnabled }, [soundEnabled])
     useEffect(() => { isSpeakingRef.current = isSpeaking }, [isSpeaking])
     useEffect(() => { ttsQueueRef.current = ttsQueue }, [ttsQueue])
-    useEffect(() => { settingsRef.current = settings }, [settings])
 
     // --- INITIALIZATION ---
     useEffect(() => {
@@ -136,23 +143,17 @@ export default function TV() {
         }
 
         const handleSettingsUpdate = (data) => {
-            console.log('📢 Settings Updated via Socket:', data)
+            console.log('📢 Incoming Socket Setting:', data)
             if (data && data.key && data.value !== undefined) {
-                // Update Ref immediately so the VERY NEXT speech uses these settings
-                settingsRef.current = { 
-                    ...settingsRef.current, 
-                    [data.key]: data.value 
-                }
-                console.log(`✅ TV System Sync: ${data.key} set to ${data.value}`)
+                // Update local state to force re-render
+                setLocalSettings(prev => {
+                    const updated = { ...prev, [data.key]: data.value }
+                    // Update Ref immediately for the TTS engine
+                    settingsRef.current = updated
+                    console.log(`⚡ TV Internal Sync: [${data.key}] is now [${data.value}]`)
+                    return updated
+                })
             }
-            
-            // Still refresh context to keep other UI elements in sync
-            refreshSettings().then(newSettings => {
-                if (newSettings) {
-                    console.log('🔄 TV Full Context Synced')
-                    settingsRef.current = newSettings
-                }
-            })
         }
 
         socketService.on('connect', handleConnect)
@@ -293,15 +294,15 @@ export default function TV() {
         speechSynthesis.speak(u)
     }
 
-    // Prepare Grid Data
-    const classesList = settings.classes || ['7A', '7B', '7C', '8A', '8B', '8C', '9A', '9B', '9C']
+    // Prepare Grid Data - use localSettings for real-time reactivity
+    const classesList = localSettings?.classes || ['7A', '7B', '7C', '8A', '8B', '8C', '9A', '9B', '9C']
     const classData = classesList.map(cls => {
         const s = stats.byClass.find(i => i.class === cls) || { waiting: 0, finished: 0 }
         return { id: cls, name: `Kelas ${cls}`, waiting: s.waiting, finished: s.finished }
     })
 
-    const schoolLogo = settings.schoolLogo || ''
-    const schoolName = settings.schoolName || 'Sistem Antrian Bagi Raport'
+    const schoolLogo = localSettings?.schoolLogo || ''
+    const schoolName = localSettings?.schoolName || 'Sistem Antrian Bagi Raport'
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col overflow-hidden">
