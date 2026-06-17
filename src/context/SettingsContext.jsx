@@ -22,6 +22,9 @@ Ananda *{name}* (Kelas {class}) telah berhasil check-in.
 Nomor Antrian: *{queue_number}*
 Waktu: {time}
 
+🔗 *Pantau Antrian Secara Live:*
+{tracking_link}
+
 _Mohon menunggu giliran dipanggil._
 Terima kasih. 🙏`,
 

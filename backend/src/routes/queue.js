@@ -356,6 +356,11 @@ router.post('/checkin', checkInLimiter, validate(checkInSchema), (req, res) => {
                 `).get(today, queue.class)
 
                 const queueNumber = queueCount.count
+                
+                // Generate tracking link
+                const protocol = req.headers['x-forwarded-proto'] || req.protocol
+                const host = req.get('host')
+                const trackingLink = `${protocol}://${host}/track/${result.lastInsertRowid}`
 
                 // Prepare message
                 const defaultCheckin = `*👋 Assalamu'alaikum, Selamat Pagi!*
@@ -364,6 +369,9 @@ Bapak/Ibu *{parent_name}*,
 Ananda *{name}* (Kelas {class}) telah berhasil check-in.
 Nomor Antrian: *{queue_number}*
 Waktu: {time}
+
+🔗 *Pantau Antrian Secara Live:*
+{tracking_link}
 
 _Mohon menunggu giliran dipanggil._
 Terima kasih. 🙏`
@@ -377,6 +385,7 @@ Terima kasih. 🙏`
                     .replace(/{queue_number}/g, queueNumber)
                     .replace(/{date}/g, today)
                     .replace(/{time}/g, getIndonesiaDateTime().split('T')[1].substring(0, 5))
+                    .replace(/{tracking_link}/g, trackingLink)
 
                 logger.debug('Sending WA to', parent_phone, 'Message:', message)
 
@@ -797,6 +806,60 @@ router.delete('/reset', authMiddleware, (req, res) => {
 
         res.json({ success: true })
     } catch (error) {
+        res.status(500).json({ error: 'Internal server error' })
+    }
+})
+
+// Public: Track Queue Status
+router.get('/public/track', (req, res) => {
+    try {
+        const { id, nis } = req.query
+        const today = getIndonesiaDate()
+
+        if (!id && !nis) {
+            return res.status(400).json({ error: 'Provide ID or NIS' })
+        }
+
+        let query = `
+            SELECT q.id, q.queue_number, q.status, q.check_in_time, q.called_time, q.finished_time,
+                   s.name, s.nis, s.class
+            FROM queue q
+            JOIN students s ON q.student_id = s.id
+            WHERE q.date = ?
+        `
+        const params = [today]
+
+        if (id) {
+            query += ' AND q.id = ?'
+            params.push(id)
+        } else {
+            query += ' AND s.nis = ?'
+            params.push(nis)
+        }
+
+        const data = db.prepare(query).get(...params)
+
+        if (!data) {
+            return res.status(404).json({ error: 'Data not found' })
+        }
+
+        // Calculate people ahead if still waiting
+        if (data.status === 'WAITING') {
+            const aheadQuery = `
+                SELECT COUNT(*) as count 
+                FROM queue 
+                WHERE date = ? 
+                AND status = 'WAITING' 
+                AND class = ? 
+                AND check_in_time < ?
+            `
+            const aheadData = db.prepare(aheadQuery).get(today, data.class, data.check_in_time)
+            data.peopleAhead = aheadData.count
+        }
+
+        res.json(data)
+    } catch (error) {
+        logger.error('Track error:', error)
         res.status(500).json({ error: 'Internal server error' })
     }
 })

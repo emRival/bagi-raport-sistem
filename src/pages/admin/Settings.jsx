@@ -534,6 +534,7 @@ export default function Settings() {
                                         <li><code className="text-xs font-bold bg-white px-1 py-0.5 rounded border">{'{queue_number}'}</code> : No. Antrian</li>
                                         <li><code className="text-xs font-bold bg-white px-1 py-0.5 rounded border">{'{date}'}</code> : Tanggal</li>
                                         <li><code className="text-xs font-bold bg-white px-1 py-0.5 rounded border">{'{time}'}</code> : Jam</li>
+                                        <li className="col-span-2 mt-1"><code className="text-xs font-bold bg-white px-1 py-0.5 rounded border text-blue-600">{'{tracking_link}'}</code> : Link Pantau Antrian (Live)</li>
                                     </ul>
                                 </div>
 

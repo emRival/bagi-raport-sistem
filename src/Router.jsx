@@ -19,6 +19,8 @@ import TeacherQueue from './pages/teacher/Queue.jsx'
 import TeacherHistory from './pages/teacher/History.jsx'
 import TV from './pages/display/TV.jsx'
 
+import TrackQueue from './pages/public/TrackQueue.jsx'
+
 // Protected Route wrapper
 function ProtectedRoute({ children, allowedRoles }) {
     const { user, loading, isAuthenticated } = useAuth()
@@ -83,6 +85,8 @@ export default function Router() {
                     <Login />
                 </PublicRoute>
             } />
+            <Route path="/track" element={<TrackQueue />} />
+            <Route path="/track/:id" element={<TrackQueue />} />
 
             {/* Admin routes */}
             <Route path="/admin" element={

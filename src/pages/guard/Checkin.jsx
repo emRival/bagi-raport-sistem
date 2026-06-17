@@ -10,6 +10,8 @@ import { Button } from '@/components/ui-new/button'
 import { Input } from '@/components/ui-new/input'
 import { Badge } from '@/components/ui-new/badge'
 import { AlertDialog } from '@/components/ui-new/alert-dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui-new/dialog'
+import { QRCodeSVG } from 'qrcode.react'
 import { cn } from '@/lib/utils'
 
 export default function Checkin() {
@@ -29,6 +31,7 @@ export default function Checkin() {
     const [recentCheckins, setRecentCheckins] = useState([])
     const [checkedInIds, setCheckedInIds] = useState(new Set())
     const [deleteModal, setDeleteModal] = useState({ open: false, id: null, name: '' })
+    const [qrModalOpen, setQrModalOpen] = useState(false)
     
     const inputRef = useRef(null)
     const phoneInputRef = useRef(null)
@@ -159,6 +162,39 @@ export default function Checkin() {
                     </div>
 
                     <div className="flex items-center gap-3">
+                        <Dialog open={qrModalOpen} onOpenChange={setQrModalOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="hidden sm:flex border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 font-bold">
+                                    QR Antrian
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md flex flex-col items-center justify-center p-8">
+                                <DialogHeader className="text-center mb-4">
+                                    <DialogTitle className="text-2xl font-black">Scan Untuk Cek Antrian</DialogTitle>
+                                    <DialogDescription className="font-medium text-slate-500">
+                                        Wali murid dapat memantau antrian secara live dari HP masing-masing tanpa perlu menggunakan mesin pencari.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="p-6 bg-white rounded-2xl shadow-xl border-2 border-slate-100 mb-6">
+                                    <QRCodeSVG 
+                                        value={`${window.location.origin}/track`} 
+                                        size={250} 
+                                        bgColor={"#ffffff"}
+                                        fgColor={"#0f172a"}
+                                        level={"Q"}
+                                        includeMargin={false}
+                                    />
+                                </div>
+                                <Button className="w-full font-bold" onClick={() => {
+                                    const link = `${window.location.origin}/track`;
+                                    navigator.clipboard.writeText(link);
+                                    toast.success('Link disalin ke clipboard');
+                                }}>
+                                    Salin Link Tracking
+                                </Button>
+                            </DialogContent>
+                        </Dialog>
+
                         <div className="hidden sm:block text-right mr-2">
                             <p className="text-xs font-bold text-slate-900">{user?.name}</p>
                             <p className="text-[10px] text-emerald-600 font-bold uppercase">Petugas Aktif</p>
@@ -207,6 +243,14 @@ export default function Checkin() {
                         </CardContent>
                     </Card>
                 </div>
+
+                <Button 
+                    variant="outline" 
+                    className="w-full sm:hidden border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 font-bold mb-2"
+                    onClick={() => setQrModalOpen(true)}
+                >
+                    Tampilkan QR Code Antrian
+                </Button>
 
                 {/* Primary Action Card */}
                 <Card className="shadow-md border-slate-200">

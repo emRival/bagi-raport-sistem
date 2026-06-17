@@ -66,7 +66,7 @@ app.use((req, res, next) => {
 // Routes (with specific rate limiters)
 app.use('/api/auth', authLimiter, authRouter)
 app.use('/api/students', authMiddleware, studentsRouter)
-app.use('/api/queue', authMiddleware, queueRouter)
+app.use('/api/queue', queueRouter) // Authorization is handled inside the router now
 app.use('/api/settings', settingsRouter)
 
 // Socket.io connections

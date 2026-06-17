@@ -18,6 +18,8 @@ import {
 import { Card, CardContent } from '@/components/ui-new/card'
 import { Button } from '@/components/ui-new/button'
 import { Badge } from '@/components/ui-new/badge'
+import { Switch } from '@/components/ui-new/switch'
+import { Label } from '@/components/ui-new/label'
 import TeacherHeader from '../../components/layout/TeacherHeader.jsx'
 
 export default function Queue() {
@@ -27,6 +29,7 @@ export default function Queue() {
     const [queue, setQueue] = useState([])
     const [loading, setLoading] = useState({})
     const [connected, setConnected] = useState(false)
+    const [autoCallNext, setAutoCallNext] = useState(false)
 
     const className = user?.assignedClass || '7A'
     const waitingQueue = queue.filter(q => q.status === 'WAITING')
@@ -111,9 +114,18 @@ export default function Queue() {
         setLoading({ ...loading, [item.id]: 'finish' })
         try {
             await queueApi.finish(item.id)
-            setQueue(queue.filter(q => q.id !== item.id))
+            const newQueue = queue.filter(q => q.id !== item.id)
+            setQueue(newQueue)
             socketService.finishStudent(item.name, item.class)
             toast.success(`${item.name} selesai`)
+
+            // Auto-Call Next Logic
+            if (autoCallNext) {
+                const nextStudent = newQueue.find(q => q.status === 'WAITING')
+                if (nextStudent) {
+                    setTimeout(() => handleCall(nextStudent), 1000) // Small delay for better UX
+                }
+            }
         } catch (error) {
             toast.error('Gagal: ' + error.message)
         } finally {
@@ -173,16 +185,25 @@ export default function Queue() {
 
                 {/* Queue Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <h2 className="text-xl font-bold text-slate-900">
-                        Daftar Antrian ({activeQueue.length})
-                    </h2>
-                    <Button
-                        variant="outline"
-                        onClick={() => navigate('/teacher/history')}
-                        icon={HistoryIcon}
-                    >
-                        Riwayat
-                    </Button>
+                    <div className="flex items-center gap-4">
+                        <h2 className="text-xl font-bold text-slate-900">
+                            Daftar Antrian ({activeQueue.length})
+                        </h2>
+                    </div>
+                    <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                        <div className="flex items-center space-x-2 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-full flex-1 sm:flex-initial justify-center">
+                            <Switch id="auto-call-next" checked={autoCallNext} onCheckedChange={setAutoCallNext} />
+                            <Label htmlFor="auto-call-next" className="text-sm font-bold text-blue-700 cursor-pointer">Panggil Otomatis</Label>
+                        </div>
+                        <Button
+                            variant="outline"
+                            onClick={() => navigate('/teacher/history')}
+                            icon={HistoryIcon}
+                            className="flex-shrink-0"
+                        >
+                            Riwayat
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Queue List */}
