@@ -78,11 +78,22 @@ const getIndonesiaDateTime = () => {
     return now.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).replace(' ', 'T')
 }
 
-// Get today's queue for a class
-router.get('/', (req, res) => {
+// Get today's queue for a class (Protected)
+router.get('/', authMiddleware, (req, res) => {
     try {
         const { class: cls, date } = req.query
         const targetDate = date || getIndonesiaDate()
+        const user = req.user
+
+        // Role-based filtering: Teachers only see their assigned class
+        let finalClass = cls
+        if (user.role === 'teacher') {
+            const userData = db.prepare('SELECT assigned_class FROM users WHERE id = ?').get(user.id)
+            if (cls && cls !== userData.assigned_class) {
+                return res.status(403).json({ error: 'Anda hanya bisa mengakses data kelas Anda sendiri' })
+            }
+            finalClass = userData.assigned_class
+        }
 
         let query = `
             SELECT q.*, s.nis, s.name, s.class, s.parent_name
@@ -92,9 +103,9 @@ router.get('/', (req, res) => {
         `
         const params = [targetDate]
 
-        if (cls) {
+        if (finalClass) {
             query += ' AND s.class = ?'
-            params.push(cls)
+            params.push(finalClass)
         }
 
         query += ' ORDER BY q.check_in_time ASC'
@@ -107,10 +118,21 @@ router.get('/', (req, res) => {
     }
 })
 
-// Get queue history (all dates)
-router.get('/history', (req, res) => {
+// Get queue history (all dates) (Protected)
+router.get('/history', authMiddleware, (req, res) => {
     try {
         const { class: cls, limit = 100, offset = 0 } = req.query
+        const user = req.user
+
+        // Role-based filtering: Teachers only see their assigned class
+        let finalClass = cls
+        if (user.role === 'teacher') {
+            const userData = db.prepare('SELECT assigned_class FROM users WHERE id = ?').get(user.id)
+            if (cls && cls !== userData.assigned_class) {
+                return res.status(403).json({ error: 'Anda hanya bisa mengakses data kelas Anda sendiri' })
+            }
+            finalClass = userData.assigned_class
+        }
 
         let query = `
             SELECT q.*, s.nis, s.name, s.class, s.parent_name
@@ -120,9 +142,9 @@ router.get('/history', (req, res) => {
         `
         const params = []
 
-        if (cls) {
+        if (finalClass) {
             query += ' AND s.class = ?'
-            params.push(cls)
+            params.push(finalClass)
         }
 
         query += ' ORDER BY q.check_in_time DESC LIMIT ? OFFSET ?'
@@ -133,9 +155,9 @@ router.get('/history', (req, res) => {
         // Get total count
         let countQuery = `SELECT COUNT(*) as total FROM queue q JOIN students s ON q.student_id = s.id WHERE q.status = 'FINISHED'`
         const countParams = []
-        if (cls) {
+        if (finalClass) {
             countQuery += ' AND s.class = ?'
-            countParams.push(cls)
+            countParams.push(finalClass)
         }
         const total = db.prepare(countQuery).get(...countParams)
 
