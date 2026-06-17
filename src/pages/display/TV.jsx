@@ -314,68 +314,74 @@ export default function TV() {
     const schoolName = localSettings?.schoolName || 'Sistem Antrian Bagi Raport'
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col overflow-hidden">
-            {/* Header */}
-            <header className="bg-white border-b border-slate-200 shadow-sm z-10 sticky top-0">
-                <div className="px-6 py-4 flex items-center justify-between gap-4">
-                    {/* Left: Identity */}
-                    <div className="flex items-center gap-4 min-w-0 flex-1">
-                        {schoolLogo ? (
-                            <img src={schoolLogo} alt="Logo" className="w-12 h-12 object-contain" />
-                        ) : (
-                            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-md">
-                                <span className="text-2xl">🎓</span>
-                            </div>
-                        )}
-                        <div className="min-w-0">
-                            <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">ANTRIAN RAPORT</h1>
-                            <p className="text-sm font-medium text-slate-500 truncate">{schoolName}</p>
+        <div className="min-h-[100dvh] bg-slate-950 flex flex-col overflow-hidden font-sans text-slate-50 selection:bg-blue-500/30">
+            {/* Ambient Background */}
+            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-900/20 blur-[120px]"></div>
+                <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-900/20 blur-[120px]"></div>
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
+            </div>
+
+            {/* Cinematic Header */}
+            <header className="relative z-10 px-8 py-6 flex items-center justify-between border-b border-white/5 bg-slate-950/50 backdrop-blur-xl">
+                {/* Left: Identity */}
+                <div className="flex items-center gap-4">
+                    {schoolLogo ? (
+                        <div className="w-14 h-14 bg-white/10 p-2 rounded-2xl backdrop-blur-md border border-white/10 shadow-xl flex items-center justify-center">
+                            <img src={schoolLogo} alt="Logo" className="max-w-full max-h-full object-contain" />
                         </div>
+                    ) : (
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl border border-white/10">
+                            <GraduationCap className="w-7 h-7 text-white" />
+                        </div>
+                    )}
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight text-white leading-tight">Antrian Raport</h1>
+                        <p className="text-sm font-medium text-slate-400">{schoolName}</p>
                     </div>
+                </div>
 
-                    {/* Right: Controls & Info */}
-                    <div className="flex items-center gap-6 flex-shrink-0">
-                        <div className="flex items-center gap-3 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
-                            <Badge
-                                variant={connected ? "default" : "destructive"}
-                                className={`${connected ? "bg-emerald-500 hover:bg-emerald-600" : "bg-red-500 hover:bg-red-600"} h-8 px-3 text-sm font-bold shadow-sm transition-all`}
-                            >
-                                {connected ? <><Wifi className="w-4 h-4 mr-1.5" />Online</> : <><WifiOff className="w-4 h-4 mr-1.5" />Offline</>}
-                            </Badge>
-
-                            <Button
-                                size="sm"
-                                variant={soundEnabled ? "default" : "outline"}
-                                onClick={soundEnabled ? () => setSoundEnabled(false) : enableSound}
-                                className={`h-8 font-bold text-xs ${soundEnabled ? "bg-blue-600 hover:bg-blue-700 shadow-md" : "border-slate-300 text-slate-600 hover:bg-slate-200"}`}
-                            >
-                                {soundEnabled ? <Volume2 className="w-4 h-4 mr-1.5" /> : <VolumeX className="w-4 h-4 mr-1.5" />}
-                                {soundEnabled ? 'SUARA ON' : 'SUARA OFF'}
-                            </Button>
-                        </div>
+                {/* Right: Controls & Time */}
+                <div className="flex items-center gap-8">
+                    {/* Controls (Hidden from public view, subtle) */}
+                    <div className="flex items-center gap-3 opacity-20 hover:opacity-100 transition-opacity duration-300">
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={soundEnabled ? () => setSoundEnabled(false) : enableSound}
+                            className={cn(
+                                "h-10 px-4 rounded-xl border font-semibold tracking-wide transition-all",
+                                soundEnabled 
+                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20" 
+                                    : "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20"
+                            )}
+                        >
+                            {soundEnabled ? <Volume2 className="w-4 h-4 mr-2" /> : <VolumeX className="w-4 h-4 mr-2" />}
+                            {soundEnabled ? 'SUARA ON' : 'SUARA OFF'}
+                        </Button>
 
                         <Button
                             size="sm"
-                            variant="outline"
+                            variant="ghost"
                             onClick={() => {
                                 logout()
                                 navigate('/login')
                             }}
-                            className="h-8 px-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
-                            title="Keluar"
+                            className="h-10 w-10 p-0 rounded-xl bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700 border border-white/5"
                         >
                             <LogOut className="w-4 h-4" />
                         </Button>
+                    </div>
 
-                        <div className="h-10 w-px bg-slate-200"></div>
+                    <div className="w-px h-12 bg-white/10"></div>
 
-                        <div className="text-right">
-                            <div className="text-3xl font-black text-slate-900 tabular-nums leading-none tracking-tight">
-                                {formatTime(currentTime)}
-                            </div>
-                            <div className="text-xs font-bold text-slate-500 uppercase tracking-wide mt-1">
-                                {formatDate(currentTime)}
-                            </div>
+                    {/* Clock */}
+                    <div className="text-right">
+                        <div className="text-4xl font-light tabular-nums tracking-tighter text-white">
+                            {formatTime(currentTime)}
+                        </div>
+                        <div className="text-xs font-semibold text-blue-400 uppercase tracking-widest mt-0.5">
+                            {formatDate(currentTime)}
                         </div>
                     </div>
                 </div>
@@ -465,76 +471,80 @@ export default function TV() {
                 </div>
             </main>
 
-            {/* Footer marquee */}
-            <footer className="fixed bottom-0 left-0 right-0 bg-blue-600 text-white shadow-lg py-2 px-6 z-20">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex-1 overflow-hidden">
-                        {(() => {
-                            // Debug logging
-                            console.log('TV Announcements Raw:', announcements)
-                            const activeAnnouncements = announcements.filter(a => a.is_active == 1 || a.is_active === true)
-                            console.log('TV Announcements Active:', activeAnnouncements)
+            {/* Announcements Ticker */}
+            {announcements.filter(a => a.is_active).length > 0 && (
+                <div className="relative z-10 border-t border-white/5 bg-slate-900/80 backdrop-blur-md overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-slate-950 z-10"></div>
+                    <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-slate-950 z-10"></div>
+                    
+                    <div className="flex items-center">
+                        <div className="flex items-center gap-2 bg-blue-600 text-white px-6 py-4 z-20 font-bold tracking-wider text-sm whitespace-nowrap shadow-[10px_0_20px_rgba(0,0,0,0.5)] uppercase">
+                            <Megaphone className="w-5 h-5 animate-pulse" />
+                            INFO
+                        </div>
+                        <div className="flex-1 overflow-hidden relative">
+                            <div className="whitespace-nowrap animate-[marquee_30s_linear_infinite] inline-block">
+                                {announcements.filter(a => a.is_active).map(a => (
+                                    <span key={a.id} className="inline-flex items-center mx-12 text-lg text-slate-300 font-medium">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-4"></span>
+                                        {a.text}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-                            return activeAnnouncements.length > 0 ? (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-lg">📢</span>
-                                    <div className="overflow-hidden">
-                                        <div className="whitespace-nowrap animate-marquee">
-                                            {activeAnnouncements.map((a, i, arr) => (
-                                                <span key={a.id} className="inline-block mr-12">
-                                                    {a.text}{i < arr.length - 1 ? ' • ' : ''}
-                                                </span>
-                                            ))}
-                                        </div>
+            {/* Cinematic Full Screen Overlay */}
+            {overlay && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-slate-950/90 backdrop-blur-2xl animate-in fade-in duration-500">
+                    <div className={cn(
+                        "w-full max-w-5xl rounded-[3rem] p-16 flex flex-col items-center justify-center text-center relative overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-8 duration-700 ease-out",
+                        overlay.type === 'call' 
+                            ? "bg-blue-600 text-white shadow-[0_0_100px_rgba(37,99,235,0.4)] border border-blue-400/50" 
+                            : "bg-slate-900 text-white border border-white/10 shadow-black"
+                    )}>
+                        {/* Dramatic Glow Background for Call */}
+                        {overlay.type === 'call' && (
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent opacity-60"></div>
+                        )}
+
+                        <div className="relative z-10 w-full">
+                            {overlay.type === 'call' ? (
+                                <div className="space-y-8">
+                                    <div className="inline-flex items-center justify-center p-6 bg-white/10 rounded-full mb-4 animate-bounce-slow backdrop-blur-sm border border-white/20">
+                                        <Volume2 className="w-16 h-16 text-white" />
                                     </div>
+                                    <h2 className="text-3xl font-semibold text-blue-200 uppercase tracking-[0.3em]">
+                                        Panggilan Ke Ruang {overlay.class}
+                                    </h2>
+                                    <div className="text-[8rem] font-black tracking-tighter leading-tight drop-shadow-xl text-white">
+                                        {overlay.name}
+                                    </div>
+                                    <p className="text-2xl text-blue-100 font-medium tracking-wide mt-8">
+                                        Silakan menuju ke ruang kelas sekarang
+                                    </p>
                                 </div>
                             ) : (
-                                <div className="text-center text-sm">Selamat Datang di Sistem Antrian Bagi Raport</div>
-                            )
-                        })()}
-                    </div>
-                    <div className="flex items-center gap-4 text-xs ml-4">
-                        <span>Selesai: <strong className="text-lg">{stats.totals.finished}</strong></span>
-                        <span>{onlineClasses.length > 0 ? '🟢' : '⚪'} {onlineClasses.length} Guru</span>
-                        <span className="text-blue-200 border-l border-blue-400 pl-4">Powered by <strong>Bagi Raport</strong> @em_rival</span>
-                    </div>
-                </div>
-            </footer>
-
-            {/* Full Screen Overlays */}
-            {overlay && overlay.type === 'call' && (
-                <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 animate-in fade-in duration-300">
-                    <div className="text-center p-12 bg-blue-600 rounded-3xl max-w-4xl w-full border-8 border-yellow-400 shadow-2xl animate-in zoom-in-50 duration-300">
-                        <Volume2 className="w-32 h-32 mx-auto text-white mb-8 animate-bounce" />
-                        <h2 className="text-4xl font-black mb-6 text-yellow-300 tracking-wider">🔔 PANGGILAN WALI SISWA</h2>
-                        <div className="bg-white/10 rounded-2xl p-8 backdrop-blur-sm border border-white/20">
-                            <p className="text-6xl font-black mb-4 text-white drop-shadow-lg">{overlay.name}</p>
-                            <p className="text-4xl font-bold text-blue-100">KELAS {overlay.class}</p>
-                        </div>
-                        <p className="text-2xl text-white mt-8 font-medium">Silakan menuju kelas {overlay.class}</p>
-                    </div>
-                </div>
-            )}
-
-            {overlay && overlay.type === 'announcement' && (
-                <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 animate-in fade-in duration-300">
-                    <div className="text-center p-12 bg-orange-600 rounded-3xl max-w-5xl w-full border-8 border-yellow-400 shadow-2xl animate-in zoom-in-50 duration-300">
-                        <Megaphone className="w-24 h-24 mx-auto text-white mb-6 animate-bounce" />
-                        <h2 className="text-3xl font-black mb-6 text-yellow-300 tracking-wider uppercase">📢 PENGUMUMAN</h2>
-                        <div className="bg-white/10 rounded-2xl p-8 backdrop-blur-sm border border-white/20 min-h-[200px] flex items-center justify-center">
-                            <p className={`${overlay.text.length > 200 ? 'text-2xl' :
-                                overlay.text.length > 100 ? 'text-3xl' :
-                                    overlay.text.length > 50 ? 'text-4xl' :
-                                        'text-5xl'
-                                } font-bold text-white leading-relaxed break-words`}>
-                                {overlay.text}
-                            </p>
+                                <div className="space-y-10">
+                                    <div className="inline-flex items-center justify-center p-6 bg-blue-500/20 rounded-full mb-4 border border-blue-500/30">
+                                        <Megaphone className="w-16 h-16 text-blue-400 animate-pulse" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-slate-400 uppercase tracking-widest">
+                                        Pengumuman
+                                    </h2>
+                                    <div className="text-6xl font-semibold leading-tight tracking-tight text-white max-w-4xl mx-auto">
+                                        {overlay.text}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Sound Activation Overlay - Forces user interaction for Autoplay Policy */}
+            {/* Sound Activation Overlay */}
             {!soundEnabled && (
                 <div
                     onClick={enableSound}
@@ -569,7 +579,7 @@ export default function TV() {
                     50% { transform: translateY(-10px); }
                 }
                 .animate-bounce-slow {
-                    animation: bounce-slow 3s infinite ease-in-out;
+                    animation: bounce-slow 4s infinite ease-in-out;
                 }
             `}</style>
         </div>
