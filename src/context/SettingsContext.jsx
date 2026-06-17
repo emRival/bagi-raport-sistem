@@ -59,15 +59,15 @@ export function SettingsProvider({ children }) {
         // Optimistic update
         setSettings(prev => ({ ...prev, ...updates }))
 
-        // Persist to backend
+        // Persist to backend - Sequential to avoid rate limit spikes
         try {
-            const promises = Object.entries(updates).map(([key, value]) =>
-                settingsApi.update(key, value)
-            )
-            await Promise.all(promises)
+            for (const [key, value] of Object.entries(updates)) {
+                await settingsApi.update(key, value)
+            }
         } catch (error) {
             console.error('Failed to save settings:', error)
-            // Revert on error? For now just log
+            // Ideally re-fetch or revert here
+            throw error
         }
     }
 

@@ -10,6 +10,7 @@ import { Slider } from '@/components/ui-new/slider'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui-new/tabs'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
+import { settingsApi } from '../../services/api'
 
 export default function Settings() {
     const { settings, updateSettings } = useSettings()
@@ -17,26 +18,62 @@ export default function Settings() {
     const [showToken, setShowToken] = useState(false)
     const [saving, setSaving] = useState(false)
     const [testing, setTesting] = useState(false)
+
+    // Local state for form fields to avoid per-keystroke API calls
+    const [localSettings, setLocalSettings] = useState(null)
+
+    // Initialize local settings from context
+    useEffect(() => {
+        if (settings && !localSettings) {
+            setLocalSettings(settings)
+        }
+    }, [settings, localSettings])
+
     const [logoMode, setLogoMode] = useState(settings.schoolLogo?.startsWith('http') ? 'url' : 'upload')
     const [logoUrl, setLogoUrl] = useState(settings.schoolLogo?.startsWith('http') ? settings.schoolLogo : '')
     const [newClass, setNewClass] = useState('')
     const [draggedIndex, setDraggedIndex] = useState(null)
     const fileInputRef = useRef(null)
 
-    const handleSave = (section) => {
-        setSaving(true)
-        setTimeout(() => {
-            setSaving(false)
-            toast.success(`Pengaturan ${section} berhasil disimpan`)
-        }, 500)
+    if (!localSettings) return null
+
+    const handleLocalChange = (updates) => {
+        setLocalSettings(prev => ({ ...prev, ...updates }))
     }
 
-    const handleTest = () => {
+    const handleSave = async (section, keys) => {
+        setSaving(true)
+        try {
+            const updates = {}
+            keys.forEach(key => {
+                updates[key] = localSettings[key]
+            })
+            await updateSettings(updates)
+            toast.success(`Pengaturan ${section} berhasil disimpan`)
+        } catch (error) {
+            console.error('Save error:', error)
+            toast.error(`Gagal menyimpan pengaturan ${section}`)
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const handleTest = async () => {
+        if (!localSettings.waApiUrl) {
+            toast.error('Masukan API URL terlebih dahulu')
+            return
+        }
+
         setTesting(true)
-        setTimeout(() => {
+        try {
+            await settingsApi.testWaConnection(localSettings.waApiUrl, localSettings.waApiToken)
+            toast.success('Koneksi ke WhatsApp Gateway berhasil! Cek n8n Anda.')
+        } catch (error) {
+            console.error('Test error:', error)
+            toast.error(error.message || 'Gagal terhubung ke WhatsApp Gateway')
+        } finally {
             setTesting(false)
-            toast.success('Koneksi ke WhatsApp Gateway berhasil!')
-        }, 1500)
+        }
     }
 
     const handleLogoUpload = (e) => {
@@ -55,8 +92,8 @@ export default function Settings() {
 
         const reader = new FileReader()
         reader.onload = (event) => {
-            updateSettings({ schoolLogo: event.target.result })
-            toast.success('Logo berhasil diupload')
+            handleLocalChange({ schoolLogo: event.target.result })
+            toast.success('Logo disiapkan. Klik Simpan untuk memperbarui.')
         }
         reader.readAsDataURL(file)
     }
@@ -66,19 +103,14 @@ export default function Settings() {
             toast.error('URL tidak boleh kosong')
             return
         }
-        updateSettings({ schoolLogo: logoUrl })
-        toast.success('Logo berhasil diperbarui')
+        handleLocalChange({ schoolLogo: logoUrl })
+        toast.success('URL Logo disiapkan. Klik Simpan untuk memperbarui.')
     }
 
-    const handleRemoveLogo = async () => {
-        try {
-            await updateSettings({ schoolLogo: '' })
-            setLogoUrl('')
-            setLogoMode('upload')
-            toast.success('Logo berhasil dihapus')
-        } catch (error) {
-            toast.error('Gagal menghapus logo')
-        }
+    const handleRemoveLogo = () => {
+        handleLocalChange({ schoolLogo: '' })
+        setLogoUrl('')
+        setLogoMode('upload')
     }
 
     const handleAddClass = () => {
@@ -88,38 +120,33 @@ export default function Settings() {
             return
         }
 
-        if (settings.classes.includes(className)) {
+        if (localSettings.classes.includes(className)) {
             toast.error('Kelas sudah ada')
             return
         }
 
-        // Add to end of list (no auto-sort to preserve admin order)
-        const updatedClasses = [...settings.classes, className]
-        updateSettings({ classes: updatedClasses })
+        const updatedClasses = [...localSettings.classes, className]
+        handleLocalChange({ classes: updatedClasses })
         setNewClass('')
-        toast.success(`Kelas ${className} berhasil ditambahkan`)
     }
 
     const handleRemoveClass = (className) => {
-        if (confirm(`Hapus kelas ${className} dari daftar?`)) {
-            const updatedClasses = settings.classes.filter(c => c !== className)
-            updateSettings({ classes: updatedClasses })
-            toast.success(`Kelas ${className} berhasil dihapus`)
-        }
+        const updatedClasses = localSettings.classes.filter(c => c !== className)
+        handleLocalChange({ classes: updatedClasses })
     }
 
     const moveClassUp = (index) => {
         if (index === 0) return
-        const newClasses = [...settings.classes]
+        const newClasses = [...localSettings.classes]
             ;[newClasses[index - 1], newClasses[index]] = [newClasses[index], newClasses[index - 1]]
-        updateSettings({ classes: newClasses })
+        handleLocalChange({ classes: newClasses })
     }
 
     const moveClassDown = (index) => {
-        if (index === settings.classes.length - 1) return
-        const newClasses = [...settings.classes]
+        if (index === localSettings.classes.length - 1) return
+        const newClasses = [...localSettings.classes]
             ;[newClasses[index], newClasses[index + 1]] = [newClasses[index + 1], newClasses[index]]
-        updateSettings({ classes: newClasses })
+        handleLocalChange({ classes: newClasses })
     }
 
     // Drag and drop handlers
@@ -144,10 +171,10 @@ export default function Settings() {
         e.preventDefault()
         if (draggedIndex === null || draggedIndex === dropIndex) return
 
-        const newClasses = [...settings.classes]
+        const newClasses = [...localSettings.classes]
         const [draggedItem] = newClasses.splice(draggedIndex, 1)
         newClasses.splice(dropIndex, 0, draggedItem)
-        updateSettings({ classes: newClasses })
+        handleLocalChange({ classes: newClasses })
         setDraggedIndex(null)
     }
 
@@ -192,8 +219,8 @@ export default function Settings() {
                                 <Input
                                     id="schoolName"
                                     placeholder="Contoh: SMP Negeri 1 Jakarta"
-                                    value={settings.schoolName}
-                                    onChange={(e) => updateSettings({ schoolName: e.target.value })}
+                                    value={localSettings.schoolName}
+                                    onChange={(e) => handleLocalChange({ schoolName: e.target.value })}
                                 />
                             </div>
 
@@ -247,10 +274,10 @@ export default function Settings() {
                                     </div>
                                 )}
 
-                                {settings.schoolLogo && (
+                                {localSettings.schoolLogo && (
                                     <div className="mt-3 p-3 border rounded-lg bg-muted/50">
                                         <div className="flex items-center gap-3">
-                                            <img src={settings.schoolLogo} alt="Logo" className="h-12 w-12 object-contain" />
+                                            <img src={localSettings.schoolLogo} alt="Logo" className="h-12 w-12 object-contain" />
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium">Logo aktif</p>
                                             </div>
@@ -262,7 +289,7 @@ export default function Settings() {
                                 )}
                             </div>
 
-                            <Button onClick={() => handleSave('sekolah')} loading={saving} icon={Save}>
+                            <Button onClick={() => handleSave('sekolah', ['schoolName', 'schoolLogo'])} loading={saving} icon={Save}>
                                 Simpan
                             </Button>
                         </CardContent>
@@ -283,8 +310,8 @@ export default function Settings() {
                                     Drag & drop atau gunakan tombol ↑ ↓ untuk mengubah urutan.
                                 </p>
                                 <div className="space-y-1">
-                                    {settings.classes && settings.classes.length > 0 ? (
-                                        settings.classes.map((className, index) => (
+                                    {localSettings.classes && localSettings.classes.length > 0 ? (
+                                        localSettings.classes.map((className, index) => (
                                             <div
                                                 key={className}
                                                 draggable
@@ -309,7 +336,7 @@ export default function Settings() {
                                                     </button>
                                                     <button
                                                         onClick={() => moveClassDown(index)}
-                                                        disabled={index === settings.classes.length - 1}
+                                                        disabled={index === localSettings.classes.length - 1}
                                                         className="p-1 rounded hover:bg-background disabled:opacity-30 disabled:cursor-not-allowed smooth-transition"
                                                         title="Pindah ke bawah"
                                                     >
@@ -357,6 +384,10 @@ export default function Settings() {
                                     💡 Siswa tetap bisa memiliki kelas lain saat import Excel
                                 </p>
                             </div>
+
+                            <Button onClick={() => handleSave('kelas', ['classes'])} loading={saving} icon={Save}>
+                                Simpan Urutan Kelas
+                            </Button>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -375,8 +406,8 @@ export default function Settings() {
                                     <p className="text-sm text-muted-foreground">Kirim notifikasi otomatis</p>
                                 </div>
                                 <Switch
-                                    checked={settings.waEnabled}
-                                    onCheckedChange={(checked) => updateSettings({ waEnabled: checked })}
+                                    checked={localSettings.waEnabled}
+                                    onCheckedChange={(checked) => handleLocalChange({ waEnabled: checked })}
                                 />
                             </div>
 
@@ -385,8 +416,8 @@ export default function Settings() {
                                 <Input
                                     id="waUrl"
                                     placeholder="https://wa-gateway.com/send"
-                                    value={settings.waApiUrl}
-                                    onChange={(e) => updateSettings({ waApiUrl: e.target.value })}
+                                    value={localSettings.waApiUrl}
+                                    onChange={(e) => handleLocalChange({ waApiUrl: e.target.value })}
                                 />
                             </div>
 
@@ -396,8 +427,8 @@ export default function Settings() {
                                     <Input
                                         id="waToken"
                                         type={showToken ? 'text' : 'password'}
-                                        value={settings.waApiToken}
-                                        onChange={(e) => updateSettings({ waApiToken: e.target.value })}
+                                        value={localSettings.waApiToken}
+                                        onChange={(e) => handleLocalChange({ waApiToken: e.target.value })}
                                         className="pr-10"
                                     />
                                     <button
@@ -430,8 +461,8 @@ export default function Settings() {
                                     <textarea
                                         id="checkinTemplate"
                                         className="w-full min-h-[80px] px-3 py-2 text-sm rounded-md border border-input bg-background"
-                                        value={settings.waCheckinTemplate}
-                                        onChange={(e) => updateSettings({ waCheckinTemplate: e.target.value })}
+                                        value={localSettings.waCheckinTemplate}
+                                        onChange={(e) => handleLocalChange({ waCheckinTemplate: e.target.value })}
                                     />
                                 </div>
 
@@ -440,8 +471,8 @@ export default function Settings() {
                                     <textarea
                                         id="callTemplate"
                                         className="w-full min-h-[80px] px-3 py-2 text-sm rounded-md border border-input bg-background"
-                                        value={settings.waCallTemplate}
-                                        onChange={(e) => updateSettings({ waCallTemplate: e.target.value })}
+                                        value={localSettings.waCallTemplate}
+                                        onChange={(e) => handleLocalChange({ waCallTemplate: e.target.value })}
                                     />
                                 </div>
                             </div>
@@ -450,7 +481,7 @@ export default function Settings() {
                                 <Button variant="outline" onClick={handleTest} loading={testing} icon={TestTube}>
                                     Test
                                 </Button>
-                                <Button onClick={() => handleSave('WhatsApp')} loading={saving} icon={Save}>
+                                <Button onClick={() => handleSave('WhatsApp', ['waEnabled', 'waApiUrl', 'waApiToken', 'waCheckinTemplate', 'waCallTemplate'])} loading={saving} icon={Save}>
                                     Simpan
                                 </Button>
                             </div>
@@ -469,11 +500,11 @@ export default function Settings() {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <Label>Nada Suara (Pitch)</Label>
-                                    <span className="text-sm font-medium">{settings.ttsPitch || 1.0}</span>
+                                    <span className="text-sm font-medium">{localSettings.ttsPitch || 1.0}</span>
                                 </div>
                                 <Slider
-                                    value={[settings.ttsPitch || 1.0]}
-                                    onValueChange={(value) => updateSettings({ ttsPitch: value[0] })}
+                                    value={[localSettings.ttsPitch || 1.0]}
+                                    onValueChange={(value) => handleLocalChange({ ttsPitch: value[0] })}
                                     min={0.5}
                                     max={2}
                                     step={0.1}
@@ -488,11 +519,11 @@ export default function Settings() {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <Label>Kecepatan (Rate)</Label>
-                                    <span className="text-sm font-medium">{settings.ttsRate || 0.6}</span>
+                                    <span className="text-sm font-medium">{localSettings.ttsRate || 0.6}</span>
                                 </div>
                                 <Slider
-                                    value={[settings.ttsRate || 0.6]}
-                                    onValueChange={(value) => updateSettings({ ttsRate: value[0] })}
+                                    value={[localSettings.ttsRate || 0.6]}
+                                    onValueChange={(value) => handleLocalChange({ ttsRate: value[0] })}
                                     min={0.5}
                                     max={2}
                                     step={0.1}
@@ -507,11 +538,11 @@ export default function Settings() {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <Label>Volume</Label>
-                                    <span className="text-sm font-medium">{Math.round((settings.ttsVolume || 1.0) * 100)}%</span>
+                                    <span className="text-sm font-medium">{Math.round((localSettings.ttsVolume || 1.0) * 100)}%</span>
                                 </div>
                                 <Slider
-                                    value={[settings.ttsVolume || 1.0]}
-                                    onValueChange={(value) => updateSettings({ ttsVolume: value[0] })}
+                                    value={[localSettings.ttsVolume || 1.0]}
+                                    onValueChange={(value) => handleLocalChange({ ttsVolume: value[0] })}
                                     min={0}
                                     max={1}
                                     step={0.1}
@@ -529,7 +560,7 @@ export default function Settings() {
                                 </p>
                             </div>
 
-                            <Button onClick={() => handleSave('suara')} loading={saving} icon={Save}>
+                            <Button onClick={() => handleSave('suara', ['ttsPitch', 'ttsRate', 'ttsVolume'])} loading={saving} icon={Save}>
                                 Simpan
                             </Button>
                         </CardContent>
@@ -539,3 +570,4 @@ export default function Settings() {
         </div>
     )
 }
+

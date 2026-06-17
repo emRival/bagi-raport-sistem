@@ -78,6 +78,47 @@ router.put('/:key', authMiddleware, modifyLimiter, validate(settingsSchema), (re
     }
 })
 
+// Test WhatsApp Connection (Protected)
+router.post('/wa-test', authMiddleware, async (req, res) => {
+    try {
+        const { url, token } = req.body
+
+        if (!url) {
+            return res.status(400).json({ error: 'API URL is required' })
+        }
+
+        logger.debug('Testing WA Connection to:', url)
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token
+            },
+            body: JSON.stringify({
+                phone: '628123456789',
+                message: 'Test connection from Bagi Raport System'
+            })
+        })
+
+        const responseText = await response.text()
+        logger.debug('WA Test Response Status:', response.status)
+        logger.debug('WA Test Response Body:', responseText)
+
+        if (response.ok) {
+            res.json({ success: true, message: 'Connection successful', details: responseText })
+        } else {
+            res.status(response.status).json({
+                error: `Gateway returned error ${response.status}`,
+                details: responseText
+            })
+        }
+    } catch (error) {
+        logger.error('WA Test Error:', error)
+        res.status(500).json({ error: 'Failed to connect to WhatsApp Gateway', details: error.message })
+    }
+})
+
 
 
 // Get users (admin only)
