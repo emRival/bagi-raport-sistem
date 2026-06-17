@@ -152,11 +152,11 @@ export default function AdminLayout() {
 
             {/* Main content - offset by sidebar width on desktop */}
             <div className={cn(
-                "flex-1 flex flex-col min-h-screen w-full",
-                sidebarOpen ? "lg:pl-64" : "lg:pl-20"
+                "flex-1 flex flex-col min-h-screen w-full lg:w-auto",
+                sidebarOpen ? "lg:ml-64" : "lg:ml-20"
             )}>
                 {/* Top header - Desktop only */}
-                <header className="hidden lg:flex h-16 bg-white border-b border-slate-200 items-center px-6 shadow-sm z-20 sticky top-0 w-full">
+                <header className="hidden lg:flex h-16 bg-white border-b border-slate-200 items-center px-6 shadow-sm z-20 sticky top-0">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
                             <currentNavItem.icon className="w-5 h-5" />
@@ -178,7 +178,7 @@ export default function AdminLayout() {
                 </header>
 
                 {/* Mobile Top Bar */}
-                <header className="lg:hidden h-14 bg-white border-b border-slate-200 flex items-center px-4 shadow-sm relative z-20 sticky top-0 w-full">
+                <header className="lg:hidden h-14 bg-white border-b border-slate-200 flex items-center px-4 shadow-sm relative z-20 sticky top-0">
                     <div className="flex items-center gap-2.5 min-w-0">
                         {settings.schoolLogo ? (
                             <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow border border-slate-100 overflow-hidden flex-shrink-0">

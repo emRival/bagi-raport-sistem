@@ -29,29 +29,40 @@ export default function Settings() {
     // Load available voices
     const loadVoices = useCallback(() => {
         setVoicesLoading(true)
-        // Give browser time to load voices
-        setTimeout(() => {
+        // Give browser multiple attempts to load voices
+        const attemptLoad = (retryCount = 0) => {
             const voices = window.speechSynthesis.getVoices()
-            // Filter Indonesian or common fallback voices
+            if (voices.length === 0 && retryCount < 5) {
+                setTimeout(() => attemptLoad(retryCount + 1), 200)
+                return
+            }
+
+            // Filter Indonesian
             const filtered = voices.filter(v => 
                 v.lang.includes('id') || 
                 v.lang.includes('ID') || 
                 v.name.toLowerCase().includes('indonesian')
             )
             
-            // If no ID voices, show top 20 available voices instead of just 10
-            const finalVoices = filtered.length > 0 ? filtered : voices.slice(0, 20)
+            // Show all if no ID, otherwise show ID + some common ones
+            const finalVoices = filtered.length > 0 ? filtered : voices.slice(0, 30)
             setAvailableVoices(finalVoices)
             setVoicesLoading(false)
             console.log('📡 Voices Loaded:', finalVoices.length)
-        }, 100)
+        }
+
+        attemptLoad()
     }, [])
 
     useEffect(() => {
         loadVoices()
-        window.speechSynthesis.onvoiceschanged = loadVoices
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = loadVoices
+        }
         return () => {
-            window.speechSynthesis.onvoiceschanged = null
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = null
+            }
         }
     }, [loadVoices])
 
@@ -260,18 +271,18 @@ export default function Settings() {
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
             {/* Tabs */}
             <Tabs defaultValue="general" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-6">
-                    <TabsTrigger value="general" className="gap-2">
+                <TabsList className="flex w-full mb-6 bg-muted p-1 overflow-x-auto overflow-y-hidden no-scrollbar">
+                    <TabsTrigger value="general" className="flex-1 gap-2 whitespace-nowrap min-w-[100px]">
                         <SettingsIcon className="w-4 h-4" />
-                        <span className="hidden sm:inline">Umum</span>
+                        <span>Umum</span>
                     </TabsTrigger>
-                    <TabsTrigger value="integration" className="gap-2">
+                    <TabsTrigger value="integration" className="flex-1 gap-2 whitespace-nowrap min-w-[100px]">
                         <MessageSquare className="w-4 h-4" />
-                        <span className="hidden sm:inline">Integrasi</span>
+                        <span>Integrasi</span>
                     </TabsTrigger>
-                    <TabsTrigger value="display" className="gap-2">
+                    <TabsTrigger value="display" className="flex-1 gap-2 whitespace-nowrap min-w-[100px]">
                         <Volume2 className="w-4 h-4" />
-                        <span className="hidden sm:inline">Tampilan</span>
+                        <span>Tampilan</span>
                     </TabsTrigger>
                 </TabsList>
 
