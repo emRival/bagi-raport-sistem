@@ -192,6 +192,38 @@ export default function Settings() {
         setDraggedIndex(null)
     }
 
+    const handleTestSuara = () => {
+        if (!('speechSynthesis' in window)) {
+            toast.error('Browser Anda tidak mendukung fitur suara')
+            return
+        }
+
+        // Cancel previous speech
+        window.speechSynthesis.cancel()
+
+        const text = 'Satu, dua, tiga. Ini adalah percobaan suara untuk antrian raport.'
+        const utterance = new SpeechSynthesisUtterance(text)
+        
+        const pitch = parseFloat(localSettings.ttsPitch ?? 1.0)
+        const rate = parseFloat(localSettings.ttsRate ?? 0.8)
+        const volume = parseFloat(localSettings.ttsVolume ?? 1.0)
+
+        utterance.lang = 'id-ID'
+        utterance.pitch = pitch
+        utterance.rate = rate
+        utterance.volume = volume
+
+        // Try to find a male voice
+        const voices = window.speechSynthesis.getVoices()
+        const voice = voices.find(v => v.lang.includes('id') && v.name.toLowerCase().includes('male')) 
+                    || voices.find(v => v.lang.includes('id'))
+        
+        if (voice) utterance.voice = voice
+
+        window.speechSynthesis.speak(utterance)
+        toast.info(`Mencoba suara: Pitch ${pitch}, Speed ${rate}`)
+    }
+
     return (
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
             {/* Tabs */}
@@ -580,10 +612,15 @@ export default function Settings() {
                                 </p>
                             </div>
 
-                            <Button onClick={() => handleSave('suara', ['ttsPitch', 'ttsRate', 'ttsVolume'])} loading={saving} icon={Save}>
-                                Simpan
-                            </Button>
-                        </CardContent>
+                            <div className="flex gap-2">
+                                <Button variant="outline" onClick={handleTestSuara} icon={Volume2}>
+                                    Test Suara
+                                </Button>
+                                <Button onClick={() => handleSave('suara', ['ttsPitch', 'ttsRate', 'ttsVolume'])} loading={saving} icon={Save}>
+                                    Simpan
+                                </Button>
+                            </div>
+                            </CardContent>
                     </Card>
                 </TabsContent>
             </Tabs>

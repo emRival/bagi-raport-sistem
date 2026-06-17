@@ -204,10 +204,13 @@ export default function TV() {
         }
 
         if ('speechSynthesis' in window) {
+            // Cancel any ongoing speech to clear the buffer
+            window.speechSynthesis.cancel()
+
             const currentSettings = settingsRef.current
             const utterance = new SpeechSynthesisUtterance(item.text)
 
-            // Explicitly cast to Number to ensure browser compatibility
+            // Explicitly cast to Number
             const pitch = parseFloat(currentSettings.ttsPitch ?? 1.0)
             const rate = parseFloat(currentSettings.ttsRate ?? 0.8)
             const volume = parseFloat(currentSettings.ttsVolume ?? 1.0)
@@ -217,27 +220,40 @@ export default function TV() {
             utterance.rate = rate
             utterance.volume = volume
 
-            console.log('🗣️ Speaking with settings:', { pitch, rate, volume, text: item.text.substring(0, 20) + '...' })
+            console.log('🗣️ [TV] Speaking with settings:', { pitch, rate, volume, text: item.text.substring(0, 30) + '...' })
 
-            // Voice selection logic
-            const voices = speechSynthesis.getVoices()
+            // Voice selection logic - try to get fresh voices
+            const voices = window.speechSynthesis.getVoices()
             const maleVoice = voices.find(v => v.lang.includes('id') && v.name.toLowerCase().includes('male'))
                 || voices.find(v => v.lang.includes('id'))
-            if (maleVoice) utterance.voice = maleVoice
+            
+            if (maleVoice) {
+                utterance.voice = maleVoice
+                console.log('✅ [TV] Voice selected:', maleVoice.name)
+            }
+
+            utterance.onstart = () => {
+                console.log('🏁 [TV] TTS Started')
+            }
 
             utterance.onend = () => {
+                console.log('✅ [TV] TTS Finished')
                 setTimeout(() => {
                     setOverlay(null)
                     setIsSpeaking(false)
-                }, 2000) // Keep overlay for 2s after speech ends
+                }, 2000)
             }
 
-            utterance.onerror = () => {
+            utterance.onerror = (event) => {
+                console.error('❌ [TV] TTS Error:', event)
                 setOverlay(null)
                 setIsSpeaking(false)
             }
 
-            speechSynthesis.speak(utterance)
+            // Small delay to ensure cancel() has finished processing in some browsers
+            setTimeout(() => {
+                window.speechSynthesis.speak(utterance)
+            }, 50)
         } else {
             // Fallback if no TTS
             setTimeout(() => {

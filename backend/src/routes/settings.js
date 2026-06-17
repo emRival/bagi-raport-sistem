@@ -65,15 +65,19 @@ router.put('/:key', authMiddleware, modifyLimiter, validate(settingsSchema), (re
         const { value } = req.body
         const valueStr = typeof value === 'string' ? value : JSON.stringify(value)
 
+        logger.info(`⚙️ Updating setting [${req.params.key}] to: ${valueStr} (${typeof value})`)
+
         db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(req.params.key, valueStr)
 
         // Broadcast settings update via socket
         if (req.io) {
+            logger.debug(`📡 Broadcasting settings-updated for [${req.params.key}]`)
             req.io.emit('settings-updated', { key: req.params.key, value })
         }
 
         res.json({ success: true })
     } catch (error) {
+        logger.error(`❌ Error updating setting [${req.params.key}]:`, error)
         res.status(500).json({ error: 'Internal server error' })
     }
 })
