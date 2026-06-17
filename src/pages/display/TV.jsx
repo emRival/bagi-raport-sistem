@@ -314,46 +314,39 @@ export default function TV() {
     const schoolName = localSettings?.schoolName || 'Sistem Antrian Bagi Raport'
 
     return (
-        <div className="min-h-[100dvh] bg-slate-950 flex flex-col overflow-hidden font-sans text-slate-50 selection:bg-blue-500/30">
-            {/* Ambient Background */}
-            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-900/20 blur-[120px]"></div>
-                <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-900/20 blur-[120px]"></div>
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
-            </div>
-
-            {/* Cinematic Header */}
-            <header className="relative z-10 px-8 py-6 flex items-center justify-between border-b border-white/5 bg-slate-950/50 backdrop-blur-xl">
+        <div className="min-h-[100dvh] bg-slate-50 flex flex-col overflow-hidden font-sans text-slate-900 selection:bg-blue-100">
+            {/* Header */}
+            <header className="relative z-10 px-6 sm:px-10 py-5 flex items-center justify-between border-b border-slate-200 bg-white/80 backdrop-blur-md shadow-sm">
                 {/* Left: Identity */}
                 <div className="flex items-center gap-4">
                     {schoolLogo ? (
-                        <div className="w-14 h-14 bg-white/10 p-2 rounded-2xl backdrop-blur-md border border-white/10 shadow-xl flex items-center justify-center">
+                        <div className="w-16 h-16 bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
                             <img src={schoolLogo} alt="Logo" className="max-w-full max-h-full object-contain" />
                         </div>
                     ) : (
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl border border-white/10">
-                            <GraduationCap className="w-7 h-7 text-white" />
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-md border border-slate-100">
+                            <GraduationCap className="w-8 h-8 text-white" />
                         </div>
                     )}
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-white leading-tight">Antrian Raport</h1>
-                        <p className="text-sm font-medium text-slate-400">{schoolName}</p>
+                        <h1 className="text-3xl font-black tracking-tight text-slate-900 leading-none mb-1 uppercase">ANTRIAN RAPORT</h1>
+                        <p className="text-base font-semibold text-slate-500 tracking-wide">{schoolName}</p>
                     </div>
                 </div>
 
                 {/* Right: Controls & Time */}
-                <div className="flex items-center gap-8">
-                    {/* Controls (Hidden from public view, subtle) */}
-                    <div className="flex items-center gap-3 opacity-20 hover:opacity-100 transition-opacity duration-300">
+                <div className="flex items-center gap-6">
+                    {/* Controls (Hidden from public view, subtle on hover) */}
+                    <div className="flex items-center gap-2 opacity-10 hover:opacity-100 transition-opacity duration-300">
                         <Button
                             size="sm"
-                            variant="ghost"
+                            variant={soundEnabled ? "default" : "outline"}
                             onClick={soundEnabled ? () => setSoundEnabled(false) : enableSound}
                             className={cn(
-                                "h-10 px-4 rounded-xl border font-semibold tracking-wide transition-all",
+                                "h-10 px-4 rounded-xl font-bold tracking-wide transition-all shadow-sm",
                                 soundEnabled 
-                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20" 
-                                    : "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20"
+                                    ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                                    : "bg-white text-slate-500 border-slate-200 hover:bg-slate-100"
                             )}
                         >
                             {soundEnabled ? <Volume2 className="w-4 h-4 mr-2" /> : <VolumeX className="w-4 h-4 mr-2" />}
@@ -362,25 +355,25 @@ export default function TV() {
 
                         <Button
                             size="sm"
-                            variant="ghost"
+                            variant="outline"
                             onClick={() => {
                                 logout()
                                 navigate('/login')
                             }}
-                            className="h-10 w-10 p-0 rounded-xl bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700 border border-white/5"
+                            className="h-10 w-10 p-0 rounded-xl bg-white text-red-500 hover:bg-red-50 border-red-100 shadow-sm"
                         >
                             <LogOut className="w-4 h-4" />
                         </Button>
                     </div>
 
-                    <div className="w-px h-12 bg-white/10"></div>
+                    <div className="w-px h-12 bg-slate-200"></div>
 
                     {/* Clock */}
                     <div className="text-right">
-                        <div className="text-4xl font-light tabular-nums tracking-tighter text-white">
+                        <div className="text-4xl font-bold tabular-nums tracking-tight text-slate-800 leading-none">
                             {formatTime(currentTime)}
                         </div>
-                        <div className="text-xs font-semibold text-blue-400 uppercase tracking-widest mt-0.5">
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
                             {formatDate(currentTime)}
                         </div>
                     </div>
@@ -388,8 +381,8 @@ export default function TV() {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 p-4 overflow-hidden flex flex-col">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 h-full content-start">
+            <main className="relative z-10 flex-1 p-6 sm:p-10 flex flex-col h-full overflow-hidden">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 h-full auto-rows-max content-start">
                     {classData.map(cls => {
                         const isOnline = onlineClasses.includes(cls.id)
                         const activeStudent = activeCalls[cls.id]
@@ -398,73 +391,223 @@ export default function TV() {
                         return (
                             <div
                                 key={cls.id}
-                                className={`
-                                    relative flex flex-col bg-white rounded-xl shadow-sm border transition-all duration-300 overflow-hidden group
-                                    ${isActiveCall
-                                        ? 'border-blue-500 ring-4 ring-blue-500/20 shadow-xl scale-[1.02] z-10'
+                                className={cn(
+                                    "relative flex flex-col rounded-3xl border transition-all duration-500 ease-out overflow-hidden min-h-[180px]",
+                                    isActiveCall
+                                        ? "bg-blue-600 border-blue-500 shadow-[0_20px_50px_-12px_rgba(37,99,235,0.5)] scale-[1.03] z-20"
                                         : isOnline
-                                            ? 'border-slate-200 hover:border-blue-300 hover:shadow-md'
-                                            : 'border-slate-100 bg-slate-50 opacity-90 grayscale-[0.5]'
-                                    }
-                                `}
-                            >
-                                {isActiveCall && (
-                                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-500 animate-shimmer bg-[length:200%_100%]"></div>
+                                            ? "bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200"
+                                            : "bg-slate-100 border-slate-200 opacity-60 grayscale-[0.3]"
                                 )}
-
-                                <div className={`px-5 py-4 border-b flex justify-between items-center ${isActiveCall ? 'bg-blue-50/50 border-blue-100' : 'bg-transparent border-slate-100'}`}>
-                                    <h2 className={`text-2xl font-black tracking-tight ${isActiveCall ? 'text-blue-700' : 'text-slate-800'}`}>
-                                        {cls.name}
-                                    </h2>
-                                    {isOnline ? (
-                                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-extrabold uppercase tracking-wide border border-emerald-200">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                                            Online
-                                        </span>
-                                    ) : (
-                                        <span className="px-2.5 py-1 rounded-full bg-slate-200 text-slate-500 text-[10px] font-bold uppercase tracking-wide">
-                                            Offline
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="flex-1 p-5 flex flex-col justify-center">
-                                    {isActiveCall ? (
-                                        <div className="text-center animate-in fade-in zoom-in duration-300">
-                                            <div className="inline-flex items-center justify-center p-3 bg-blue-100 text-blue-600 rounded-full mb-3 animate-bounce">
-                                                <Volume2 className="w-8 h-8" />
-                                            </div>
-                                            <div className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-1">Sedang Dipanggil</div>
-                                            <div className="text-xl font-bold text-slate-900 leading-tight line-clamp-2 px-2">
-                                                {activeStudent}
+                            >
+                                <div className="p-5 flex flex-col h-full relative z-10">
+                                    <div className="flex items-center justify-between mb-4 border-b border-inherit pb-3 opacity-90">
+                                        <div className={cn(
+                                            "text-lg font-black tracking-tight",
+                                            isActiveCall ? "text-white" : "text-slate-800"
+                                        )}>
+                                            {cls.name}
+                                        </div>
+                                        {/* Status Indicator */}
+                                        <div className="flex items-center">
+                                            <div className="relative flex h-3 w-3">
+                                                {isOnline && !isActiveCall && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50"></span>}
+                                                <span className={cn(
+                                                    "relative inline-flex rounded-full h-3 w-3 shadow-sm",
+                                                    isActiveCall ? "bg-white" : isOnline ? "bg-emerald-500" : "bg-slate-400"
+                                                )}></span>
                                             </div>
                                         </div>
-                                    ) : (
-                                        <div className={`text-center space-y-2 ${!isOnline && 'opacity-50'}`}>
-                                            {isOnline ? (
-                                                <div className="text-slate-400 text-sm font-medium">Menunggu Antrian...</div>
-                                            ) : (
-                                                <div className="flex flex-col items-center justify-center py-2">
-                                                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-2">
-                                                        <WifiOff className="w-5 h-5 text-slate-400" />
-                                                    </div>
-                                                    <div className="text-slate-400 text-sm font-medium">Guru Offline</div>
+                                    </div>
+
+                                    <div className="flex-1 flex flex-col justify-center">
+                                        {isActiveCall ? (
+                                            <div className="animate-in fade-in zoom-in duration-300 text-center">
+                                                <div className="inline-flex items-center justify-center p-3 bg-white/20 text-white rounded-full mb-3 animate-bounce">
+                                                    <Volume2 className="w-8 h-8" />
                                                 </div>
-                                            )}
-                                        </div>
-                                    )}
+                                                <div className="text-xs font-bold text-blue-200 uppercase tracking-widest mb-1 drop-shadow-sm">Sedang Dipanggil</div>
+                                                <div className="text-2xl font-black text-white leading-tight line-clamp-2 drop-shadow-md px-2">
+                                                    {activeStudent}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className={cn(
+                                                "text-center space-y-2",
+                                                !isOnline && "opacity-50"
+                                            )}>
+                                                {isOnline ? (
+                                                    <div className="text-slate-400 text-sm font-medium">Menunggu Antrian...</div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center justify-center py-2">
+                                                        <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center mb-2 shadow-inner">
+                                                            <WifiOff className="w-5 h-5 text-slate-500" />
+                                                        </div>
+                                                        <div className="text-slate-500 text-sm font-bold">Guru Offline</div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
+                                
+                                <div className="grid grid-cols-2 border-t border-inherit divide-x divide-inherit bg-slate-50/50">
+                                    <div className={cn(
+                                        "p-3 flex flex-col items-center justify-center transition-colors",
+                                        isActiveCall ? "bg-blue-700/50 hover:bg-blue-700" : "hover:bg-orange-50/50"
+                                    )}>
+                                        <div className={cn("text-[10px] font-bold uppercase tracking-wider mb-0.5", isActiveCall ? "text-blue-200" : "text-orange-600")}>Menunggu</div>
+                                        <div className={cn("text-2xl font-black tabular-nums", isActiveCall ? "text-white" : "text-slate-700")}>{cls.waiting}</div>
+                                    </div>
+                                    <div className={cn(
+                                        "p-3 flex flex-col items-center justify-center transition-colors",
+                                        isActiveCall ? "bg-blue-700/50 hover:bg-blue-700" : "hover:bg-emerald-50/50"
+                                    )}>
+                                        <div className={cn("text-[10px] font-bold uppercase tracking-wider mb-0.5", isActiveCall ? "text-blue-200" : "text-emerald-600")}>Selesai</div>
+                                        <div className={cn("text-2xl font-black tabular-nums", isActiveCall ? "text-white" : "text-slate-700")}>{cls.finished}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            </main>
 
-                                <div className="grid grid-cols-2 border-t border-slate-100 divide-x divide-slate-100 bg-slate-50/50">
-                                    <div className="p-3 flex flex-col items-center justify-center hover:bg-orange-50/50 transition-colors">
-                                        <div className="text-[10px] font-bold text-orange-600 uppercase tracking-wider mb-0.5">Menunggu</div>
-                                        <div className="text-2xl font-black text-slate-700 tabular-nums">{cls.waiting}</div>
+            {/* Footer marquee */}
+    return (
+        <div className="min-h-[100dvh] bg-slate-50 flex flex-col overflow-hidden font-sans text-slate-900 selection:bg-blue-100">
+            {/* Header */}
+            <header className="relative z-10 px-6 sm:px-10 py-5 flex items-center justify-between border-b border-slate-200 bg-white/80 backdrop-blur-md shadow-sm">
+                {/* Left: Identity */}
+                <div className="flex items-center gap-4">
+                    {schoolLogo ? (
+                        <div className="w-16 h-16 bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
+                            <img src={schoolLogo} alt="Logo" className="max-w-full max-h-full object-contain" />
+                        </div>
+                    ) : (
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-md border border-slate-100">
+                            <GraduationCap className="w-8 h-8 text-white" />
+                        </div>
+                    )}
+                    <div>
+                        <h1 className="text-3xl font-black tracking-tight text-slate-900 leading-none mb-1 uppercase">ANTRIAN RAPORT</h1>
+                        <p className="text-base font-semibold text-slate-500 tracking-wide">{schoolName}</p>
+                    </div>
+                </div>
+
+                {/* Right: Controls & Time */}
+                <div className="flex items-center gap-6">
+                    {/* Controls (Hidden from public view, subtle on hover) */}
+                    <div className="flex items-center gap-2 opacity-10 hover:opacity-100 transition-opacity duration-300">
+                        <Button
+                            size="sm"
+                            variant={soundEnabled ? "default" : "outline"}
+                            onClick={soundEnabled ? () => setSoundEnabled(false) : enableSound}
+                            className={cn(
+                                "h-10 px-4 rounded-xl font-bold tracking-wide transition-all shadow-sm",
+                                soundEnabled 
+                                    ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                                    : "bg-white text-slate-500 border-slate-200 hover:bg-slate-100"
+                            )}
+                        >
+                            {soundEnabled ? <Volume2 className="w-4 h-4 mr-2" /> : <VolumeX className="w-4 h-4 mr-2" />}
+                            {soundEnabled ? 'SUARA ON' : 'SUARA OFF'}
+                        </Button>
+
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                                logout()
+                                navigate('/login')
+                            }}
+                            className="h-10 w-10 p-0 rounded-xl bg-white text-red-500 hover:bg-red-50 border-red-100 shadow-sm"
+                        >
+                            <LogOut className="w-4 h-4" />
+                        </Button>
+                    </div>
+
+                    <div className="w-px h-12 bg-slate-200"></div>
+
+                    {/* Clock */}
+                    <div className="text-right">
+                        <div className="text-4xl font-bold tabular-nums tracking-tight text-slate-800 leading-none">
+                            {formatTime(currentTime)}
+                        </div>
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                            {formatDate(currentTime)}
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            {/* Main Content */}
+            <main className="relative z-10 flex-1 p-6 sm:p-10 flex flex-col h-full overflow-hidden">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 h-full auto-rows-max content-start">
+                    {classData.map(cls => {
+                        const isOnline = onlineClasses.includes(cls.id)
+                        const activeStudent = activeCalls[cls.id]
+                        const isActiveCall = !!activeStudent
+
+                        return (
+                            <div
+                                key={cls.id}
+                                className={cn(
+                                    "relative flex flex-col rounded-3xl border transition-all duration-500 ease-out overflow-hidden min-h-[180px]",
+                                    isActiveCall
+                                        ? "bg-blue-600 border-blue-500 shadow-[0_20px_50px_-12px_rgba(37,99,235,0.5)] scale-[1.03] z-20"
+                                        : isOnline
+                                            ? "bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200"
+                                            : "bg-slate-100 border-slate-200 opacity-60 grayscale-[0.3]"
+                                )}
+                            >
+                                <div className="p-5 flex flex-col h-full relative z-10">
+                                    <div className="flex items-center justify-between mb-4 border-b border-inherit pb-3 opacity-90">
+                                        <div className={cn(
+                                            "text-lg font-black tracking-tight",
+                                            isActiveCall ? "text-white" : "text-slate-800"
+                                        )}>
+                                            {cls.name}
+                                        </div>
+                                        {/* Status Indicator */}
+                                        <div className="flex items-center">
+                                            <div className="relative flex h-3 w-3">
+                                                {isOnline && !isActiveCall && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50"></span>}
+                                                <span className={cn(
+                                                    "relative inline-flex rounded-full h-3 w-3 shadow-sm",
+                                                    isActiveCall ? "bg-white" : isOnline ? "bg-emerald-500" : "bg-slate-400"
+                                                )}></span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="p-3 flex flex-col items-center justify-center hover:bg-emerald-50/50 transition-colors">
-                                        <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">Selesai</div>
-                                        <div className="text-2xl font-black text-slate-700 tabular-nums">{cls.finished}</div>
+
+                                    <div className="flex-1 flex flex-col justify-center">
+                                        {isActiveCall ? (
+                                            <div className="animate-in fade-in zoom-in duration-300">
+                                                <p className="text-xs font-bold text-blue-200 uppercase tracking-widest mb-1.5 drop-shadow-sm">Sedang Dipanggil</p>
+                                                <p className="text-2xl font-black text-white leading-tight line-clamp-2 drop-shadow-md">{activeStudent}</p>
+                                            </div>
+                                        ) : (
+                                            <div className={cn(
+                                                "flex items-baseline gap-2",
+                                                !isOnline && "opacity-50"
+                                            )}>
+                                                <div className="text-6xl font-light tracking-tighter tabular-nums text-slate-800 leading-none">
+                                                    {cls.waiting}
+                                                </div>
+                                                <div className="text-sm font-bold text-slate-400 uppercase tracking-widest pb-1">
+                                                    Antri
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
+                                
+                                {/* Bottom Accent Line */}
+                                <div className={cn(
+                                    "h-2 w-full absolute bottom-0 transition-colors duration-500",
+                                    isActiveCall ? "bg-white/30" : isOnline ? "bg-blue-500" : "bg-slate-300"
+                                )}></div>
                             </div>
                         )
                     })}
