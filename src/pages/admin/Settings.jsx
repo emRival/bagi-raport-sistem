@@ -46,8 +46,16 @@ export default function Settings() {
         try {
             const updates = {}
             keys.forEach(key => {
-                updates[key] = localSettings[key]
+                if (localSettings[key] !== undefined) {
+                    updates[key] = localSettings[key]
+                }
             })
+
+            if (Object.keys(updates).length === 0) {
+                toast.error('Tidak ada perubahan untuk disimpan')
+                return
+            }
+
             await updateSettings(updates)
             toast.success(`Pengaturan ${section} berhasil disimpan`)
         } catch (error) {

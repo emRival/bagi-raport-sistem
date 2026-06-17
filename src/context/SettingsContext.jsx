@@ -32,6 +32,11 @@ Giliran ananda *{name}* (Kelas {class}) untuk pengambilan raport.
 Silakan menuju ke ruang kelas sekarang.
 
 _Terima kasih atas kesabarannya._ 🙏`,
+
+    // TTS Config
+    ttsPitch: 1.0,
+    ttsRate: 0.8,
+    ttsVolume: 1.0,
 }
 
 export function SettingsProvider({ children }) {
