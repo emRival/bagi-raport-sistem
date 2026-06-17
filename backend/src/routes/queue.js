@@ -846,11 +846,12 @@ router.get('/public/track', (req, res) => {
         if (data.status === 'WAITING') {
             const aheadQuery = `
                 SELECT COUNT(*) as count 
-                FROM queue 
-                WHERE date = ? 
-                AND status = 'WAITING' 
-                AND class = ? 
-                AND check_in_time < ?
+                FROM queue q
+                JOIN students s ON q.student_id = s.id
+                WHERE q.date = ? 
+                AND q.status = 'WAITING' 
+                AND s.class = ? 
+                AND q.check_in_time < ?
             `
             const aheadData = db.prepare(aheadQuery).get(today, data.class, data.check_in_time)
             data.peopleAhead = aheadData.count
