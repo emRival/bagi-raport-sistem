@@ -362,45 +362,45 @@ export default function TV() {
                 </div>
             )}
 
-            {/* Cinematic Full Screen Overlay - ZOOM & RESPONSIVE FRIENDLY */}
+            {/* Full Screen Call Overlay (Responsive & Auto-Resize) */}
             {overlay && overlay.type === 'call' && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-10 bg-white/95 backdrop-blur-3xl animate-in fade-in duration-300">
-                    <div className="w-full max-w-[95vw] max-h-[95vh] rounded-[2rem] sm:rounded-[4rem] p-6 sm:p-12 md:p-20 flex flex-col items-center justify-center text-center relative overflow-y-auto overflow-x-hidden shadow-[0_40px_100px_rgba(0,0,0,0.2)] border-2 border-blue-100 bg-white animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 no-scrollbar">
-                        <div className="absolute top-0 left-0 w-full h-3 sm:h-5 bg-blue-600"></div>
-                        
-                        <div className="space-y-6 sm:space-y-10 md:space-y-14 w-full flex flex-col items-center">
-                            <div className="inline-flex items-center justify-center p-5 sm:p-8 bg-blue-50 text-blue-600 rounded-full animate-bounce-slow border-2 border-blue-100 shadow-inner">
-                                <Volume2 className="w-12 h-12 sm:w-20 sm:h-20" />
-                            </div>
-                            
-                            <h2 className="text-xl sm:text-3xl md:text-4xl font-black text-slate-400 uppercase tracking-[0.2em] sm:tracking-[0.4em]">
-                                Panggilan Ke Ruang {overlay.class}
-                            </h2>
-                            
-                            <div className="text-4xl sm:text-6xl md:text-8xl lg:text-[10rem] font-black tracking-tighter leading-[1.1] text-slate-900 drop-shadow-sm break-words max-w-full">
-                                {overlay.name}
-                            </div>
-                            
-                            <p className="text-lg sm:text-2xl md:text-4xl text-blue-600 font-black tracking-tight bg-blue-50 py-3 sm:py-6 px-8 sm:px-16 rounded-full inline-block border-2 border-blue-100 shadow-sm">
-                                Segera Menuju Ruang Kelas
-                            </p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-white animate-in fade-in duration-300">
+                    <div className="w-full h-full flex flex-col items-center justify-center text-center space-y-8">
+                        <div className="inline-flex items-center justify-center p-8 bg-blue-50 text-blue-600 rounded-full animate-bounce-slow border-2 border-blue-100">
+                            <Volume2 size={64} />
                         </div>
+                        
+                        <h2 className="text-4xl font-black text-slate-400 uppercase tracking-[0.3em]">
+                            Panggilan Ke Ruang {overlay.class}
+                        </h2>
+                        
+                        <div className={cn(
+                            "font-black tracking-tighter leading-[1.1] text-slate-900 break-words w-full px-4",
+                            overlay.name.length > 20 ? "text-7xl" : "text-[10rem]"
+                        )}>
+                            {overlay.name}
+                        </div>
+                        
+                        <p className="text-4xl text-blue-600 font-black tracking-tight bg-blue-50 py-6 px-16 rounded-full inline-block border-2 border-blue-100">
+                            Segera Menuju Ruang Kelas
+                        </p>
                     </div>
                 </div>
             )}
 
-            {/* Announcement Overlay - ZOOM & RESPONSIVE FRIENDLY */}
+            {/* Announcement Overlay (Responsive & Auto-Resize) */}
             {overlay && overlay.type === 'announcement' && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-10 bg-white/95 backdrop-blur-3xl animate-in fade-in duration-300">
-                    <div className="w-full max-w-[95vw] max-h-[95vh] rounded-[2rem] sm:rounded-[4rem] p-8 sm:p-20 flex flex-col items-center justify-center text-center bg-white border-4 border-orange-100 shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 overflow-y-auto no-scrollbar">
-                        <div className="space-y-8 sm:space-y-12">
-                            <div className="inline-flex items-center justify-center p-6 sm:p-10 bg-orange-50 text-orange-500 rounded-full border-2 border-orange-100 shadow-inner">
-                                <Megaphone className="w-12 h-12 sm:w-24 sm:h-24 animate-pulse" />
-                            </div>
-                            <h2 className="text-xl sm:text-4xl font-black text-slate-400 uppercase tracking-[0.3em]">PENGUMUMAN</h2>
-                            <div className="text-2xl sm:text-5xl md:text-7xl font-black leading-tight tracking-tight text-slate-900 max-w-5xl break-words">
-                                {overlay.text}
-                            </div>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-12 bg-white animate-in fade-in duration-300">
+                    <div className="w-full flex flex-col items-center justify-center text-center space-y-12">
+                        <div className="inline-flex items-center justify-center p-10 bg-orange-50 text-orange-500 rounded-full border-2 border-orange-100">
+                            <Megaphone size={80} className="animate-pulse" />
+                        </div>
+                        <h2 className="text-4xl font-black text-slate-400 uppercase tracking-[0.3em]">PENGUMUMAN</h2>
+                        <div className={cn(
+                            "font-black leading-tight tracking-tight text-slate-900 break-words w-full px-4",
+                            overlay.text.length > 100 ? "text-4xl" : "text-7xl"
+                        )}>
+                            {overlay.text}
                         </div>
                     </div>
                 </div>
