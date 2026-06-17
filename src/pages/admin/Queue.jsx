@@ -361,7 +361,7 @@ export default function AdminQueue() {
             {finishedQueue.length > 0 && (
                 <Card>
                     <CardHeader
-                        className="cursor-pointer hover:bg-slate-50 transition-colors"
+                        className="cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 pb-4"
                         onClick={() => setShowFinished(!showFinished)}
                     >
                         <CardTitle className="flex items-center justify-between text-lg">
@@ -373,11 +373,11 @@ export default function AdminQueue() {
                         </CardTitle>
                     </CardHeader>
                     {showFinished && (
-                        <CardContent className="space-y-2 max-h-[40vh] overflow-y-auto">
+                        <CardContent className="space-y-3 max-h-[40vh] overflow-y-auto p-4 sm:p-6 bg-slate-50/50">
                             {finishedQueue.map((item) => (
                                 <div
                                     key={item.id}
-                                    className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between"
+                                    className="p-4 bg-green-50/80 border border-green-200/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
                                 >
                                     <div>
                                         <p className="font-medium">{item.name}</p>
