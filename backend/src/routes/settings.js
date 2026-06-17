@@ -26,25 +26,24 @@ router.get('/', (req, res) => {
             }
         })
 
-        // Check Authentication
+        // Check Authentication and Role
         const authHeader = req.headers.authorization
-        let isAuthenticated = false
+        let isAdmin = false
 
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1]
             try {
-                jwt.verify(token, JWT_SECRET)
-                isAuthenticated = true
+                const decoded = jwt.verify(token, JWT_SECRET)
+                if (decoded.role === 'admin') {
+                    isAdmin = true
+                }
             } catch (e) {
                 // Invalid token
             }
         }
 
-        // Helper to check for specific roles if needed, currently just valid token = full access
-        // But ideally only admin/teacher should see waToken? 
-        // For now, if logged in, show all. If public, show limited.
-
-        if (!isAuthenticated) {
+        // Only Admin can see sensitive data (WhatsApp tokens, etc.)
+        if (!isAdmin) {
             const PUBLIC_KEYS = ['schoolName', 'schoolLogo', 'classes']
             const filtered = {}
             PUBLIC_KEYS.forEach(key => {
@@ -53,6 +52,7 @@ router.get('/', (req, res) => {
             return res.json(filtered)
         }
 
+        // Admin gets full settings
         res.json(result)
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' })
