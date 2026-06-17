@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Save, TestTube, Eye, EyeOff, Upload, Link, Image, Trash2, Plus, X, Settings as SettingsIcon, MessageSquare, Volume2, ChevronUp, ChevronDown, GripVertical } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui-new/card'
 import { Button } from '@/components/ui-new/button'
