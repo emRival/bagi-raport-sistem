@@ -473,20 +473,20 @@ export default function TV() {
 
             {/* Announcements Ticker */}
             {announcements.filter(a => a.is_active).length > 0 && (
-                <div className="relative z-10 border-t border-white/5 bg-slate-900/80 backdrop-blur-md overflow-hidden">
-                    <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-slate-950 z-10"></div>
-                    <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-slate-950 z-10"></div>
+                <div className="relative z-20 border-t border-slate-200 bg-white shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-white z-10 pointer-events-none"></div>
+                    <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white z-10 pointer-events-none"></div>
                     
                     <div className="flex items-center">
-                        <div className="flex items-center gap-2 bg-blue-600 text-white px-6 py-4 z-20 font-bold tracking-wider text-sm whitespace-nowrap shadow-[10px_0_20px_rgba(0,0,0,0.5)] uppercase">
-                            <Megaphone className="w-5 h-5 animate-pulse" />
-                            INFO
+                        <div className="flex items-center gap-3 bg-blue-600 text-white px-8 py-5 z-20 font-black tracking-widest text-base shadow-xl uppercase">
+                            <Megaphone className="w-6 h-6 animate-bounce-slow" />
+                            INFORMASI
                         </div>
                         <div className="flex-1 overflow-hidden relative">
-                            <div className="whitespace-nowrap animate-[marquee_30s_linear_infinite] inline-block">
+                            <div className="whitespace-nowrap animate-marquee inline-block">
                                 {announcements.filter(a => a.is_active).map(a => (
-                                    <span key={a.id} className="inline-flex items-center mx-12 text-lg text-slate-300 font-medium">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-4"></span>
+                                    <span key={a.id} className="inline-flex items-center mx-16 text-2xl text-slate-700 font-semibold tracking-tight">
+                                        <span className="w-3 h-3 rounded-full bg-blue-500 mr-5 shadow-sm"></span>
                                         {a.text}
                                     </span>
                                 ))}
@@ -496,45 +496,41 @@ export default function TV() {
                 </div>
             )}
 
-            {/* Cinematic Full Screen Overlay */}
+            {/* Cinematic Full Screen Overlay (Light/Clean version) */}
             {overlay && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-slate-950/90 backdrop-blur-2xl animate-in fade-in duration-500">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-white/95 backdrop-blur-xl animate-in fade-in duration-300">
                     <div className={cn(
-                        "w-full max-w-5xl rounded-[3rem] p-16 flex flex-col items-center justify-center text-center relative overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-8 duration-700 ease-out",
+                        "w-full max-w-6xl rounded-[3rem] p-20 flex flex-col items-center justify-center text-center relative overflow-hidden shadow-[0_20px_100px_rgba(0,0,0,0.1)] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 ease-out border-2",
                         overlay.type === 'call' 
-                            ? "bg-blue-600 text-white shadow-[0_0_100px_rgba(37,99,235,0.4)] border border-blue-400/50" 
-                            : "bg-slate-900 text-white border border-white/10 shadow-black"
+                            ? "bg-white border-blue-100" 
+                            : "bg-white border-orange-100"
                     )}>
-                        {/* Dramatic Glow Background for Call */}
-                        {overlay.type === 'call' && (
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent opacity-60"></div>
-                        )}
-
+                        
                         <div className="relative z-10 w-full">
                             {overlay.type === 'call' ? (
                                 <div className="space-y-8">
-                                    <div className="inline-flex items-center justify-center p-6 bg-white/10 rounded-full mb-4 animate-bounce-slow backdrop-blur-sm border border-white/20">
-                                        <Volume2 className="w-16 h-16 text-white" />
+                                    <div className="inline-flex items-center justify-center p-8 bg-blue-50 text-blue-600 rounded-full mb-6 shadow-inner animate-bounce-slow border border-blue-100">
+                                        <Volume2 className="w-20 h-20" />
                                     </div>
-                                    <h2 className="text-3xl font-semibold text-blue-200 uppercase tracking-[0.3em]">
+                                    <h2 className="text-4xl font-bold text-slate-400 uppercase tracking-[0.2em]">
                                         Panggilan Ke Ruang {overlay.class}
                                     </h2>
-                                    <div className="text-[8rem] font-black tracking-tighter leading-tight drop-shadow-xl text-white">
+                                    <div className="text-[7rem] font-black tracking-tighter leading-none text-slate-900 drop-shadow-sm py-4">
                                         {overlay.name}
                                     </div>
-                                    <p className="text-2xl text-blue-100 font-medium tracking-wide mt-8">
+                                    <p className="text-3xl text-blue-600 font-bold tracking-tight mt-8 bg-blue-50 py-4 px-10 rounded-full inline-block border border-blue-100">
                                         Silakan menuju ke ruang kelas sekarang
                                     </p>
                                 </div>
                             ) : (
                                 <div className="space-y-10">
-                                    <div className="inline-flex items-center justify-center p-6 bg-blue-500/20 rounded-full mb-4 border border-blue-500/30">
-                                        <Megaphone className="w-16 h-16 text-blue-400 animate-pulse" />
+                                    <div className="inline-flex items-center justify-center p-8 bg-orange-50 text-orange-500 rounded-full mb-6 border border-orange-100">
+                                        <Megaphone className="w-20 h-20 animate-pulse" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-slate-400 uppercase tracking-widest">
+                                    <h2 className="text-3xl font-bold text-slate-400 uppercase tracking-[0.2em]">
                                         Pengumuman
                                     </h2>
-                                    <div className="text-6xl font-semibold leading-tight tracking-tight text-white max-w-4xl mx-auto">
+                                    <div className="text-[5rem] font-black leading-tight tracking-tighter text-slate-900 max-w-5xl mx-auto drop-shadow-sm">
                                         {overlay.text}
                                     </div>
                                 </div>
@@ -548,19 +544,19 @@ export default function TV() {
             {!soundEnabled && (
                 <div
                     onClick={enableSound}
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center cursor-pointer animate-in fade-in duration-500 hover:bg-black/70 transition-colors"
+                    className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center cursor-pointer animate-in fade-in duration-500 hover:bg-slate-900/70 transition-colors"
                 >
-                    <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 text-center shadow-2xl animate-bounce-slow">
-                        <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600">
-                            <VolumeX className="w-10 h-10" />
+                    <div className="bg-white rounded-3xl p-10 max-w-lg w-full mx-4 text-center shadow-2xl animate-bounce-slow">
+                        <div className="w-24 h-24 bg-red-50 border border-red-100 rounded-full flex items-center justify-center mx-auto mb-8 text-red-500 shadow-inner">
+                            <VolumeX className="w-12 h-12" />
                         </div>
-                        <h3 className="text-2xl font-bold text-slate-900 mb-2">Suara Nonaktif</h3>
-                        <p className="text-slate-600 mb-8 max-w-sm mx-auto">
-                            Klik di mana saja pada layar untuk mengaktifkan suara notifikasi panggilan.
+                        <h3 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">Suara Nonaktif</h3>
+                        <p className="text-slate-500 mb-10 text-lg font-medium">
+                            Klik di mana saja pada layar untuk mengaktifkan output suara.
                         </p>
-                        <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6 shadow-lg shadow-blue-200">
-                            <Volume2 className="w-6 h-6 mr-2" />
-                            Aktifkan Suara
+                        <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700 text-xl py-8 font-bold shadow-xl shadow-blue-600/20 rounded-2xl">
+                            <Volume2 className="w-7 h-7 mr-3" />
+                            Aktifkan Suara TV
                         </Button>
                     </div>
                 </div>
@@ -572,14 +568,14 @@ export default function TV() {
                     100% { transform: translateX(-100%); }
                 }
                 .animate-marquee {
-                    animation: marquee 30s linear infinite;
+                    animation: marquee 25s linear infinite;
                 }
                 @keyframes bounce-slow {
                     0%, 100% { transform: translateY(0); }
                     50% { transform: translateY(-10px); }
                 }
                 .animate-bounce-slow {
-                    animation: bounce-slow 4s infinite ease-in-out;
+                    animation: bounce-slow 3s infinite ease-in-out;
                 }
             `}</style>
         </div>
