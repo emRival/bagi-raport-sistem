@@ -342,17 +342,17 @@ export default function TV() {
 
             {/* Footer Marquee */}
             {announcements.filter(a => a.is_active).length > 0 && (
-                <div className="relative z-20 border-t border-slate-200 bg-white py-4 overflow-hidden shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+                <div className="relative z-20 border-t border-slate-200 bg-white py-3 overflow-hidden shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
                     <div className="flex items-center">
-                        <div className="flex items-center gap-3 bg-blue-600 text-white px-8 py-4 z-20 font-black tracking-widest text-sm uppercase rounded-r-full shadow-lg">
+                        <div className="flex items-center gap-3 bg-blue-600 text-white px-6 py-3 z-20 font-black tracking-widest text-sm uppercase rounded-r-full shadow-lg">
                             <Megaphone className="w-5 h-5" />
                             INFO
                         </div>
-                        <div className="flex-1 overflow-hidden relative">
-                            <div className="whitespace-nowrap animate-marquee inline-block">
+                        <div className="flex-1 overflow-hidden relative text-white">
+                            <div className="whitespace-nowrap animate-marquee inline-block pl-[100%]">
                                 {announcements.filter(a => a.is_active).map(a => (
-                                    <span key={a.id} className="inline-flex items-center mx-16 text-2xl text-slate-700 font-bold tracking-tight">
-                                        <span className="w-3 h-3 rounded-full bg-blue-500 mr-5 shadow-sm"></span>
+                                    <span key={a.id} className="inline-flex items-center mx-8 text-xl text-slate-700 font-bold tracking-tight">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-blue-500 mr-3 shadow-sm"></span>
                                         {a.text}
                                     </span>
                                 ))}
@@ -362,22 +362,22 @@ export default function TV() {
                 </div>
             )}
 
-            {/* Full Screen Call Overlay */}
+            {/* Full Screen Call Overlay (Resized) */}
             {overlay && overlay.type === 'call' && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-12 bg-white/95 backdrop-blur-2xl animate-in fade-in duration-300">
-                    <div className="w-full max-w-6xl rounded-[4rem] p-24 flex flex-col items-center justify-center text-center relative overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.1)] border-4 border-blue-100 bg-white animate-in zoom-in-95 slide-in-from-bottom-12 duration-500">
-                        <div className="absolute top-0 left-0 w-full h-4 bg-blue-600"></div>
-                        <div className="space-y-12">
-                            <div className="inline-flex items-center justify-center p-10 bg-blue-50 text-blue-600 rounded-full mb-4 animate-bounce-slow border-2 border-blue-100 shadow-inner">
-                                <Volume2 size={80} />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-white/95 backdrop-blur-2xl animate-in fade-in duration-300">
+                    <div className="w-full max-w-4xl rounded-[3rem] p-12 flex flex-col items-center justify-center text-center relative overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.15)] border-2 border-blue-100 bg-white animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 text-slate-900">
+                        <div className="absolute top-0 left-0 w-full h-3 bg-blue-600"></div>
+                        <div className="space-y-8">
+                            <div className="inline-flex items-center justify-center p-6 bg-blue-50 text-blue-600 rounded-full mb-2 animate-bounce-slow border border-blue-100 shadow-inner">
+                                <Volume2 size={48} />
                             </div>
-                            <h2 className="text-5xl font-black text-slate-400 uppercase tracking-[0.3em]">
+                            <h2 className="text-2xl font-black text-slate-400 uppercase tracking-[0.3em]">
                                 Panggilan Ke Ruang {overlay.class}
                             </h2>
-                            <div className="text-[10rem] font-black tracking-tighter leading-none text-slate-900 py-6">
+                            <div className="text-[6rem] font-black tracking-tighter leading-none py-2 text-slate-900">
                                 {overlay.name}
                             </div>
-                            <p className="text-4xl text-blue-600 font-black tracking-tight bg-blue-50 py-6 px-16 rounded-full inline-block border-2 border-blue-100 shadow-sm">
+                            <p className="text-2xl text-blue-600 font-black tracking-tight bg-blue-50 py-4 px-12 rounded-full inline-block border border-blue-100 shadow-sm">
                                 Segera Menuju Ruang Kelas
                             </p>
                         </div>
@@ -385,16 +385,16 @@ export default function TV() {
                 </div>
             )}
 
-            {/* Announcement Overlay */}
+            {/* Announcement Overlay (Resized) */}
             {overlay && overlay.type === 'announcement' && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-12 bg-white/95 backdrop-blur-2xl animate-in fade-in duration-300">
-                    <div className="w-full max-w-6xl rounded-[4rem] p-24 flex flex-col items-center justify-center text-center bg-white border-4 border-orange-100 shadow-2xl animate-in zoom-in-95 duration-500">
-                        <div className="space-y-12">
-                            <div className="inline-flex items-center justify-center p-10 bg-orange-50 text-orange-500 rounded-full border-2 border-orange-100 shadow-inner">
-                                <Megaphone size={80} />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-white/95 backdrop-blur-2xl animate-in fade-in duration-300">
+                    <div className="w-full max-w-4xl rounded-[3rem] p-16 flex flex-col items-center justify-center text-center bg-white border-2 border-orange-100 shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 text-slate-900">
+                        <div className="space-y-8">
+                            <div className="inline-flex items-center justify-center p-8 bg-orange-50 text-orange-500 rounded-full border border-orange-100 shadow-inner">
+                                <Megaphone size={60} />
                             </div>
-                            <h2 className="text-4xl font-black text-slate-400 uppercase tracking-[0.3em]">PENGUMUMAN</h2>
-                            <div className="text-7xl font-black leading-tight tracking-tight text-slate-900 max-w-5xl">
+                            <h2 className="text-2xl font-black text-slate-400 uppercase tracking-[0.3em]">PENGUMUMAN</h2>
+                            <div className="text-5xl font-black leading-tight tracking-tight max-w-3xl text-slate-900">
                                 {overlay.text}
                             </div>
                         </div>
@@ -404,14 +404,14 @@ export default function TV() {
 
             {/* Sound Activation Modal */}
             {!soundEnabled && (
-                <div onClick={enableSound} className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center cursor-pointer animate-in fade-in">
-                    <div className="bg-white rounded-[3rem] p-16 max-w-xl w-full mx-6 text-center shadow-2xl animate-bounce-slow border-b-8 border-blue-600">
-                        <div className="w-32 h-32 bg-red-50 border-2 border-red-100 rounded-full flex items-center justify-center mx-auto mb-10 text-red-500 shadow-inner">
-                            <VolumeX size={60} />
+                <div onClick={enableSound} className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center cursor-pointer animate-in fade-in text-slate-900">
+                    <div className="bg-white rounded-[2.5rem] p-12 max-w-lg w-full mx-4 text-center shadow-2xl animate-bounce-slow border-b-8 border-blue-600">
+                        <div className="w-24 h-24 bg-red-50 border border-red-100 rounded-full flex items-center justify-center mx-auto mb-8 text-red-500 shadow-inner">
+                            <VolumeX size={48} />
                         </div>
-                        <h3 className="text-5xl font-black text-slate-900 mb-4 tracking-tighter">SUARA OFF</h3>
-                        <p className="text-slate-500 mb-12 text-xl font-bold uppercase tracking-widest">Klik Layar Untuk Mengaktifkan</p>
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-2xl py-10 font-black shadow-2xl shadow-blue-600/30 rounded-[2rem]">
+                        <h3 className="text-4xl font-black text-slate-900 mb-3 tracking-tighter text-slate-900">SUARA OFF</h3>
+                        <p className="text-slate-500 mb-10 text-lg font-bold uppercase tracking-widest text-slate-500">Klik Layar Untuk Mengaktifkan</p>
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-xl py-8 font-black shadow-2xl shadow-blue-600/30 rounded-2xl text-white">
                             AKTIFKAN SEKARANG
                         </Button>
                     </div>
@@ -419,9 +419,9 @@ export default function TV() {
             )}
 
             <style>{`
-                @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+                @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
                 .animate-marquee { animation: marquee 35s linear infinite; }
-                @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+                @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
                 .animate-bounce-slow { animation: bounce-slow 4s infinite ease-in-out; }
             `}</style>
         </div>
