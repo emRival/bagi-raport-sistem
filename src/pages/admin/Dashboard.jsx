@@ -105,14 +105,6 @@ export default function Dashboard() {
 
     return (
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
-            {/* Header */}
-            <div className="flex items-center justify-between min-h-[48px]">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
-                    <p className="text-sm text-muted-foreground mt-1">Ringkasan sistem antrian</p>
-                </div>
-            </div>
-
             {/* Stats Grid - Mobile First */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
                 <Card className="w-full bg-gradient-to-br from-blue-500 to-blue-600 text-white animate-fade-in">

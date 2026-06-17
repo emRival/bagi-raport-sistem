@@ -197,14 +197,6 @@ export default function Users() {
 
     return (
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
-            {/* Header */}
-            <div className="flex items-center justify-between min-h-[48px]">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold">Manajemen User</h1>
-                    <p className="text-sm text-muted-foreground mt-1">{users.length} user terdaftar</p>
-                </div>
-            </div>
-
             {/* Filters Card */}
             <Card>
                 <CardContent className="p-4">

@@ -249,17 +249,6 @@ export default function Students() {
 
     return (
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
-            {/* Header - Match pattern with History */}
-            <div className="flex items-center justify-between min-h-[48px]">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold">Data Siswa</h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        {students.length} siswa terdaftar
-                        {someSelected && ` • ${selectedIds.length} terpilih`}
-                    </p>
-                </div>
-            </div>
-
             {/* Import/Export Card */}
             <Card>
                 <CardContent className="p-4">
